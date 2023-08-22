@@ -1,0 +1,26 @@
+[package]
+name = "enkrypton"
+version = "0.0.0"
+description = "🗨️Message anybody on the tor network\n🔒E2E - RSA\nThis app was created for my facharbeit"
+authors = ["sshcrack"]
+license = ""
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.4", features = [] }
+
+[dependencies]
+tauri = { version = "1.4", features = ["shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0.75"
+#TODO correct version here
+actix-web = "latest"
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

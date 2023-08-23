@@ -24,7 +24,7 @@ hex = "0.4.3"
 tauri-plugin-log = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 log = "^0.4"
 async-channel = "1.9.0"
-subprocess = "0.2.9"
+signal-hook = "0.3.17"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

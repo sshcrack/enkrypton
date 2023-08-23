@@ -3,9 +3,12 @@
 
 mod tor;
 
-use tauri::Manager;
+
+use log::info;
+use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::LogTarget;
 use tor::commands::*;
+use tor::manager;
 
 fn main() {
     tauri::Builder::default()
@@ -15,6 +18,13 @@ fn main() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![tor_start])
+        .on_window_event(|event| match event.event() {
+            WindowEvent::Destroyed => {
+                info!("Exiting...");
+                block_on(manager::stop_tor());
+            },
+            _ => {}
+        })
         .setup(|app| {
             #[cfg(debug_assertions)] // only include this code on debug builds
             {

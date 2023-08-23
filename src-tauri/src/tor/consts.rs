@@ -1,4 +1,4 @@
-use std::{env::current_exe, path::PathBuf, thread::JoinHandle, sync::Arc, future::Future};
+use std::{env::current_exe, path::PathBuf, thread::JoinHandle, sync::Arc};
 
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
@@ -6,6 +6,7 @@ use tauri::async_runtime::RwLock;
 
 use super::manager::TorMessage;
 
+// https://check.torproject.org/api/ip
 lazy_static! {
     pub static ref TOR_BINARY_HASH: String = get_tor_hash();
     pub static ref TOR_BINARY_PATH: PathBuf = get_tor_path();

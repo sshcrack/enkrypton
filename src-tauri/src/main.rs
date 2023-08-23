@@ -1,29 +1,28 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{fs::File, io::Write, env::current_exe};
+mod tor;
 
-//const TOR_BIN: &'static [u8;7803392]  = ;
-
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use tauri::Manager;
+use tauri_plugin_log::LogTarget;
+use tor::commands::*;
 
 fn main() {
-    let tor_exe_raw = include_bytes!("./assets/tor.exe");
-    let mut tor_write_path = current_exe().unwrap();
-    tor_write_path.set_file_name("tor_proxy.exe");
-
-
-    println!("Writing at {:?}", tor_write_path);
-    let mut f = File::create(tor_write_path).unwrap();
-    f.write_all(tor_exe_raw).unwrap();
-    drop(f);
-
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
+                .build(),
+        )
+        .invoke_handler(tauri::generate_handler![tor_start])
+        .setup(|app| {
+            #[cfg(debug_assertions)] // only include this code on debug builds
+            {
+                let window = app.get_window("main").unwrap();
+                window.open_devtools();
+            }
+            return Ok(());
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -1,5 +1,5 @@
-pub mod commands;
+pub mod misc;
 pub mod manager;
 pub mod consts;
-mod integrity_check;
 mod parser;
+mod mainloop;

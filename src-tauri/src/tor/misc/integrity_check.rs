@@ -3,9 +3,7 @@ use std::{fs::File, io::{self, Write}};
 use anyhow::Result;
 use sha2::{Digest, Sha256};
 
-use crate::tor::consts::TOR_BINARY_PATH;
-
-use super::consts::TOR_BINARY_HASH;
+use crate::tor::consts::{TOR_BINARY_PATH, TOR_BINARY_HASH};
 
 
 /**
@@ -24,7 +22,7 @@ pub fn check_integrity() -> Result<()> {
 
 fn extract_tor() -> Result<()> {
     let mut f = File::create(TOR_BINARY_PATH.clone())?;
-    f.write_all(include_bytes!("../assets/tor.exe"))?;
+    f.write_all(include_bytes!("../../assets/tor.exe"))?;
 
     Ok(())
 }

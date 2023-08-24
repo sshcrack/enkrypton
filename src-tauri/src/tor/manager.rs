@@ -1,42 +1,12 @@
-use std::{
-    process::{Command, Stdio},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread::{self, yield_now},
-};
+use std::{thread::{self}, process::ExitStatus};
 
 use anyhow::{anyhow, Result};
-use async_channel::{Receiver, Sender};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
-use crate::tor::{
-    consts::{FROM_TOR_RX, TOR_THREAD},
-    parser::stdout::handle_tor_stdout,
-};
+use crate::tor::{misc::{integrity_check::check_integrity, tools::{get_from_tor_rx, get_to_tor_tx}, payloads::{Tor2ClientMsg, StartTorError}}, mainloop::tor_main_loop};
 
-use super::{
-    consts::{TOR_BINARY_PATH, TO_TOR_TX},
-    integrity_check::check_integrity,
-};
-
-#[derive(Clone, serde::Serialize)]
-pub struct StartTorPayload {
-    pub message: String,
-    pub progress: f32,
-}
-
-#[derive(Debug, Clone)]
-pub enum Tor2ClientMsg {
-    BootstrapProgress(f32, String),
-    StatusMsg(String), // To exit close the tx / rx channel.
-                       //Exit
-}
-
-#[derive(Debug, Clone)]
-pub enum Client2TorMsg {}
+use super::{consts::TOR_THREAD, misc::payloads::StartTorPayload};
 
 pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     let already_started = TOR_THREAD.read().await;
@@ -76,43 +46,59 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     TOR_THREAD.write().await.replace(handle);
 
     debug!("Waiting for tor to start...");
+    let rx = get_from_tor_rx().await;
+    loop {
+        if rx.len() > 0 {
+            let msg = rx.recv().await?;
+            match msg {
+                Tor2ClientMsg::BootstrapProgress(prog, status) => {
+                    on_event(StartTorPayload {
+                        progress: prog / 3.0 + 0.6,
+                        message: status
+                    });
 
-    let mut is_done = true;
-    while !is_done {
+                    if prog == 1.0 {
+                        break;
+                    }
+                }
+                Tor2ClientMsg::ExitMsg(status, logs) => {
+                    return Err(StartTorError(status, logs));
+                }
+                _ => {}
+            }
+        }
     }
 
-    debug!("Done");
     Ok(())
 }
 
-pub async fn stop_tor() {
-    let tx = TO_TOR_TX.read().await;
-    tx.as_ref().unwrap().close();
+pub async fn wait_for_exit() {
+    let mut handle = TOR_THREAD.write().await;
+
+    info!("Waiting for handle");
+    handle
+        .take()
+        .expect("Could not wait for tor client to exit")
+        .join()
+        .expect("msg");
 }
 
-/**
- * Spawns the tor process
- * Controls and interprets the output of the tor process
- */
-async fn tor_main_loop(
-) -> Result<()> {
-    debug!("Starting tor...");
-    let mut child = Command::new(TOR_BINARY_PATH.clone())
-        .stdout(Stdio::piped())
-        .spawn()?;
+pub async fn stop_tor() -> anyhow::Result<()> {
+    let handle = TOR_THREAD.read().await;
+    if !handle.is_some() {
+        return Err(anyhow!("Could not stop tor, tor is not running"));
+    }
+    drop(handle);
 
-    let should_exit = Arc::new(AtomicBool::new(false));
+    let state = get_to_tor_tx().await;
+    info!("Sending exit signal...");
+    state.send(Client2TorMsg::Exit()).await?;
 
-    let temp = should_exit.clone();
-    let stdout = child.stdout.take().unwrap();
+    Ok(())
+}
 
-    handle_tor_stdout(temp, stdout).await?;
-
-    debug!("Exiting...");
-    should_exit.store(true, Ordering::Relaxed);
-
-    child.kill()?;
-
-    debug!("Exit done");
+pub async fn wait_and_stop_tor() -> anyhow::Result<()> {
+    stop_tor().await?;
+    wait_for_exit().await;
     Ok(())
 }

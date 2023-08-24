@@ -4,15 +4,15 @@
 mod tor;
 
 
-use log::info;
+use log::{info, error};
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::LogTarget;
-use tor::commands::*;
-use tor::consts::{TO_TOR_TX, setup_channels};
+use tor::misc::commands::*;
+use tor::consts::setup_channels;
 use tor::manager;
 
 fn main() {
-    setup_channels();
+    block_on(setup_channels());
 
     tauri::Builder::default()
         .plugin(
@@ -24,7 +24,10 @@ fn main() {
         .on_window_event(|event| match event.event() {
             WindowEvent::Destroyed => {
                 info!("Exiting...");
-                block_on(manager::stop_tor());
+                let res = block_on(manager::wait_and_stop_tor());
+                if res.is_err() {
+                    error!("Could not stop tor: {}", res.unwrap_err());
+                }
             },
             _ => {}
         })

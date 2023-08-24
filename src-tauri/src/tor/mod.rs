@@ -1,4 +1,5 @@
 pub mod commands;
 pub mod manager;
-mod consts;
+pub mod consts;
 mod integrity_check;
+mod parser;

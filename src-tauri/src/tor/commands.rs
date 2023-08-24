@@ -1,4 +1,4 @@
-use log::warn;
+use log::{warn, debug};
 use tauri::{Manager, Window};
 
 use crate::tor::manager;
@@ -14,6 +14,7 @@ pub async fn tor_start(window: Window) -> Result<(), String> {
     }).await;
 
     if res.is_ok() {
+        debug!("done command");
         return Ok(());
     }
 

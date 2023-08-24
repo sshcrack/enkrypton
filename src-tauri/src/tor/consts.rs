@@ -4,7 +4,7 @@ use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 use tauri::async_runtime::RwLock;
 
-use super::manager::TorMessage;
+use super::manager::{Tor2ClientMsg, Client2TorMsg};
 
 // https://check.torproject.org/api/ip
 lazy_static! {
@@ -12,8 +12,8 @@ lazy_static! {
     pub static ref TOR_BINARY_PATH: PathBuf = get_tor_path();
     pub static ref TOR_THREAD: Arc<RwLock<Option<JoinHandle<()>>>> = Arc::default();
 
-    pub static ref TO_TOR_TX: Arc<RwLock<Option<Sender<TorMessage>>>> = Arc::default();
-    pub static ref FROM_TOR_RX: Arc<RwLock<Option<Receiver<TorMessage>>>> = Arc::default();
+    pub static ref TO_TOR_TX: Arc<RwLock<Option<Sender<Client2TorMsg>>>> = Arc::default();
+    pub static ref FROM_TOR_RX: Arc<RwLock<Option<Receiver<Tor2ClientMsg>>>> = Arc::default();
 
 }
 

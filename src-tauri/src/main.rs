@@ -8,9 +8,12 @@ use log::info;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::LogTarget;
 use tor::commands::*;
+use tor::consts::{TO_TOR_TX, setup_channels};
 use tor::manager;
 
 fn main() {
+    setup_channels();
+
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::default()

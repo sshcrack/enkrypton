@@ -1,12 +1,9 @@
 use std::{sync::{atomic::{Ordering, AtomicBool}, Arc}, io::{BufReader, BufRead}, process::ChildStdout};
 
 use anyhow::Result;
-use async_channel::Sender;
 use log::{info, error, debug};
 
-use crate::tor::manager::Tor2ClientMsg;
-
-pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, stdout: ChildStdout, tx: Sender<Tor2ClientMsg>) -> Result<()> {
+pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, stdout: ChildStdout) -> Result<()> {
     const BOOTSTRAP_MSG: &str = "[notice] Bootstrapped ";
 
     debug!("handle");
@@ -15,7 +12,6 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, stdout: ChildStdout
         let mut buf = String::new();
         match stdout.read_line(&mut buf) {
             Ok(_) => {
-                debug!("msg");
                 let msg = buf.trim_end_matches("\r\n").trim_end_matches('\n');
                 if msg.replace(" ", "").is_empty() {
                     continue;
@@ -41,12 +37,11 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, stdout: ChildStdout
                     let info: Vec<&str> = main_fragment.split(": ").collect();
                     let info = info.get(1).unwrap_or(&"no info");
 
-                    debug!("Sending msg...");
-                    tx.send(Tor2ClientMsg::BootstrapProgress(percentage, info.to_string())).await?;
+                    debug!("Sending msg... {} {}", percentage, info);
                     continue;
                 }
 
-                tx.send(Tor2ClientMsg::StatusMsg(msg.to_string())).await?;
+                debug!("status {}", msg);
             }
             Err(e) => error!("an error!: {:?}", e),
         }

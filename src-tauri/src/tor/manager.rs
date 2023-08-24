@@ -59,15 +59,10 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     });
 
     debug!("Creating unbounded channels...");
-    let (to_tx, to_rx) = async_channel::unbounded::<Client2TorMsg>();
-    let (from_tx, from_rx) = async_channel::unbounded::<Tor2ClientMsg>();
-
     debug!("Writing to rwlock...");
-    TO_TOR_TX.write().await.replace(to_tx);
-    FROM_TOR_RX.write().await.replace(from_rx.clone());
 
     let handle = thread::spawn(move || {
-        let res = block_on(tor_main_loop(from_tx, to_rx));
+        let res = block_on(tor_main_loop());
         if res.is_ok() {
             info!("TOR: thread has finished!");
             return;
@@ -84,22 +79,6 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
 
     let mut is_done = true;
     while !is_done {
-        debug!("Reading msg");
-        let msg = from_rx.recv().await?;
-        match msg {
-            Tor2ClientMsg::BootstrapProgress(prog, status) => {
-                debug!("Received new msg: {} {}", prog, status);
-                if prog == 1.0 {
-                    is_done = true;
-                }
-
-                on_event(StartTorPayload {
-                    message: status,
-                    progress: prog / 3.0 + 0.6,
-                });
-            }
-            _ => {}
-        }
     }
 
     debug!("Done");
@@ -116,8 +95,6 @@ pub async fn stop_tor() {
  * Controls and interprets the output of the tor process
  */
 async fn tor_main_loop(
-    from_tx: Sender<Tor2ClientMsg>,
-    to_rx: Receiver<Client2TorMsg>,
 ) -> Result<()> {
     debug!("Starting tor...");
     let mut child = Command::new(TOR_BINARY_PATH.clone())
@@ -128,30 +105,13 @@ async fn tor_main_loop(
 
     let temp = should_exit.clone();
     let stdout = child.stdout.take().unwrap();
-    let handle = thread::spawn(move || handle_tor_stdout(temp, stdout, from_tx));
 
-    yield_now();
-    while !to_rx.is_closed() && !should_exit.load(Ordering::Relaxed) {
-        if to_rx.len() != 0 {
-            debug!("TOR: Reading message...");
-            let msg = to_rx.recv().await?;
-            debug!("TOR: Received a new message: {:#?}", msg)
-        }
-    }
+    handle_tor_stdout(temp, stdout).await?;
 
     debug!("Exiting...");
     should_exit.store(true, Ordering::Relaxed);
-    if !to_rx.is_closed() {
-        to_rx.close();
-    }
 
     child.kill()?;
-
-    handle
-        .join()
-        .expect("Error waiting for tor handle to exit")
-        .await
-        .unwrap();
 
     debug!("Exit done");
     Ok(())

@@ -13,8 +13,22 @@ lazy_static! {
     pub static ref TOR_THREAD: Arc<RwLock<Option<JoinHandle<()>>>> = Arc::default();
 
     pub static ref TO_TOR_TX: Arc<RwLock<Option<Sender<Client2TorMsg>>>> = Arc::default();
-    pub static ref FROM_TOR_RX: Arc<RwLock<Option<Receiver<Tor2ClientMsg>>>> = Arc::default();
+    static ref TO_TOR_RX: Arc<RwLock<Option<Receiver<Client2TorMsg>>>> = Arc::default();
 
+    pub static ref FROM_TOR_RX: Arc<RwLock<Option<Receiver<Tor2ClientMsg>>>> = Arc::default();
+    static ref FROM_TOR_TX: Arc<RwLock<Option<Sender<Tor2ClientMsg>>>> = Arc::default();
+
+}
+
+pub async fn setup_channels() {
+    let (to_tx, to_rx) = async_channel::unbounded::<Client2TorMsg>();
+    let (from_tx, from_rx) = async_channel::unbounded::<Tor2ClientMsg>();
+
+    TO_TOR_TX.write().await.replace(to_tx);
+    TO_TOR_RX.write().await.replace(to_rx);
+
+    FROM_TOR_TX.write().await.replace(from_tx);
+    FROM_TOR_RX.write().await.replace(from_rx);
 }
 
 fn get_tor_hash() -> String {

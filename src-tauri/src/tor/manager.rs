@@ -1,10 +1,10 @@
-use std::{thread::{self}, process::ExitStatus};
+use std::{thread::{self}};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, bail};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
-use crate::tor::{misc::{integrity_check::check_integrity, tools::{get_from_tor_rx, get_to_tor_tx}, payloads::{Tor2ClientMsg, StartTorError}}, mainloop::tor_main_loop};
+use crate::tor::{misc::{integrity_check::check_integrity, tools::{get_from_tor_rx, get_to_tor_tx}, payloads::{Tor2ClientMsg, StartTorError, Client2TorMsg}}, mainloop::tor_main_loop};
 
 use super::{consts::TOR_THREAD, misc::payloads::StartTorPayload};
 
@@ -53,7 +53,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
             match msg {
                 Tor2ClientMsg::BootstrapProgress(prog, status) => {
                     on_event(StartTorPayload {
-                        progress: prog / 3.0 + 0.6,
+                        progress: prog / 3.0 + 2.0 / 3.0,
                         message: status
                     });
 
@@ -62,7 +62,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
                     }
                 }
                 Tor2ClientMsg::ExitMsg(status, logs) => {
-                    return Err(StartTorError(status, logs));
+                    bail!(StartTorError { logs, status });
                 }
                 _ => {}
             }

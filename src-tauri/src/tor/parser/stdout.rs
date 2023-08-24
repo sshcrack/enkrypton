@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::{Result, anyhow};
 use async_channel::Sender;
-use log::{debug, warn, error};
+use log::{debug, warn, error, info};
 
 use crate::tor::{manager::stop_tor, misc::{tools::get_from_tor_tx, payloads::Tor2ClientMsg}, consts::MAX_LOG_SIZE};
 
@@ -24,10 +24,13 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -
     let mut logs = Vec::<String>::with_capacity(10);
     while !should_exit.load(Ordering::Relaxed) {
         let res = child.try_wait()?;
+
         if res.is_some() {
             let intentional = should_exit.load(Ordering::Relaxed);
+            debug!("Process exited intentional: {}", intentional);
             if intentional {
-                return Ok(());
+                debug!("Intentional exit. Exiting...");
+                break;
             }
 
             let err_stat = res.unwrap();
@@ -38,12 +41,12 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -
 
         let mut buf = String::new();
         match stdout.read_line(&mut buf) {
-            Ok(_) => {
-                let msg = buf.trim_end_matches("\r\n").trim_end_matches('\n');
-                if msg.replace(" ", "").is_empty() {
+            Ok(bytes_read) => {
+                if bytes_read == 0 {
                     continue;
                 }
 
+                let msg = buf.trim_end_matches("\r\n").trim_end_matches('\n');
                 let msg = msg.to_string();
                 let res = check_msg(&msg, &tx).await;
                 if res.is_err() {
@@ -60,6 +63,7 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -
         }
     }
 
+    debug!("Handle done");
     Ok(())
 }
 

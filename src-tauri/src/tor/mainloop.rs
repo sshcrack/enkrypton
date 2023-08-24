@@ -1,20 +1,22 @@
 use std::{
-    process::{Command, Stdio},
+    process::{self, Command, Stdio},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
     thread::{self},
 };
+use sysinfo::{Pid, ProcessExt, System, SystemExt, PidExt};
 
+
+use crate::tor::{
+    consts::TOR_BINARY_PATH,
+    misc::{payloads::Client2TorMsg, tools::get_to_tor_rx},
+    parser::stdout::handle_tor_stdout,
+};
 use anyhow::Result;
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
-use crate::tor::{
-    misc::{tools::get_to_tor_rx, payloads::Client2TorMsg},
-    parser::stdout::handle_tor_stdout, consts::TOR_BINARY_PATH,
-};
-
 
 /**
  * Spawns the tor process
@@ -25,6 +27,7 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     let child = Command::new(TOR_BINARY_PATH.clone())
         .stdout(Stdio::piped())
         .spawn()?;
+    let id = child.id();
 
     let should_exit = Arc::new(AtomicBool::new(false));
 
@@ -54,6 +57,12 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     }
 
     should_exit.store(true, Ordering::Relaxed);
+
+    let s = System::new_all();
+    if let Some(process) = s.process(Pid::from_u32(id)) {
+        process.kill();
+    }
+
     info!("Waiting for handle to exit...");
     handle.join().unwrap();
 

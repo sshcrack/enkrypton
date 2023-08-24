@@ -41,9 +41,9 @@ impl fmt::Display for StartTorError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let code = self.status.code();
         let code = if code.is_some() {
-            &code.unwrap().to_string()
+            code.unwrap().to_string()
         } else {
-            "<invalid code>"
+            "<invalid code>".to_owned()
         };
 
         let mut last_logs = Vec::<String>::new();

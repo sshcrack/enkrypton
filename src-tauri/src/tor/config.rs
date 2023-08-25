@@ -9,10 +9,7 @@ use super::consts::get_tor_dir;
 
 #[derive(Debug, Clone)]
 pub struct TorConfig {
-    https_port: u32,
-
-    https_username: String,
-    https_password: String,
+    socks_port: u32,
 
     service_dir: PathBuf,
     service_port: u32,
@@ -21,24 +18,17 @@ pub struct TorConfig {
 impl TorConfig {
     pub fn to_text(&self) -> String {
         return format!(
-            "
-        HTTPSProxy 127.0.0.1:{}\n
-        HTTPSProxyAuthenticator {}:{}\n
-        HiddenServiceDir {},\n
-        HiddenServicePort 80 127.0.0.0.1:{}\n
-        ",
-            self.https_port,
-            self.https_username,
-            self.https_password,
-            self.service_dir.to_string_lossy(),
+"SocksPort 127.0.0.1:{}
+HiddenServiceDir \"{}\"
+HiddenServicePort 80 127.0.0.1:{}",
+            self.socks_port,
+            self.service_dir.to_string_lossy().replace("\\", "/"),
             self.service_port
         );
     }
 
     pub fn create_client(&self) -> Result<Client> {
-        let proxy = Proxy::https(format!("https://127.0.0.1:{}", self.https_port))?
-            .basic_auth(&self.https_username, &self.https_password);
-
+        let proxy = Proxy::https(format!("socks5h://127.0.0.1:{}", self.socks_port))?;
         let res = Client::builder().proxy(proxy).build()?;
         return Ok(res);
     }
@@ -46,9 +36,7 @@ impl TorConfig {
 
 lazy_static! {
     pub static ref CONFIG: TorConfig = TorConfig {
-        https_port: 14569,
-        https_username: "admin".to_string(),
-        https_password: random_pass(20),
+        socks_port: 14569,
 
         service_dir: get_service_dir(),
         service_port: 5467

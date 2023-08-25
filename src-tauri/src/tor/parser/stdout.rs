@@ -35,6 +35,7 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -
 
             let err_stat = res.unwrap();
 
+            tx.send(Tor2ClientMsg::ExitMsg(err_stat, logs)).await?;
             stop_tor().await?;
             return Err(anyhow!("Tor exited with code {}", err_stat));
         }

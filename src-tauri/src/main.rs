@@ -3,8 +3,8 @@
 
 mod tor;
 
-use log::{debug, error, info, warn};
-use tauri::{async_runtime, InvokePayload};
+use log::{info, warn, error};
+use tauri::async_runtime;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;

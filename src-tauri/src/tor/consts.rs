@@ -1,4 +1,4 @@
-use std::{env::current_exe, path::{PathBuf, Path}, sync::Arc, thread::JoinHandle};
+use std::{env::current_exe, path::PathBuf, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;

@@ -38,7 +38,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     });
     check_integrity()?;
 
-    write_torrc();
+    write_torrc().await?;
 
     on_event(StartTorPayload {
         message: "Starting tor...".to_owned(),

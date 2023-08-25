@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fs};
 
 use anyhow::Result;
 use lazy_static::lazy_static;
@@ -8,7 +8,7 @@ use reqwest::{Client, Proxy};
 use super::consts::get_tor_dir;
 
 #[derive(Debug, Clone)]
-struct TorConfig {
+pub struct TorConfig {
     https_port: u32,
 
     https_username: String,
@@ -50,7 +50,7 @@ lazy_static! {
         https_username: "admin".to_string(),
         https_password: random_pass(20),
 
-        service_dir: get_tor_dir(),
+        service_dir: get_service_dir(),
         service_port: 5467
     };
 
@@ -60,6 +60,11 @@ lazy_static! {
 fn get_service_dir() -> PathBuf {
     let mut dir = get_tor_dir();
     dir.push("service");
+
+    if !dir.is_dir() {
+        fs::create_dir(&dir).unwrap();
+    }
+
     return dir;
 }
 

@@ -26,6 +26,8 @@ log = "^0.4"
 async-channel = "1.9.0"
 signal-hook = "0.3.17"
 sysinfo = "0.29.8"
+reqwest = { version = "0.11.20", features = ["json"] }
+rand = "0.8.5"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

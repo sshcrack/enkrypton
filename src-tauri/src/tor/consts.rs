@@ -1,12 +1,12 @@
-use std::{env::current_exe, path::PathBuf, thread::JoinHandle, sync::Arc};
+use std::{env::current_exe, path::{PathBuf, Path}, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
+use reqwest::Client;
 use tauri::async_runtime::RwLock;
 
 use super::misc::payloads::{Client2TorMsg, Tor2ClientMsg};
 
-// https://check.torproject.org/api/ip
 lazy_static! {
     pub static ref TOR_BINARY_HASH: String = get_tor_hash();
     pub static ref TOR_BINARY_PATH: PathBuf = get_tor_path();
@@ -21,6 +21,10 @@ lazy_static! {
     /* In total 20 log messages to keep in memory */
     pub(super) static ref MAX_LOG_SIZE: usize = 20;
 
+
+    pub static ref TOR_CLIENT: Client = reqwest::Client::builder()
+        .build()
+        .unwrap();
 }
 
 pub async fn setup_channels() {
@@ -41,9 +45,19 @@ fn get_tor_hash() -> String {
     return String::from(hash);
 }
 
+pub fn get_tor_dir() -> PathBuf {
+    current_exe().unwrap().parent().unwrap().to_path_buf()
+}
+
+pub fn get_torrc() -> PathBuf {
+    let mut dir = get_tor_dir();
+    dir.push("torrc");
+
+    return dir;
+}
 
 fn get_tor_path() -> PathBuf {
-    let mut tor_write_path = current_exe().unwrap();
+    let mut tor_write_path = get_tor_dir();
     tor_write_path.set_file_name("tor_proxy.exe");
 
     return tor_write_path;

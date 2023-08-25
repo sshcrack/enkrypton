@@ -1,12 +1,27 @@
-use std::{thread::{self}};
+use std::{
+    fs::File,
+    io::Write,
+    thread::{self},
+};
 
-use anyhow::{anyhow, Result, bail};
+use anyhow::{anyhow, bail, Result};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
-use crate::tor::{misc::{integrity_check::check_integrity, tools::{get_from_tor_rx, get_to_tor_tx}, payloads::{Tor2ClientMsg, StartTorError, Client2TorMsg}}, mainloop::tor_main_loop};
+use crate::tor::{
+    mainloop::tor_main_loop,
+    misc::{
+        integrity_check::check_integrity,
+        payloads::{Client2TorMsg, StartTorError, Tor2ClientMsg},
+        tools::{get_from_tor_rx, get_to_tor_tx},
+    },
+};
 
-use super::{consts::TOR_THREAD, misc::payloads::StartTorPayload};
+use super::{
+    config::CONFIG,
+    consts::{get_torrc, TOR_THREAD},
+    misc::payloads::StartTorPayload,
+};
 
 pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     let already_started = TOR_THREAD.read().await;
@@ -18,10 +33,12 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
 
     info!("Checking integrity...");
     on_event(StartTorPayload {
-        message: "Checking integrity...".to_owned(),
+        message: "Checking integrity / writing torrc...".to_owned(),
         progress: 0.0,
     });
     check_integrity()?;
+
+    write_torrc();
 
     on_event(StartTorPayload {
         message: "Starting tor...".to_owned(),
@@ -54,7 +71,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
                 Tor2ClientMsg::BootstrapProgress(prog, status) => {
                     on_event(StartTorPayload {
                         progress: prog / 3.0 + 2.0 / 3.0,
-                        message: status
+                        message: status,
                     });
 
                     if prog == 1.0 {
@@ -68,6 +85,15 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
             }
         }
     }
+
+    Ok(())
+}
+
+pub async fn write_torrc() -> Result<()> {
+    let buf = get_torrc();
+    let mut file = File::create(buf)?;
+
+    file.write_all(CONFIG.to_text().as_bytes())?;
 
     Ok(())
 }

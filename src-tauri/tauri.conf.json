@@ -39,7 +39,18 @@
         "resizable": true,
         "title": "enkrypton",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "url": "src/app/index.html",
+        "visible": false,
+        "label": "main"
+      },
+      {
+        "width": 400,
+        "height": 200,
+        "decorations": false,
+        "url": "src/splashscreen/index.html",
+        "label": "splashscreen",
+        "center": true
       }
     ]
   }

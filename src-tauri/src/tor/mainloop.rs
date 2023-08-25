@@ -1,16 +1,15 @@
 use std::{
-    process::{self, Command, Stdio},
+    process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
     thread::{self},
 };
-use sysinfo::{Pid, ProcessExt, System, SystemExt, PidExt};
-
+use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use crate::tor::{
-    consts::TOR_BINARY_PATH,
+    consts::{get_torrc, TOR_BINARY_PATH},
     misc::{payloads::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
@@ -25,6 +24,7 @@ use tauri::async_runtime::block_on;
 pub(super) async fn tor_main_loop() -> Result<()> {
     info!("Starting tor...");
     let child = Command::new(TOR_BINARY_PATH.clone())
+        .args(["-f", &get_torrc().to_string_lossy()])
         .stdout(Stdio::piped())
         .spawn()?;
     let id = child.id();

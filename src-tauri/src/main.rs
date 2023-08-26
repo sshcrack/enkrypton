@@ -5,19 +5,22 @@ mod commands;
 mod payloads;
 mod startup;
 mod tor;
+mod webserver;
 
-use log::{info, error};
+use log::{error, info};
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
 use tor::manager;
+use webserver::server::start_webserver;
 
 use crate::commands::restart;
 use crate::commands::tor::tor_check;
 
 fn main() {
     block_on(setup_channels());
+    start_webserver();
 
     tauri::Builder::default()
         .plugin(

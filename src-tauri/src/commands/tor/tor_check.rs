@@ -1,9 +1,13 @@
-use crate::tor::config::{CONFIG};
+use crate::tor::config::CONFIG;
 
-#[derive(serde::Deserialize, Debug, Clone)]
+use serde::Deserialize;
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct TorCheckResponse {
-    IsTor: bool,
-    IP: String,
+    #[serde(rename="IsTor")]
+    is_tor: bool,
+    #[serde(rename="IP")]
+    ip: String,
 }
 
 /* checks if the client is in the tor network */
@@ -30,5 +34,5 @@ pub async fn tor_check() -> Result<bool, String> {
     let body = body.unwrap();
 
     println!("Body:\n{:#?}", body);
-    Ok(body.IsTor)
+    Ok(body.is_tor)
 }

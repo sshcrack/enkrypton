@@ -10,10 +10,10 @@ use super::consts::get_tor_dir;
 
 #[derive(Debug, Clone)]
 pub struct TorConfig {
-    socks_port: u32,
+    pub socks_port: u32,
 
-    service_dir: PathBuf,
-    service_port: u32,
+    pub service_dir: PathBuf,
+    pub service_port: u16,
 }
 
 impl TorConfig {

@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -17,4 +18,12 @@ export default defineConfig(async () => ({
   // 3. to make use of `TAURI_DEBUG` and other env variables
   // https://tauri.studio/v1/api/config#buildconfig.beforedevcommand
   envPrefix: ["VITE_", "TAURI_"],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'src/app/index.html'),
+        splashscreen: resolve(__dirname, 'src/splashscreen/index.html'),
+      },
+    },
+  },
 }));

@@ -2,13 +2,16 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import "./styles.scss";
 import { attachConsole } from "tauri-plugin-log-api";
-import {
-  FluentProvider,
-  webDarkTheme
-} from "@fluentui/react-components";
 import { UnlistenFn } from '@tauri-apps/api/event';
+import { ChakraProvider, useColorMode } from '@chakra-ui/react';
+import { Dict } from '@chakra-ui/utils';
 
 const ConsoleListener = ({ children }: React.PropsWithChildren<{}>) => {
+  const { colorMode, toggleColorMode } = useColorMode()
+
+  if (colorMode === "light")
+    toggleColorMode()
+
   useEffect(() => {
     let unlisten: UnlistenFn;
     attachConsole().then(e => unlisten = e);
@@ -24,14 +27,17 @@ const ConsoleListener = ({ children }: React.PropsWithChildren<{}>) => {
   return <>{children}</>
 }
 
+const theme: Dict = {
+}
+
 export function renderPage(Page: () => JSX.Element) {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-      <ConsoleListener>
-        <FluentProvider theme={webDarkTheme} className='full-size'>
+      <ChakraProvider theme={theme}>
+        <ConsoleListener>
           <Page />
-        </FluentProvider>
-      </ConsoleListener>
+        </ConsoleListener>
+      </ChakraProvider>
     </React.StrictMode>,
   );
 }

@@ -1,7 +1,7 @@
-import { Button, Text } from '@fluentui/react-components';
 import "./App.scss";
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api';
+import { Button, Flex, Text } from '@chakra-ui/react';
 
 function App() {
   const [isTor, setIsTor] = useState<boolean | null>(null);
@@ -13,10 +13,16 @@ function App() {
     })
   }
   return (
-    <div className="full-size flex-center flex flex-column">
+    <Flex
+      w='75%'
+      h='100%'
+      gap='4'
+      justifyContent='center'
+      alignItems='center'
+    >
       <Text>{isTor === null ? "not checked yet" : (isTor ? "Is tor" : "no tor conn")}</Text>
       <Button onClick={checkTor}>Check</Button>
-    </div>
+    </Flex>
   );
 }
 

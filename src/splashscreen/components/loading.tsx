@@ -6,6 +6,8 @@ export type LoadingScreenProps = {
 }
 
 export default function LoadingScreen({ status, progress }: LoadingScreenProps) {
+    
+    console.log("l page")
     return <Flex w='100%' h='100%' flexDir='column'>
         <Flex
             w='85%'

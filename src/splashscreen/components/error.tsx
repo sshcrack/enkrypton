@@ -1,11 +1,17 @@
-import { Flex, Heading, Text } from '@chakra-ui/react'
+import { Button, Flex, Heading, Text } from '@chakra-ui/react'
 import { StartTorErrorPayload } from '../payloads/StartTorPayload'
+import { invoke } from '@tauri-apps/api/tauri';
+import { useEffect } from "react"
+import { invokeWindowTauri } from '../../tools/tauri';
+//import { window } from "@tauri-apps/api"
 
 export type ErrorScreenProps = {
     error: StartTorErrorPayload
 }
 
 export default function ErrorScreen({ error }: ErrorScreenProps) {
+    console.log("Error page")
+
     const logs = error?.logs?.concat([])?.reverse()
         // not keeping the date
         .map(e => {
@@ -15,6 +21,15 @@ export default function ErrorScreen({ error }: ErrorScreenProps) {
 
             return e.substring(index)
         });
+
+    useEffect(() => {
+        console.log("Setting dec, maximizable")
+
+        const window = "splashscreen"
+        invokeWindowTauri(window, "setDecorations", true)
+        invokeWindowTauri(window, "setMaximizable", true)
+        invokeWindowTauri(window, "maximize", true)
+    }, [])
 
 
     return <Flex
@@ -35,5 +50,7 @@ export default function ErrorScreen({ error }: ErrorScreenProps) {
             <Text>Exit code: {error.error_code}</Text>
             <Text className="log-style">{logs.join("\n")}</Text>
         </Flex>
+
+        <Button onClick={() => invoke("resetart")} />
     </Flex>
 }

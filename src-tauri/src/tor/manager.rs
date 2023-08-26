@@ -8,19 +8,18 @@ use anyhow::{anyhow, bail, Result};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
-use crate::tor::{
+use crate::{tor::{
     mainloop::tor_main_loop,
     misc::{
         integrity_check::check_integrity,
-        payloads::{Client2TorMsg, TorStartError, Tor2ClientMsg},
+        messages::{Client2TorMsg, TorStartError, Tor2ClientMsg},
         tools::{get_from_tor_rx, get_to_tor_tx},
     },
-};
+}, payloads::start_tor::StartTorPayload};
 
 use super::{
     config::CONFIG,
-    consts::{get_torrc, TOR_THREAD},
-    misc::payloads::StartTorPayload,
+    consts::{get_torrc, TOR_THREAD}
 };
 
 pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {

@@ -3,6 +3,7 @@
 
 mod tor;
 mod startup;
+mod payloads;
 
 use log::{info, warn, error, debug};
 use startup::startup;

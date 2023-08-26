@@ -2,7 +2,7 @@ use async_channel::{Receiver, Sender};
 
 use crate::tor::consts::*;
 
-use super::payloads::{Client2TorMsg, Tor2ClientMsg};
+use super::messages::{Client2TorMsg, Tor2ClientMsg};
 
 pub async fn get_to_tor_tx() -> Sender<Client2TorMsg> {
     return TO_TOR_TX.read().await.clone().unwrap();

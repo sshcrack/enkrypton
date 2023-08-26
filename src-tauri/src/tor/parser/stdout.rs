@@ -11,7 +11,7 @@ use anyhow::{Result, anyhow};
 use async_channel::Sender;
 use log::{debug, warn, error};
 
-use crate::tor::{manager::stop_tor, misc::{tools::get_from_tor_tx, payloads::Tor2ClientMsg}, consts::MAX_LOG_SIZE};
+use crate::tor::{manager::stop_tor, misc::{tools::get_from_tor_tx, messages::Tor2ClientMsg}, consts::MAX_LOG_SIZE};
 
 use super::messages::{BOOTSTRAP_MSG, WARN_MSG, NOTICE_MSG, ERR_MSG};
 

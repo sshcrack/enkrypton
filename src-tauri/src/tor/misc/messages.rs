@@ -1,11 +1,5 @@
 use std::{fmt, process::ExitStatus};
 
-#[derive(Clone, serde::Serialize)]
-pub struct StartTorPayload {
-    pub progress: f32,
-    pub message: String,
-}
-
 #[derive(Debug, Clone)]
 pub enum Tor2ClientMsg {
     BootstrapProgress(f32, String),

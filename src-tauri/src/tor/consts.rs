@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use reqwest::Client;
 use tauri::async_runtime::RwLock;
 
-use super::misc::payloads::{Client2TorMsg, Tor2ClientMsg};
+use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
 
 lazy_static! {
     pub static ref TOR_BINARY_HASH: String = get_tor_hash();

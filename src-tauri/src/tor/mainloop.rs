@@ -10,7 +10,7 @@ use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use crate::tor::{
     consts::{get_torrc, TOR_BINARY_PATH},
-    misc::{payloads::Client2TorMsg, tools::get_to_tor_rx},
+    misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
 use anyhow::Result;

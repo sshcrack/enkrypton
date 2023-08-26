@@ -1,15 +1,7 @@
 use log::{error, warn};
-use serde::{Serialize, Deserialize};
-use tauri::{async_runtime, App, Manager, api::process::restart};
+use tauri::{async_runtime::{self, block_on}, App, Manager, api::process};
 
-use crate::tor::{manager, misc::payloads::TorStartError};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TorStartupErrorPayload {
-    message: String,
-    error_code: Option<i32>,
-    logs: Option<Vec<String>>,
-}
+use crate::{tor::{manager::{self, wait_and_stop_tor}, misc::messages::TorStartError}, payloads::start_tor::TorStartupErrorPayload};
 
 pub fn startup(app: &mut App) {
     let window = app.get_window("main").unwrap();
@@ -21,6 +13,12 @@ pub fn startup(app: &mut App) {
 
     let splashscreen_window = app.get_window("splashscreen").unwrap();
     let temp = splashscreen_window.clone();
+
+    let env = app.env();
+    temp.once_global("restart", move |_e| {
+        block_on(wait_and_stop_tor()).unwrap();
+        process::restart(&env);
+    });
 
     temp.once_global("splashscreen_ready", move |_event| {
         async_runtime::spawn(async move {

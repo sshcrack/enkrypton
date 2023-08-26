@@ -40,7 +40,7 @@
         "setIcon": false,
         "setIgnoreCursorEvents": false,
         "setMaxSize": false,
-        "setMaximizable": false,
+        "setMaximizable": true,
         "setMinSize": false,
         "setMinimizable": false,
         "setPosition": false,

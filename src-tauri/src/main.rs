@@ -1,19 +1,20 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod tor;
-mod startup;
+mod commands;
 mod payloads;
+mod startup;
+mod tor;
 
-use log::{info, warn, error, debug};
+use log::{info, error};
 use startup::startup;
-use tauri::async_runtime;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
 use tor::manager;
 
-use crate::tor::check::tor_check;
+use crate::commands::restart;
+use crate::commands::tor::tor_check;
 
 fn main() {
     block_on(setup_channels());
@@ -24,7 +25,7 @@ fn main() {
                 .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![tor_check])
+        .invoke_handler(tauri::generate_handler![tor_check, restart])
         .on_window_event(|event| {
             let window = event.window();
             let windows = window.windows();

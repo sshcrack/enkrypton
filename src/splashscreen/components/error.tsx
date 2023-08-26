@@ -10,25 +10,12 @@ export type ErrorScreenProps = {
 }
 
 export default function ErrorScreen({ error }: ErrorScreenProps) {
-    console.log("Error page")
-
-    const logs = error?.logs?.concat([])?.reverse()
-        // not keeping the date
-        .map(e => {
-            let index = e.indexOf("[");
-            if (index === -1)
-                index = 0
-
-            return e.substring(index)
-        });
-
+    const logs = error?.logs;
     useEffect(() => {
-        console.log("Setting dec, maximizable")
-
         const window = "splashscreen"
         invokeWindowTauri(window, "setDecorations", true)
         invokeWindowTauri(window, "setMaximizable", true)
-        invokeWindowTauri(window, "maximize", true)
+        invokeWindowTauri(window, "maximize")
     }, [])
 
 
@@ -39,18 +26,29 @@ export default function ErrorScreen({ error }: ErrorScreenProps) {
         justifyContent='center'
         alignItems='center'
     >
-        <Heading size='sm'>Could not start tor</Heading>
+        <Heading size='sm' pb='5'>Could not start tor</Heading>
         <Flex
-            w='90%'
+            w='100%'
+            h='60%'
             flexDir='column'
+            justifyContent='space-between'
             alignItems='center'
-            justifyContent='center'
-            gap='3'
         >
-            <Text>Exit code: {error.error_code}</Text>
-            <Text className="log-style">{logs.join("\n")}</Text>
-        </Flex>
+            <Flex flexDir='column' alignItems='center' justifyContent='center'>
+                <Flex
+                    w='90%'
+                    flexDir='column'
+                    alignItems='center'
+                    justifyContent='center'
+                    gap='3'
+                    bg='blackAlpha.600'
+                >
+                    <Text>Exit code: {error.error_code}</Text>
+                    <Text className="log-style" p='5'>{logs.join("\n")}</Text>
+                </Flex>
+            </Flex>
 
-        <Button onClick={() => invoke("resetart")} />
+            <Button onClick={() => invoke("restart").then(() => console.log("Restarting..."))} size='xl' colorScheme='orange' padding='5'>Restart</Button>
+        </Flex>
     </Flex>
 }

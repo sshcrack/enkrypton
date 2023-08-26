@@ -4,7 +4,6 @@ import "./App.scss";
 import { StartTorErrorPayload, StartTorPayload } from './payloads/StartTorPayload';
 import ErrorScreen from './components/error';
 import LoadingScreen from './components/loading';
-import { Text } from '@chakra-ui/react';
 //import { info, error } from "tauri-plugin-log-api";
 
 function App() {
@@ -24,7 +23,7 @@ function App() {
       setStatus(payload.message)
     }).then(e => {
       unlisten_start = e
-      //emit("splashscreen_ready")
+      emit("splashscreen_ready")
 
       return listen("tor_start_error", (event) => {
         let payload = event.payload as StartTorErrorPayload;

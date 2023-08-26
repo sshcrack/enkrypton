@@ -15,11 +15,6 @@ pub fn startup(app: &mut App) {
     let temp = splashscreen_window.clone();
 
     let env = app.env();
-    temp.once_global("restart", move |_e| {
-        block_on(wait_and_stop_tor()).unwrap();
-        process::restart(&env);
-    });
-
     temp.once_global("splashscreen_ready", move |_event| {
         async_runtime::spawn(async move {
             let temp = splashscreen_window.clone();

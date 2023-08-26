@@ -1,6 +1,6 @@
 declare const __TAURI_INVOKE__: any;
 
-export function invokeWindowTauri(window: string, cmd: string, payload: any) {
+export function invokeWindowTauri(window: string, cmd: string, payload?: any) {
     return __TAURI_INVOKE__("tauri", {
         __tauriModule: 'Window',
         message: {

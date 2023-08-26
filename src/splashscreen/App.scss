@@ -2,4 +2,25 @@
   height: 100%;
   width: 75%;
   gap: var(--spacingHorizontalM);
+  overflow: hidden;
+}
+
+.error {
+  background-color: #c95100;
+
+  .tor-status-wrapper {
+    width: 90% !important;
+    gap: 0px !important;
+  }
+
+
+  button {
+    padding-top: 5px;
+    width: 100%;
+  }
+}
+
+.log-style {
+  overflow: auto !important;
+  white-space: pre-line !important;
 }

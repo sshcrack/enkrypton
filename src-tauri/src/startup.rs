@@ -1,12 +1,12 @@
 use log::{error, warn};
 use serde::{Serialize, Deserialize};
-use tauri::{async_runtime, App, Manager};
+use tauri::{async_runtime, App, Manager, api::process::restart};
 
 use crate::tor::{manager, misc::payloads::TorStartError};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TorStartupErrorPayload {
-    message: Option<String>,
+    message: String,
     error_code: Option<i32>,
     logs: Option<Vec<String>>,
 }
@@ -45,7 +45,7 @@ pub fn startup(app: &mut App) {
                 window.close().unwrap();
 
                 let mut payload = TorStartupErrorPayload {
-                    message: Some(err.to_string()),
+                    message: err.to_string(),
                     error_code: None,
                     logs: None,
                 };
@@ -58,8 +58,7 @@ pub fn startup(app: &mut App) {
                     payload.logs = Some(start_err.logs);
                 }
 
-                error!("Could not start tor: {:?}", err);
-
+                error!("Could not start tor: {}", payload.message);
                 splashscreen_window
                     .app_handle()
                     .emit_all("tor_start_error", payload)

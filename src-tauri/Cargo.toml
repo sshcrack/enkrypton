@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.4", features = [] }
 
 [dependencies]
-tauri = { version = "1.4", features = ["shell-open"] }
+tauri = { version = "1.4", features = [ "process-relaunch", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 anyhow = "1.0.75"
@@ -28,6 +28,9 @@ signal-hook = "0.3.17"
 sysinfo = "0.29.8"
 reqwest = { version = "0.11.20", features = ["json", "socks"] }
 rand = "0.8.5"
+
+[dev-dependencies]
+ts-rs = "7.0.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

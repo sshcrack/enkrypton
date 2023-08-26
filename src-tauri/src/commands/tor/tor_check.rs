@@ -1,4 +1,4 @@
-use crate::tor::config::{TOR_CLIENT, CONFIG};
+use crate::tor::config::{CONFIG};
 
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct TorCheckResponse {

@@ -1,7 +1,7 @@
 use log::{error, warn};
-use tauri::{async_runtime::{self, block_on}, App, Manager, api::process};
+use tauri::{async_runtime::{self}, App, Manager};
 
-use crate::{tor::{manager::{self, wait_and_stop_tor}, misc::messages::TorStartError}, payloads::start_tor::TorStartupErrorPayload};
+use crate::{tor::{manager::{self}, misc::messages::TorStartError}, payloads::start_tor::TorStartupErrorPayload};
 
 pub fn startup(app: &mut App) {
     let window = app.get_window("main").unwrap();
@@ -14,7 +14,7 @@ pub fn startup(app: &mut App) {
     let splashscreen_window = app.get_window("splashscreen").unwrap();
     let temp = splashscreen_window.clone();
 
-    let env = app.env();
+    let _env = app.env();
     temp.once_global("splashscreen_ready", move |_event| {
         async_runtime::spawn(async move {
             let temp = splashscreen_window.clone();

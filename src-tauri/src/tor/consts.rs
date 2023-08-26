@@ -2,7 +2,7 @@ use std::{env::current_exe, path::PathBuf, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
-use reqwest::Client;
+
 use tauri::async_runtime::RwLock;
 
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};

@@ -2,6 +2,7 @@ use std::{path::PathBuf, fs};
 
 use anyhow::Result;
 use lazy_static::lazy_static;
+use log::debug;
 use rand::Rng;
 use reqwest::{Client, Proxy};
 
@@ -28,7 +29,10 @@ HiddenServicePort 80 127.0.0.1:{}",
     }
 
     pub fn create_client(&self) -> Result<Client> {
-        let proxy = Proxy::https(format!("socks5h://127.0.0.1:{}", self.socks_port))?;
+        let proxy_url = format!("socks5://127.0.0.1:{}", self.socks_port);
+        debug!("Using proxy url {}", proxy_url);
+
+        let proxy = Proxy::all(proxy_url)?;
         let res = Client::builder().proxy(proxy).build()?;
         return Ok(res);
     }
@@ -42,7 +46,7 @@ lazy_static! {
         service_port: 5467
     };
 
-    pub static ref CLIENT: Client = CONFIG.create_client().unwrap();
+    pub static ref TOR_CLIENT: Client = CONFIG.create_client().unwrap();
 }
 
 fn get_service_dir() -> PathBuf {

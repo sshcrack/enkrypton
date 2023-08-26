@@ -27,7 +27,7 @@ pub enum Client2TorMsg {
 // Now we will be able to write our own errors, defer to an underlying error
 // implementation, or do something in between.
 #[derive(Debug, Clone)]
-pub struct StartTorError {
+pub struct TorStartError {
     pub logs: Vec<String>,
     pub status: ExitStatus,
 }
@@ -37,7 +37,7 @@ pub struct StartTorError {
 //
 // Note that we don't store any extra info about the errors. This means we can't state
 // which string failed to parse without modifying our types to carry that information.
-impl fmt::Display for StartTorError {
+impl fmt::Display for TorStartError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let code = self.status.code();
         let code = if code.is_some() {

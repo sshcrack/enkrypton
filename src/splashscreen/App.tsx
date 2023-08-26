@@ -8,20 +8,29 @@ import { StartTorPayload } from './payloads/StartTorPayload';
 function App() {
   const [ percentage, setCurrPercentage] = useState(0);
   const [ status, setStatus] = useState("Initializing...");
+  const [ error, setError ] = useState<string>(undefined)
 
   useEffect(() => {
-    let unlisten: UnlistenFn = () => {};
+    let unlisten_start: UnlistenFn = () => {};
+    let unlisten_error: UnlistenFn = () => {};
+
     listen('tor_start', (event) => {
       const payload = event.payload as StartTorPayload;
 
       setCurrPercentage(payload.progress)
       setStatus(payload.message)
     }).then(e => {
-      unlisten = e
+      listen("tor_start_error", (event) => {
+
+      })
+      unlisten_start = e
       emit("splashscreen_ready")
     })
 
-    return () => unlisten()
+    return () => {
+      unlisten_start && unlisten_start();
+      unlisten_error && unlisten_error()
+    }
   }, [])
 
   return (

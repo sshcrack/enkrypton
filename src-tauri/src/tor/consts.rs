@@ -20,11 +20,6 @@ lazy_static! {
 
     /* In total 20 log messages to keep in memory */
     pub(super) static ref MAX_LOG_SIZE: usize = 20;
-
-
-    pub static ref TOR_CLIENT: Client = reqwest::Client::builder()
-        .build()
-        .unwrap();
 }
 
 pub async fn setup_channels() {

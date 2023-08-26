@@ -12,7 +12,7 @@ use crate::tor::{
     mainloop::tor_main_loop,
     misc::{
         integrity_check::check_integrity,
-        payloads::{Client2TorMsg, StartTorError, Tor2ClientMsg},
+        payloads::{Client2TorMsg, TorStartError, Tor2ClientMsg},
         tools::{get_from_tor_rx, get_to_tor_tx},
     },
 };
@@ -79,7 +79,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
                     }
                 }
                 Tor2ClientMsg::ExitMsg(status, logs) => {
-                    bail!(StartTorError { logs, status });
+                    bail!(TorStartError { logs, status });
                 }
                 _ => {}
             }

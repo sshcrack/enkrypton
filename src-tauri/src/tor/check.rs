@@ -1,4 +1,4 @@
-use crate::tor::consts::TOR_CLIENT;
+use crate::tor::config::{TOR_CLIENT, CONFIG};
 
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct TorCheckResponse {
@@ -9,7 +9,7 @@ pub struct TorCheckResponse {
 /* checks if the client is in the tor network */
 #[tauri::command()]
 pub async fn tor_check() -> Result<bool, String> {
-    let res = TOR_CLIENT
+    let res = CONFIG.create_client().unwrap()
         .get("https://check.torproject.org/api/ip")
         .send()
         .await;

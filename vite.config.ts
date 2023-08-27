@@ -1,6 +1,9 @@
+//@ts-ignore
 import { resolve } from 'path'
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+
+declare const __dirname: string
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
@@ -21,9 +24,9 @@ export default defineConfig(async () => ({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'src/app/index.html'),
-        splashscreen: resolve(__dirname, 'src/splashscreen/index.html'),
-      },
+        index: resolve(__dirname, 'src/app/index.html'),
+        splashscreen: resolve(__dirname, 'index.html'),
+      }
     },
   },
 }));

@@ -1,9 +1,8 @@
-use std::{path::PathBuf, fs};
+use std::{fs, ffi::OsString};
 
 use anyhow::Result;
 use lazy_static::lazy_static;
 use log::debug;
-use rand::Rng;
 use reqwest::{Client, Proxy};
 
 use super::consts::get_tor_dir;
@@ -12,7 +11,7 @@ use super::consts::get_tor_dir;
 pub struct TorConfig {
     pub socks_port: u32,
 
-    pub service_dir: PathBuf,
+    pub service_dir: OsString,
     pub service_port: u16,
 }
 
@@ -49,7 +48,7 @@ lazy_static! {
     pub static ref TOR_CLIENT: Client = CONFIG.create_client().unwrap();
 }
 
-fn get_service_dir() -> PathBuf {
+fn get_service_dir() -> OsString {
     let mut dir = get_tor_dir();
     dir.push("service");
 
@@ -57,9 +56,9 @@ fn get_service_dir() -> PathBuf {
         fs::create_dir(&dir).unwrap();
     }
 
-    return dir;
+    return dir.into_os_string();
 }
-
+/*
 fn random_pass(length: usize) -> String {
     let chars: Vec<&str> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         .split("")
@@ -74,3 +73,4 @@ fn random_pass(length: usize) -> String {
 
     return passwd.to_string();
 }
+*/

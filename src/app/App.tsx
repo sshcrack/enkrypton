@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api';
 import { Button, Flex, Text } from '@chakra-ui/react';
+import Hostname from './Hostname';
 
 function App() {
   const [isTor, setIsTor] = useState<boolean | null>(null);
@@ -22,6 +23,7 @@ function App() {
     >
       <Text>{isTor === null ? "not checked yet" : (isTor ? "Is tor" : "no tor conn")}</Text>
       <Button onClick={checkTor} colorScheme='blue'>Check</Button>
+      <Hostname></Hostname>
     </Flex>
   );
 }

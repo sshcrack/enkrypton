@@ -1,16 +1,16 @@
 import { Button, Flex, Heading, Text } from '@chakra-ui/react'
-import { StartTorErrorPayload } from '../payloads/StartTorPayload'
 import { invoke } from '@tauri-apps/api/tauri';
 import { useEffect } from "react"
 import { invokeWindowTauri } from '../../tools/tauri';
+import { TorStartupErrorPayload } from '../../bindings/TorStartupErrorPayload';
 //import { window } from "@tauri-apps/api"
 
 export type ErrorScreenProps = {
-    error: StartTorErrorPayload
+    error: TorStartupErrorPayload
 }
 
 export default function ErrorScreen({ error }: ErrorScreenProps) {
-    const logs = error?.logs;
+    const logs = error.logs;
     useEffect(() => {
         const window = "splashscreen"
         invokeWindowTauri(window, "setDecorations", true)
@@ -43,8 +43,8 @@ export default function ErrorScreen({ error }: ErrorScreenProps) {
                     gap='3'
                     bg='blackAlpha.600'
                 >
-                    <Text>Exit code: {error.error_code}</Text>
-                    <Text className="log-style" p='5'>{logs.join("\n")}</Text>
+                    <Text>Exit code: {error.error_code ?? "none"}</Text>
+                    <Text className="log-style" p='5'>{logs?.join("\n") ?? error.message}</Text>
                 </Flex>
             </Flex>
 

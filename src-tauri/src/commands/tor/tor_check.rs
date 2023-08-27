@@ -3,6 +3,7 @@ use crate::tor::config::CONFIG;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
+#[allow(dead_code)]
 pub struct TorCheckResponse {
     #[serde(rename="IsTor")]
     is_tor: bool,

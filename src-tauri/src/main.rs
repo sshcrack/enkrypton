@@ -7,16 +7,17 @@ mod startup;
 mod tor;
 mod webserver;
 
-use log::{error, info};
+use log::{error, info, LevelFilter};
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
+use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
 use tor::manager;
 use webserver::server::start_webserver;
 
 use crate::commands::restart;
-use crate::commands::tor::tor_check;
+use crate::commands::tor::{tor_check, tor_hostname};
 
 fn main() {
     block_on(setup_channels());
@@ -26,9 +27,13 @@ fn main() {
         .plugin(
             tauri_plugin_log::Builder::default()
                 .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
+                .with_colors(ColoredLevelConfig::default())
+                .level_for("tauri", LevelFilter::Info)
+                .level_for("hyper", LevelFilter::Info)
+                .level(LevelFilter::Debug)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![tor_check, restart])
+        .invoke_handler(tauri::generate_handler![tor_check, restart, tor_hostname])
         .on_window_event(|event| {
             let window = event.window();
             let windows = window.windows();

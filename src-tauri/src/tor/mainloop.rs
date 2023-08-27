@@ -4,7 +4,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self},
+    thread::{self}, os::windows::process::CommandExt,
 };
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
@@ -17,6 +17,8 @@ use anyhow::Result;
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /**
  * Spawns the tor process
  * Controls and interprets the output of the tor process
@@ -26,6 +28,7 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     let child = Command::new(TOR_BINARY_PATH.clone())
         .args(["-f", &get_torrc().to_string_lossy()])
         .stdout(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()?;
     let id = child.id();
 

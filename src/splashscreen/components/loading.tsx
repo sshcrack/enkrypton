@@ -16,7 +16,7 @@ export default function LoadingScreen({ status, progress }: LoadingScreenProps) 
             gap='5'
         >
             <Text>{status}</Text>
-            <Progress w='100%' value={progress} rounded='xl'/>
+            <Progress w='100%' value={progress * 100} rounded='xl'/>
         </Flex>
     </Flex>
 }

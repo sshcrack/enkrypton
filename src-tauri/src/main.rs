@@ -5,6 +5,8 @@ mod commands;
 mod payloads;
 mod startup;
 mod tor;
+/** This crate just describes the ws and https client.*/
+mod client;
 mod webserver;
 
 use log::{error, info, LevelFilter};

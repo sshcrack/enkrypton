@@ -1,9 +1,8 @@
-use std::{fs, ffi::OsString};
+use std::{ffi::OsString, fs};
 
-use anyhow::Result;
 use lazy_static::lazy_static;
-use log::debug;
-use reqwest::{Client, Proxy};
+
+use crate::client::Client;
 
 use super::consts::get_tor_dir;
 
@@ -16,24 +15,23 @@ pub struct TorConfig {
 }
 
 impl TorConfig {
-    pub fn to_text(&self) -> String {
-        return format!(
-"SocksPort 127.0.0.1:{}
-HiddenServiceDir \"{}\"
-HiddenServicePort 80 127.0.0.1:{}",
-            self.socks_port,
-            self.service_dir.to_string_lossy().replace("\\", "/"),
-            self.service_port
-        );
+    pub fn get_socks_host(&self) -> String {
+        return format!("127.0.0.1:{}", self.socks_port);
     }
 
-    pub fn create_client(&self) -> Result<Client> {
-        let proxy_url = format!("socks5://127.0.0.1:{}", self.socks_port);
-        debug!("Using proxy url {}", proxy_url);
+    pub fn get_hidden_service_host(&self) -> String {
+        return format!("127.0.0.1:{}", self.service_port);
+    }
 
-        let proxy = Proxy::all(proxy_url)?;
-        let res = Client::builder().proxy(proxy).build()?;
-        return Ok(res);
+    pub fn to_text(&self) -> String {
+        return format!(
+"SocksPort {}
+HiddenServiceDir \"{}\"
+HiddenServicePort 80 {}",
+            self.get_socks_host(),
+            self.service_dir.to_string_lossy().replace("\\", "/"),
+            self.get_hidden_service_host()
+        );
     }
 }
 
@@ -44,8 +42,7 @@ lazy_static! {
         service_dir: get_service_dir(),
         service_port: 5467
     };
-
-    pub static ref TOR_CLIENT: Client = CONFIG.create_client().unwrap();
+    pub static ref TOR_CLIENT: Client = Client::from_config(&CONFIG).unwrap();
 }
 
 fn get_service_dir() -> OsString {

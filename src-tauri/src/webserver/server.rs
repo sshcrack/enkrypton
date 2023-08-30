@@ -1,7 +1,6 @@
 use std::thread;
 
 use actix_web::{App, HttpServer, web};
-use actix_web_actors::ws;
 use anyhow::Result;
 use log::{error, info};
 use tauri::async_runtime::block_on;

@@ -108,7 +108,7 @@ impl Response {
     }
 
     pub(super) async fn from_stream(stream: TlsStream<TcpStream>) -> Result<Self> {
-        let mut reader = BufReader::new(stream);
+        let reader = BufReader::new(stream);
 
         Ok(Response {
             reader,

@@ -1,15 +1,15 @@
-use std::{io::Write, sync::Arc};
+use std::{sync::Arc};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result};
 use async_rustls::{client::TlsStream, TlsConnector};
-use rustls::{ClientConfig, ClientConnection, OwnedTrustAnchor, RootCertStore, ServerName, Stream};
+use rustls::{ClientConfig, OwnedTrustAnchor, RootCertStore, ServerName};
 use smol::net::TcpStream;
 use tokio::net::TcpStream as TokioTcpStream;
 use tokio_socks::tcp::Socks5Stream;
-use url::Url;
+
 use webpki_roots::TLS_SERVER_ROOTS;
 
-use crate::{client::SocksProxy, tor::config::TorConfig, webserver::server};
+use crate::{client::SocksProxy, tor::config::TorConfig};
 
 use super::request::Request;
 

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use anyhow::Error;
+
 use log::error;
 
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>

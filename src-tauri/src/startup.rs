@@ -1,5 +1,4 @@
 use std::{
-    f32::consts::E,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,

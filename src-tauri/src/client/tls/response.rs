@@ -1,10 +1,10 @@
-use std::{char::EscapeDebug, collections::HashMap};
+use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use async_rustls::client::TlsStream;
 use log::{debug, warn};
-use serde::{de::DeserializeOwned, Deserialize};
-use serde_json::de;
+use serde::de::DeserializeOwned;
+
 use smol::{
     io::{AsyncBufReadExt, AsyncReadExt, BufReader},
     net::TcpStream,

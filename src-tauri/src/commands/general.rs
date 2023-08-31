@@ -1,6 +1,6 @@
 // reserved for commands
 
-use sysinfo::{Process, ProcessExt, System, SystemExt};
+use sysinfo::{ProcessExt, System, SystemExt};
 use tauri::{async_runtime::block_on, Runtime};
 
 use crate::tor::{manager::wait_and_stop_tor, consts::TOR_BINARY_PATH};

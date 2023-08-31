@@ -10,12 +10,12 @@ mod tor;
 mod webserver;
 mod util;
 
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::thread;
+
+
+
 
 use log::{error, info, LevelFilter};
-use signal_hook::consts::SIGINT;
+
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;

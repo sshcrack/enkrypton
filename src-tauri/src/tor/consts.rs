@@ -53,7 +53,7 @@ pub fn get_torrc() -> PathBuf {
 
 fn get_tor_path() -> PathBuf {
     let mut tor_write_path = get_tor_dir();
-    tor_write_path.set_file_name("tor_proxy.exe");
+    tor_write_path.set_file_name("enkrypton_tor.exe");
 
     return tor_write_path;
 }

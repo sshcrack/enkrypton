@@ -2,7 +2,7 @@ import { Button, Flex, Heading, Text } from '@chakra-ui/react'
 import { invoke } from '@tauri-apps/api/tauri';
 import { useEffect } from "react"
 import { invokeWindowTauri } from '../../tools/tauri';
-import { TorStartupErrorPayload } from '../../bindings/TorStartupErrorPayload';
+import { TorStartupErrorPayload } from '../../bindings/rs/TorStartupErrorPayload';
 //import { window } from "@tauri-apps/api"
 
 export type ErrorScreenProps = {

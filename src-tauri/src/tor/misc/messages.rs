@@ -41,8 +41,8 @@ impl fmt::Display for TorStartError {
         let mut last_logs = Vec::<String>::new();
         let size = self.logs.len();
 
-        let minSize = if size <= 3 { size - 3 } else { 0 };
-        for i in minSize..size {
+        let min_size = if size <= 3 { 0 } else { size - 3 };
+        for i in min_size..size {
             let el = self.logs.get(i);
             if let Some(e) = el {
                 last_logs.push(e.to_string());

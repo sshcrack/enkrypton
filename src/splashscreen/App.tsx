@@ -1,4 +1,3 @@
-import { listen, UnlistenFn, emit } from '@tauri-apps/api/event'
 import { useEffect, useState } from "react"
 import "./App.scss";
 import ErrorScreen from './components/error';

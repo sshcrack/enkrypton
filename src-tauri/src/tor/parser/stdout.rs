@@ -34,12 +34,12 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -
 
         if let Some(err_stat) = res {
             let intentional = should_exit.load(Ordering::Relaxed);
-            debug!("Process exited intentional: {}", intentional);
             if intentional {
                 debug!("Intentional exit. Exiting...");
                 break;
             }
 
+            error!("Tor exited with code {:?} logs are: \n---\n{}\n---\nStopping...", err_stat, logs.join("\n"));
             tx.send(Tor2ClientMsg::ExitMsg(err_stat, logs)).await?;
             stop_tor().await?;
             return Err(anyhow!("Tor exited with code {}", err_stat));

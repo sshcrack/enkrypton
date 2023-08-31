@@ -1,4 +1,4 @@
-import { listen, UnlistenFn, emit, Event } from '@tauri-apps/api/event'
+import { listen, UnlistenFn, Event } from '@tauri-apps/api/event'
 import { StartTorPayload } from './rs/StartTorPayload';
 import { TorStartupErrorPayload } from './rs/TorStartupErrorPayload';
 

@@ -14,14 +14,17 @@ pub struct TorCheckResponse {
 /* checks if the client is in the tor network */
 #[tauri::command()]
 pub async fn tor_check() -> Result<bool, String> {
-    let res = TOR_CLIENT
+    let mut res = TOR_CLIENT
         .get("https://check.torproject.org/api/ip")
         .send()
         .await
         .or_else(|e| to_str_err(e)())?;
 
-    println!("Status: {}", res.status().await?);
-    println!("Headers:\n{:#?}", res.headers().await?);
+    let status = res.status().await.or_else(|e| to_str_err(e)())?;
+    let headers = res.headers().await.or_else(|e| to_str_err(e)())?;
+
+    println!("Status: {}", status);
+    println!("Headers:\n{:#?}", headers);
 
     let body = res
         .json::<TorCheckResponse>()

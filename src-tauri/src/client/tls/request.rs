@@ -64,7 +64,7 @@ impl<'a> Request<'a> {
             path = "/";
         }
 
-        let proxy_conn = self.client.proxy.connect(&server_with_port).await?;
+        let proxy_conn = self.client.proxy().connect(&server_with_port).await?;
         let mut stream = self
             .client
             .create_connection(proxy_conn, server_name)

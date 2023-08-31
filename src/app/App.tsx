@@ -23,7 +23,7 @@ function App() {
     >
       <Text>{isTor === null ? "not checked yet" : (isTor ? "Is tor" : "no tor conn")}</Text>
       <Button onClick={checkTor} colorScheme='blue'>Check</Button>
-      <Hostname></Hostname>
+      <Hostname />
     </Flex>
   );
 }

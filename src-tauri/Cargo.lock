@@ -1111,6 +1111,7 @@ dependencies = [
  "anyhow",
  "async-channel",
  "async-rustls",
+ "futures-util",
  "hex",
  "lazy_static",
  "log",

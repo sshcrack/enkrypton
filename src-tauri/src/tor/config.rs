@@ -26,7 +26,7 @@ impl TorConfig {
 
     pub fn to_text(&self) -> String {
         return format!(
-"SocksPort {}
+            "SocksPort {}
 HiddenServiceDir \"{}\"
 HiddenServicePort 80 {}",
             self.get_socks_host(),
@@ -43,7 +43,7 @@ lazy_static! {
         service_dir: get_service_dir().unwrap(),
         service_port: 5467
     };
-    pub static ref TOR_CLIENT: Client = Client::from_config(&CONFIG).unwrap();
+    pub static ref TOR_CLIENT: Client = Client::from_config().unwrap();
 }
 
 fn get_service_dir() -> Result<OsString> {

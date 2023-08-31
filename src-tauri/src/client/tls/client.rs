@@ -1,6 +1,6 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
-use anyhow::{Result};
+use anyhow::Result;
 use async_rustls::{client::TlsStream, TlsConnector};
 use rustls::{ClientConfig, OwnedTrustAnchor, RootCertStore, ServerName};
 use smol::net::TcpStream;
@@ -9,7 +9,7 @@ use tokio_socks::tcp::Socks5Stream;
 
 use webpki_roots::TLS_SERVER_ROOTS;
 
-use crate::{client::SocksProxy, tor::config::TorConfig};
+use crate::client::SocksProxy;
 
 use super::request::Request;
 
@@ -18,13 +18,16 @@ const USER_AGENT: &str =
 
 #[derive(Debug)]
 pub struct Client {
-    pub(super) proxy: SocksProxy,
+    proxy: SocksProxy,
 }
 
 impl Client {
-    pub fn from_config(config: &TorConfig) -> Result<Self> {
-        let tor_addr = format!("socks5://127.0.0.1:{}", config.socks_port);
-        let tor_proxy = SocksProxy::new(&tor_addr)?;
+    pub(super) fn proxy(&self) -> &SocksProxy {
+        &self.proxy
+    }
+
+    pub fn from_config() -> Result<Self> {
+        let tor_proxy = SocksProxy::new()?;
 
         Ok(Client { proxy: tor_proxy })
     }

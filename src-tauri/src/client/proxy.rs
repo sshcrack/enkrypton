@@ -3,6 +3,8 @@ use tokio_socks::tcp::Socks5Stream;
 use tokio::net::TcpStream;
 use url::Url;
 
+use crate::tor::config::CONFIG;
+
 #[derive(Debug)]
 pub struct SocksProxy {
     auth: Option<(String, String)>,
@@ -10,8 +12,10 @@ pub struct SocksProxy {
 }
 
 impl SocksProxy {
-    pub fn new(addr: &str) -> Result<Self> {
-        let url = Url::parse(addr)?;
+    pub fn new() -> Result<Self> {
+        let addr = format!("socks5://127.0.0.1:{}", CONFIG.socks_port);
+
+        let url = Url::parse(&addr)?;
         let scheme = url.scheme();
         if scheme != "socks5" {
             return Err(anyhow!("Scheme is not 'socks5'"));

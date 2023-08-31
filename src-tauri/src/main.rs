@@ -1,15 +1,21 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+/** This crate just describes the ws and https client.*/
+mod client;
 mod commands;
 mod payloads;
 mod startup;
 mod tor;
-/** This crate just describes the ws and https client.*/
-mod client;
 mod webserver;
+mod util;
+
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
 
 use log::{error, info, LevelFilter};
+use signal_hook::consts::SIGINT;
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
@@ -20,7 +26,6 @@ use webserver::server::start_webserver;
 
 use crate::commands::restart;
 use crate::commands::tor::{tor_check, tor_hostname};
-
 fn main() {
     block_on(setup_channels());
     start_webserver();

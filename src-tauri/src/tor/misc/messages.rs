@@ -34,22 +34,19 @@ pub struct TorStartError {
 impl fmt::Display for TorStartError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let code = self.status.code();
-        let code = if code.is_some() {
-            code.unwrap().to_string()
-        } else {
-            "<invalid code>".to_owned()
-        };
+        let code = code
+            .and_then(|e| Some(e.to_string()))
+            .unwrap_or("<invalid_code>".to_string());
 
         let mut last_logs = Vec::<String>::new();
         let size = self.logs.len();
 
-        for i in (size - 3)..size {
+        let minSize = if size <= 3 { size - 3 } else { 0 };
+        for i in minSize..size {
             let el = self.logs.get(i);
-            if el.is_none() {
-                continue;
+            if let Some(e) = el {
+                last_logs.push(e.to_string());
             }
-
-            last_logs.push(el.unwrap().to_string());
         }
 
         if last_logs.is_empty() {

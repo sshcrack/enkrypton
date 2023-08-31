@@ -1,7 +1,6 @@
-use std::net::TcpStream;
-
 use anyhow::{anyhow, Result};
 use tokio_socks::tcp::Socks5Stream;
+use tokio::net::TcpStream;
 use url::Url;
 
 #[derive(Debug)]
@@ -22,10 +21,10 @@ impl SocksProxy {
         let password = url.password();
 
         let mut auth = None as Option<(String, String)>;
-        if !username.is_empty() && password.is_some() {
-            let password = password.unwrap();
-
-            auth = Some((username.to_string(), password.to_string()));
+        if let Some(passwd) = password {
+            if !username.is_empty() {
+                auth = Some((username.to_string(), passwd.to_string()));
+            }
         }
 
         Ok(SocksProxy {
@@ -34,19 +33,14 @@ impl SocksProxy {
         })
     }
 
-    pub async fn connect(&self, server_name: &str) -> Result<TcpStream> {
-        let host = self.proxy_url.host_str();
-        let port = self.proxy_url.port();
-        if host.is_none() || port.is_none() {
-            return Err(anyhow!(
-                "Host or port is none, can't connect (full url is {}, host {:?}, port {:?})",
-                self.proxy_url.to_string(),
-                host,
-                port
-            ));
-        }
+    pub async fn connect(&self, server_name: &str) -> Result<Socks5Stream<TcpStream>> {
+        let host = self.proxy_url.host_str()
+            .ok_or(anyhow!("Host is not in the proxy url ({})", self.proxy_url))?;
 
-        let proxy_url = &*format!("{}:{}", host.unwrap(), port.unwrap());
+        let port = self.proxy_url.port()
+            .ok_or(anyhow!("Port is not in the proxy url ({})", self.proxy_url))?;
+
+        let proxy_url = &*format!("{}:{}", host, port);
 
         println!("Connecting to {}", proxy_url);
         let tokio_stream = if let Some((username, password)) = self.auth.as_ref() {
@@ -55,10 +49,6 @@ impl SocksProxy {
             Socks5Stream::connect(proxy_url, server_name).await?
         };
 
-        let inner = tokio_stream.into_inner();
-        let std = inner.into_std()?;
-
-        std.set_nonblocking(false);
-        return Ok(std);
+        return Ok(tokio_stream);
     }
 }

@@ -1,10 +1,11 @@
 use std::{
+    os::windows::process::CommandExt,
     process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self}, os::windows::process::CommandExt,
+    thread::{self},
 };
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
@@ -13,7 +14,7 @@ use crate::tor::{
     misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
@@ -67,7 +68,9 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     }
 
     info!("Waiting for handle to exit...");
-    handle.join().unwrap();
+    handle
+        .join()
+        .or(Err(anyhow!("Could not wait for tor handle to exit")))?;
 
     info!("Exited.");
     Ok(())

@@ -1,6 +1,6 @@
 {
   "build": {
-    "beforeDevCommand": "yarn dev",
+    "beforeDevCommand": "taskkill /IM tor_proxy.exe /F & yarn dev",
     "beforeBuildCommand": "yarn build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",

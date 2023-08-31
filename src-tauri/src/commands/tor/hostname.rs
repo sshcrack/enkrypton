@@ -1,11 +1,8 @@
-use crate::tor::service::get_service_hostname;
+use crate::{tor::service::get_service_hostname, util::to_str_err};
 
 #[tauri::command]
 pub async fn tor_hostname() -> Result<Option<String>, String> {
-    let res = get_service_hostname();
-    if res.is_err() {
-        return Err(res.unwrap_err().to_string());
-    }
+    let res = get_service_hostname().or_else(|e| to_str_err(e)())?;
 
-    Ok(res.unwrap())
+    Ok(res)
 }

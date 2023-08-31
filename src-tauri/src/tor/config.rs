@@ -1,5 +1,6 @@
 use std::{ffi::OsString, fs};
 
+use anyhow::Result;
 use lazy_static::lazy_static;
 
 use crate::client::Client;
@@ -39,21 +40,21 @@ lazy_static! {
     pub static ref CONFIG: TorConfig = TorConfig {
         socks_port: 14569,
 
-        service_dir: get_service_dir(),
+        service_dir: get_service_dir().unwrap(),
         service_port: 5467
     };
     pub static ref TOR_CLIENT: Client = Client::from_config(&CONFIG).unwrap();
 }
 
-fn get_service_dir() -> OsString {
+fn get_service_dir() -> Result<OsString> {
     let mut dir = get_tor_dir();
     dir.push("service");
 
     if !dir.is_dir() {
-        fs::create_dir(&dir).unwrap();
+        fs::create_dir(&dir)?;
     }
 
-    return dir.into_os_string();
+    return Ok(dir.into_os_string());
 }
 /*
 fn random_pass(length: usize) -> String {

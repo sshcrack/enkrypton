@@ -1,4 +1,4 @@
-use crate::tor::config::TOR_CLIENT;
+use crate::{tor::config::TOR_CLIENT, util::to_str_err};
 
 use serde::Deserialize;
 
@@ -16,23 +16,18 @@ pub struct TorCheckResponse {
 pub async fn tor_check() -> Result<bool, String> {
     let res = TOR_CLIENT
         .get("https://check.torproject.org/api/ip")
-        .header("Accept", "*/*")
-        .header("User-Agent", "Firefox")
         .send()
-        .or_else(|e| Err(e.to_string()))?;
+        .await
+        .or_else(|e| to_str_err(e)())?;
 
-/*
-    println!("Status: {}", res.status());
-    println!("Headers:\n{:#?}", res.headers());
+    println!("Status: {}", res.status().await?);
+    println!("Headers:\n{:#?}", res.headers().await?);
 
-    let body = res.json::<TorCheckResponse>().await;
-    if body.is_err() {
-        return Err(body.unwrap_err().to_string());
-    }
- */
-    let body = res.text().unwrap();//body.unwrap();
+    let body = res
+        .json::<TorCheckResponse>()
+        .await
+        .or_else(|e| to_str_err(e)())?;
 
     println!("Body:\n{:#?}", body);
-    Ok(false)
-    //Ok(body.is_tor)
+    Ok(body.is_tor)
 }

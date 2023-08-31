@@ -1,8 +1,11 @@
-use std::{io::Write, net::TcpStream, sync::Arc};
+use std::{io::Write, sync::Arc};
 
 use anyhow::{anyhow, Result};
-use rustls::{ClientConfig, ClientConnection, OwnedTrustAnchor, RootCertStore, Stream};
-use tauri::async_runtime::block_on;
+use async_rustls::{client::TlsStream, TlsConnector};
+use rustls::{ClientConfig, ClientConnection, OwnedTrustAnchor, RootCertStore, ServerName, Stream};
+use smol::net::TcpStream;
+use tokio::net::TcpStream as TokioTcpStream;
+use tokio_socks::tcp::Socks5Stream;
 use url::Url;
 use webpki_roots::TLS_SERVER_ROOTS;
 
@@ -20,7 +23,7 @@ pub struct Client {
 
 impl Client {
     pub fn from_config(config: &TorConfig) -> Result<Self> {
-        let tor_addr = format!("127.0.0.1:{}", config.socks_port);
+        let tor_addr = format!("socks5://127.0.0.1:{}", config.socks_port);
         let tor_proxy = SocksProxy::new(&tor_addr)?;
 
         Ok(Client { proxy: tor_proxy })
@@ -32,6 +35,8 @@ impl Client {
      */
     pub fn get(&self, addr: &str) -> Request {
         Request::from_client(self, "GET", addr)
+            .header("User-Agent", USER_AGENT)
+            .header("Accept", "*/*")
     }
 
     fn get_root_store(&self) -> RootCertStore {
@@ -56,12 +61,22 @@ impl Client {
             .with_no_client_auth()
     }
 
-    pub(super) fn create_connection(&self, server_name: &str) -> Result<ClientConnection> {
+    pub(super) async fn create_connection(
+        &self,
+        proxy: Socks5Stream<TokioTcpStream>,
+        server_name_raw: &str,
+    ) -> Result<TlsStream<TcpStream>> {
         let config = self.get_tls_config();
 
-        let server_name = server_name.to_string().into();
-        let conn = ClientConnection::new(Arc::new(config), server_name)?;
+        let server_name: ServerName = server_name_raw.try_into()?;
+        let connector = TlsConnector::try_from(Arc::new(config))?;
 
-        return Ok(conn);
+        // converting the streams
+        let std = proxy.into_inner().into_std()?;
+        let smol_proxy = TcpStream::try_from(std)?;
+
+        let stream = connector.connect(server_name, smol_proxy).await?;
+
+        return Ok(stream);
     }
 }

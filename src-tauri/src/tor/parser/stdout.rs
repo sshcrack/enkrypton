@@ -7,33 +7,38 @@ use std::{
     },
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use async_channel::Sender;
-use log::{debug, warn, error};
+use log::{debug, error, warn};
 
-use crate::tor::{manager::stop_tor, misc::{tools::get_from_tor_tx, messages::Tor2ClientMsg}, consts::MAX_LOG_SIZE};
+use crate::tor::{
+    consts::MAX_LOG_SIZE,
+    manager::stop_tor,
+    misc::{messages::Tor2ClientMsg, tools::get_from_tor_tx},
+};
 
-use super::messages::{BOOTSTRAP_MSG, WARN_MSG, NOTICE_MSG, ERR_MSG};
+use super::messages::{BOOTSTRAP_MSG, ERR_MSG, NOTICE_MSG, WARN_MSG};
 
 pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -> Result<()> {
-    let stdout = child.stdout.take().unwrap();
-    let tx = get_from_tor_tx().await;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or(anyhow!("Could not take child stdout"))?;
 
+    let tx = get_from_tor_tx().await;
 
     let mut stdout = BufReader::new(stdout);
     let mut logs = Vec::<String>::with_capacity(10);
     while !should_exit.load(Ordering::Relaxed) {
         let res = child.try_wait()?;
 
-        if res.is_some() {
+        if let Some(err_stat) = res {
             let intentional = should_exit.load(Ordering::Relaxed);
             debug!("Process exited intentional: {}", intentional);
             if intentional {
                 debug!("Intentional exit. Exiting...");
                 break;
             }
-
-            let err_stat = res.unwrap();
 
             tx.send(Tor2ClientMsg::ExitMsg(err_stat, logs)).await?;
             stop_tor().await?;
@@ -93,7 +98,6 @@ async fn check_msg(msg: &str, tx: &Sender<Tor2ClientMsg>) -> Result<()> {
         tx.send(Tor2ClientMsg::NoticeMsg(msg)).await?;
         return Ok(());
     }
-
 
     Ok(())
 }

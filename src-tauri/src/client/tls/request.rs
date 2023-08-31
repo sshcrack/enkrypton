@@ -1,11 +1,7 @@
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-};
+use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
-use rustls::Stream;
-use tauri::async_runtime::block_on;
+use smol::io::AsyncWriteExt;
 use url::Url;
 
 use super::{response::Response, Client};
@@ -34,8 +30,9 @@ impl<'a> Request<'a> {
         self
     }
 
-    fn get_headers(&self) -> String {
-        let lines = Vec::<String>::new();
+    fn get_headers(&self, host: &str) -> String {
+        let mut lines = Vec::<String>::new();
+        lines.push(format!("Host: {}", host));
         for (key, value) in self.headers.iter() {
             lines.push(format!("{}: {}", key, value))
         }
@@ -43,27 +40,23 @@ impl<'a> Request<'a> {
         return lines.join("\r\n");
     }
 
-    fn get_full_headers(&self, path: &str) -> String {
+    fn get_full_headers(&self, host: &str, path: &str) -> String {
         let start = format!("{} {} HTTP/1.1\r\n", self.method, path);
-        let headers = self.get_headers();
+        let headers = self.get_headers(host);
 
-        return format!("{}\r\n{}\r\n\r\n", start, headers);
+        return format!("{}{}\r\n\r\n", start,  headers);
     }
 
     /**
      * TODO (maybe?) support other protocols than https
-     * ATTENTION: Blocking!!
      */
-    pub fn send(self) -> Result<Response> {
+    pub async fn send(self) -> Result<Response> {
         let url = Url::parse(&self.url)?;
-        let port = url.port_or_known_default().ok_or(anyhow!(
-            "Could not get standard port of url {}",
-            self.url
-        ))?;
+        let port = url
+            .port_or_known_default()
+            .ok_or(anyhow!("Could not get standard port of url {}", self.url))?;
 
-        let server_name = url
-            .host_str()
-            .ok_or(anyhow!("Url has to have a host."))?;
+        let server_name = url.host_str().ok_or(anyhow!("Url has to have a host."))?;
 
         let server_with_port = format!("{}:{}", server_name, port);
         let mut path = url.path();
@@ -71,20 +64,17 @@ impl<'a> Request<'a> {
             path = "/";
         }
 
-        let conn_future = self.client.proxy.connect(&server_with_port);
-        let proxy_conn = block_on(conn_future)?;
-        let c_conn = self.client.create_connection(server_name)?;
+        let proxy_conn = self.client.proxy.connect(&server_with_port).await?;
+        let mut stream = self
+            .client
+            .create_connection(proxy_conn, server_name)
+            .await?;
 
-        let stream = Stream::new(&mut c_conn, &mut proxy_conn);
+        let prepend = self.get_full_headers(&server_name, path);
+        println!("Writing headers \n----\n{}\n----", prepend);
+        stream.write_all(prepend.as_bytes()).await?;
 
-        let prepend = self.get_full_headers(path);
-        stream.write_all(prepend.as_bytes());
-
-        let mut buffer = Vec::new();
-        stream.read_to_end(&mut buffer).unwrap();
-
-        let resp = Response::from_bytes(buffer);
-
+        let resp = Response::from_stream(stream).await?;
         return Ok(resp);
     }
 }

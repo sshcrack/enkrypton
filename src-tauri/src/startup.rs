@@ -1,7 +1,25 @@
-use log::{error, warn};
-use tauri::{async_runtime::{self}, App, Manager};
+use std::{
+    f32::consts::E,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+};
 
-use crate::{tor::{manager::{self}, misc::messages::TorStartError}, payloads::start_tor::TorStartupErrorPayload};
+use log::{debug, error, warn};
+use tauri::{
+    async_runtime::{self, block_on},
+    App, Manager,
+};
+
+use crate::{
+    payloads::start_tor::TorStartupErrorPayload,
+    tor::{
+        manager::{self},
+        misc::messages::TorStartError,
+    },
+};
 
 pub fn startup(app: &mut App) {
     let window = app.get_window("main").unwrap();
@@ -58,5 +76,24 @@ pub fn startup(app: &mut App) {
                     .unwrap();
             }
         });
+    });
+
+    let term = Arc::new(AtomicBool::new(false));
+
+    let handle = app.handle();
+    thread::spawn(move || {
+        signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&term)).unwrap();
+        while !term.load(Ordering::Relaxed) {}
+
+        debug!("Running stop on main thread");
+        let r = handle.run_on_main_thread(|| {
+            block_on(manager::wait_and_stop_tor()).unwrap();
+        });
+
+        handle.exit(0);
+
+        if let Err(e) = r {
+            error!("Could not exit: {}", e);
+        }
     });
 }

@@ -4,6 +4,8 @@ use anyhow::{anyhow, Result};
 use smol::io::AsyncWriteExt;
 use url::Url;
 
+use crate::util::get_servername;
+
 use super::{response::Response, Client};
 
 pub struct Request<'a> {
@@ -40,11 +42,12 @@ impl<'a> Request<'a> {
         return lines.join("\r\n");
     }
 
-    fn get_full_headers(&self, host: &str, path: &str) -> String {
+    fn get_full_headers(&self, url: &Url, path: &str) -> Result<String> {
         let start = format!("{} {} HTTP/1.1\r\n", self.method, path);
-        let headers = self.get_headers(host);
+        let server_name_raw = url.host_str().ok_or(anyhow!("Url has to have a host."))?;
+        let headers = self.get_headers(server_name_raw);
 
-        return format!("{}{}\r\n\r\n", start,  headers);
+        return Ok(format!("{}{}\r\n\r\n", start, headers));
     }
 
     /**
@@ -56,21 +59,16 @@ impl<'a> Request<'a> {
             .port_or_known_default()
             .ok_or(anyhow!("Could not get standard port of url {}", self.url))?;
 
-        let server_name = url.host_str().ok_or(anyhow!("Url has to have a host."))?;
-
-        let server_with_port = format!("{}:{}", server_name, port);
         let mut path = url.path();
         if path.is_empty() {
             path = "/";
         }
 
-        let proxy_conn = self.client.proxy().connect(&server_with_port).await?;
-        let mut stream = self
-            .client
-            .create_connection(proxy_conn, server_name)
-            .await?;
+        let proxy_conn = self.client.proxy().connect(&url).await?;
+        let mut stream = self.client.create_connection(proxy_conn, &url).await?;
 
-        let prepend = self.get_full_headers(&server_name, path);
+        let prepend = self.get_full_headers(&url, path)?;
+
         println!("Writing headers \n----\n{}\n----", prepend);
         stream.write_all(prepend.as_bytes()).await?;
 

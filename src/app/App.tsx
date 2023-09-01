@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api';
-import { Button, Flex, Text } from '@chakra-ui/react';
+import { Button, Flex, FormControl, FormLabel, Input, Text } from '@chakra-ui/react';
 import Hostname from './Hostname';
+import ConnectForm from './ConnectForm';
 
 function App() {
   const [isTor, setIsTor] = useState<boolean | null>(null);
+  const [ connected, setConnected] = useState(false)
 
   const checkTor = () => {
     invoke("tor_check").then(e => {
@@ -12,20 +14,14 @@ function App() {
       setIsTor(e as boolean)
     })
   }
-  return (
-    <Flex
-      w='100%'
-      h='100%'
-      gap='10'
-      justifyContent='center'
-      alignItems='center'
-      flexDir='column'
-    >
-      <Text>{isTor === null ? "not checked yet" : (isTor ? "Is tor" : "no tor conn")}</Text>
-      <Button onClick={checkTor} colorScheme='blue'>Check</Button>
-      <Hostname />
+  return <Flex w='100%' h='100%'>
+    <Flex h='100%' w='30%'>
+      
     </Flex>
-  );
+    <Flex flex='1' h='100%' w='70%'>
+
+    </Flex>
+  </Flex>
 }
 
 export default App;

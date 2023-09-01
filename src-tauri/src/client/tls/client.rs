@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use async_rustls::{client::TlsStream, TlsConnector};
 use rustls::{ClientConfig, OwnedTrustAnchor, RootCertStore, ServerName};
 use smol::net::TcpStream;
 use tokio::net::TcpStream as TokioTcpStream;
 use tokio_socks::tcp::Socks5Stream;
 
+use url::Url;
 use webpki_roots::TLS_SERVER_ROOTS;
 
 use crate::client::SocksProxy;
@@ -67,10 +68,11 @@ impl Client {
     pub(super) async fn create_connection(
         &self,
         proxy: Socks5Stream<TokioTcpStream>,
-        server_name_raw: &str,
+        url: &Url,
     ) -> Result<TlsStream<TcpStream>> {
         let config = self.get_tls_config();
 
+        let server_name_raw = url.host_str().ok_or(anyhow!("Url has to have a host."))?;
         let server_name: ServerName = server_name_raw.try_into()?;
         let connector = TlsConnector::try_from(Arc::new(config))?;
 

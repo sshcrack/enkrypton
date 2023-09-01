@@ -1,6 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+#[macro_use]
+extern crate trace_error;
+
 /** This crate just describes the ws and https client.*/
 mod client;
 mod commands;
@@ -21,6 +24,7 @@ use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
+use commands::ws::*;
 use tor::manager;
 use webserver::server::start_webserver;
 
@@ -40,7 +44,10 @@ fn main() {
                 .level(LevelFilter::Debug)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![tor_check, restart, tor_hostname])
+        .invoke_handler(tauri::generate_handler![
+            tor_check, restart, tor_hostname,
+            ws_connect, ws_send
+            ])
         .on_window_event(|event| {
             let window = event.window();
             let windows = window.windows();

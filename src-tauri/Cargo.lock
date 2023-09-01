@@ -437,6 +437,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ecc7ab41815b3c653ccd2978ec3255c81349336702dfdf62ee6f7069b12a3aae"
 
 [[package]]
+name = "async-trait"
+version = "0.1.73"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc00ceb34980c03614e35a3a4e218276a0a824e911d07651cd0d858a51e8c0f0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.29",
+]
+
+[[package]]
 name = "atk"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1111,6 +1122,7 @@ dependencies = [
  "anyhow",
  "async-channel",
  "async-rustls",
+ "async-trait",
  "futures-util",
  "hex",
  "lazy_static",
@@ -1129,6 +1141,7 @@ dependencies = [
  "tokio",
  "tokio-socks",
  "tokio-tungstenite",
+ "trace-error",
  "ts-rs",
  "url",
  "webpki-roots",
@@ -3885,6 +3898,15 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "winnow",
+]
+
+[[package]]
+name = "trace-error"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58b0097a6a10c7543023cdcbe43f49e5c3c90541c001535c04dfb0f20f79ce8b"
+dependencies = [
+ "backtrace",
 ]
 
 [[package]]

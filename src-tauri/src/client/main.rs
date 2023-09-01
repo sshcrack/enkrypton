@@ -3,7 +3,7 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use futures_util::{
     future, pin_mut,
     stream::{SplitSink, SplitStream},
@@ -16,6 +16,7 @@ use tokio_socks::tcp::Socks5Stream;
 use tokio_tungstenite::{
     client_async_with_config, connect_async, tungstenite::Message, WebSocketStream,
 };
+use url::Url;
 
 use super::SocksProxy;
 
@@ -31,9 +32,16 @@ pub struct MessagingClient {
 
 impl MessagingClient {
     pub async fn new(onion_addr: &str) -> Result<Self> {
+        debug!("Creating proxy...");
         let proxy = SocksProxy::new()?;
-        let sock = proxy.connect(onion_addr).await?;
+        debug!("Connecting Proxy...");
+        let mut onion_addr = Url::parse(onion_addr)?;
+        onion_addr.set_scheme("ws")
+            .or(Err(anyhow!("Could not set scheme")))?;
 
+        let sock = proxy.connect(&onion_addr).await?;
+
+        debug!("Connecting Tungstenite...");
         let (ws_stream, _) = tokio_tungstenite::client_async(onion_addr, sock).await?;
 
         let (write, read) = ws_stream.split();
@@ -84,7 +92,15 @@ impl MessagingClient {
             .by_ref()
             .for_each(move |msg| async {
                 if let Err(e) = msg {
-                    warn!("Read err: {}", e)
+                    warn!("Read err: {}", e);
+                    return;
+                }
+
+                let msg = msg.unwrap();
+                if msg.is_text() {
+                    debug!("New Msg: {}", msg.into_text().unwrap())
+                } else {
+                    debug!("Unknown msg {:#?}", msg)
                 }
             })
             .await;

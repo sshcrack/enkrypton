@@ -1,9 +1,10 @@
 use anyhow::{anyhow, Result};
-use tokio_socks::tcp::Socks5Stream;
+use log::debug;
 use tokio::net::TcpStream;
+use tokio_socks::tcp::Socks5Stream;
 use url::Url;
 
-use crate::tor::config::CONFIG;
+use crate::{tor::config::CONFIG, util::get_servername};
 
 #[derive(Debug)]
 pub struct SocksProxy {
@@ -37,22 +38,21 @@ impl SocksProxy {
         })
     }
 
-    pub async fn connect(&self, server_name: &str) -> Result<Socks5Stream<TcpStream>> {
-        let host = self.proxy_url.host_str()
-            .ok_or(anyhow!("Host is not in the proxy url ({})", self.proxy_url))?;
+    pub async fn connect(&self, destination_url: &Url) -> Result<Socks5Stream<TcpStream>> {
+        let proxy_url = get_servername(&self.proxy_url)?;
+        let dest_server = get_servername(destination_url)?;
 
-        let port = self.proxy_url.port()
-            .ok_or(anyhow!("Port is not in the proxy url ({})", self.proxy_url))?;
-
-        let proxy_url = &*format!("{}:{}", host, port);
-
-        println!("Connecting to {}", proxy_url);
-        let tokio_stream = if let Some((username, password)) = self.auth.as_ref() {
-            Socks5Stream::connect_with_password(proxy_url, server_name, username, password).await?
+        println!(
+            "Connecting to {} with server_name {}",
+            proxy_url, dest_server
+        );
+        if let Some((username, password)) = self.auth.as_ref() {
+            Ok(
+                Socks5Stream::connect_with_password(&*proxy_url, dest_server, username, password)
+                    .await?,
+            )
         } else {
-            Socks5Stream::connect(proxy_url, server_name).await?
-        };
-
-        return Ok(tokio_stream);
+            Ok(Socks5Stream::connect(&*proxy_url, dest_server).await?)
+        }
     }
 }

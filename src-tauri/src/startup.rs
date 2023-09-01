@@ -13,7 +13,7 @@ use tauri::{
 };
 
 use crate::{
-    payloads::start_tor::TorStartupErrorPayload,
+    payloads::TorStartupErrorPayload,
     tor::{
         manager::{self},
         misc::messages::TorStartError,

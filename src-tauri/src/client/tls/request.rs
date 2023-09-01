@@ -55,10 +55,6 @@ impl<'a> Request<'a> {
      */
     pub async fn send(self) -> Result<Response> {
         let url = Url::parse(&self.url)?;
-        let port = url
-            .port_or_known_default()
-            .ok_or(anyhow!("Could not get standard port of url {}", self.url))?;
-
         let mut path = url.path();
         if path.is_empty() {
             path = "/";

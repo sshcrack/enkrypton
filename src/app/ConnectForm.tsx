@@ -45,7 +45,9 @@ export default function ConnectForm({ onConnected }: ConnectFormProps) {
         setConnecting(true)
 
         console.log("Conn")
-        ws.connect(input)
+        const client = ws.get(input)
+
+        client.connect()
             .then(() => {
                 console.log("Connected")
                 onConnected()

@@ -6,7 +6,7 @@ import ConnectForm from './ConnectForm';
 
 function App() {
   const [isTor, setIsTor] = useState<boolean | null>(null);
-  const [ connected, setConnected] = useState(false)
+  const [connected, setConnected] = useState(false)
 
   const checkTor = () => {
     invoke("tor_check").then(e => {
@@ -16,10 +16,9 @@ function App() {
   }
   return <Flex w='100%' h='100%'>
     <Flex h='100%' w='30%'>
-      
     </Flex>
     <Flex flex='1' h='100%' w='70%'>
-
+      <ConnectForm onConnected={() => setConnected(true)} />
     </Flex>
   </Flex>
 }

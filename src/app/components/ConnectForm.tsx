@@ -1,7 +1,7 @@
 import { Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Input, useToast } from '@chakra-ui/react'
 import { useEffect, useState } from 'react';
-import ws from '../bindings/ws';
-import tor from '../bindings/tor';
+import ws from '../../bindings/ws';
+import tor from '../../bindings/tor';
 
 export type ConnectFormProps = {
     onConnected: () => unknown

@@ -1,6 +1,9 @@
 import { Flex, Image, Text } from '@chakra-ui/react';
 
 export default function Header() {
+    return <></>
+
+    //TODO - do taskbar stuff
     return <Flex
         w='100%'
         h='10'

@@ -8,6 +8,8 @@ use tauri::async_runtime::RwLock;
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
 
 lazy_static! {
+    pub static ref DEFAULT_HTTP_RETURN: String = "Hi, yes I'm connected!".to_string();
+
     pub static ref TOR_BINARY_HASH: String = get_tor_hash();
     pub static ref TOR_BINARY_PATH: PathBuf = get_tor_path();
     pub static ref TOR_THREAD: Arc<RwLock<Option<JoinHandle<()>>>> = Arc::default();

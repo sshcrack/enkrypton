@@ -1,16 +1,13 @@
-import { Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Input, useToast } from '@chakra-ui/react'
+import { Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Input, useToast } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
-import ws from '../../bindings/ws';
 import tor from '../../bindings/tor';
+import ws from '../../bindings/ws';
 
 export type ConnectFormProps = {
     onConnected: () => unknown
 }
 
 function isAddressValid(value: string) {
-    //if (!value.endsWith(".onion") && !value.endsWith(".onion:80"))
-    //    return false;
-
     return true;
 }
 

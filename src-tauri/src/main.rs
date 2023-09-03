@@ -1,9 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-#[macro_use]
-extern crate trace_error;
-
 /** This crate just describes the ws and https client.*/
 mod client;
 mod commands;
@@ -29,7 +26,7 @@ use tor::manager;
 use webserver::server::start_webserver;
 
 use crate::commands::restart;
-use crate::commands::tor::{tor_check, tor_hostname};
+use crate::commands::tor::{tor_check, tor_hostname, tor_is_alive};
 fn main() {
     block_on(setup_channels());
     start_webserver();
@@ -45,7 +42,7 @@ fn main() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
-            tor_check, restart, tor_hostname,
+            tor_check, restart, tor_hostname, tor_is_alive,
             ws_connect, ws_send
             ])
         .on_window_event(|event| {

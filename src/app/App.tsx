@@ -1,9 +1,11 @@
-import { Flex, Text } from '@chakra-ui/react';
-import { useState, useEffect } from "react"
-import { GeneralUser } from '../bindings/ws/client/types';
+import { Flex } from '@chakra-ui/react';
+import { useEffect, useState } from "react";
 import tor from '../bindings/tor';
-import UserSidebar from './components/sidebar/User';
+import { GeneralUser } from '../bindings/ws/client/types';
 import Header from './components/header';
+import UserList from './components/sidebar/UserList';
+import MainProvider from './components/MainProvider';
+import Chat from './components/chat';
 
 function App() {
   const [receivers, setReceivers] = useState<GeneralUser[]>([])
@@ -14,27 +16,26 @@ function App() {
         if (!e)
           return
 
-        setReceivers([
+        const r = [
           {
             nickname: "Self",
             onionAddr: new URL(`ws://${e}/ws/`)
           }
-        ])
+        ]
+
+        setReceivers(r)
       })
   }, [])
 
-  return <Flex w='100%' h='100%' flexDir='column'>
-    <Header />
-    <Flex w='100%' h='100%'>
-      <Flex h='100%' w='30%' flexDir='column'>
-        {
-          receivers.map(({ nickname, onionAddr }) => <UserSidebar addr={onionAddr} nickname={nickname} />)
-        }
-      </Flex>
-      <Flex flex='1' h='100%' w='70%'>
+  return <MainProvider>
+    <Flex w='100%' h='100%' flexDir='column'>
+      <Header />
+      <Flex w='100%' h='100%'>
+        <UserList receivers={receivers} />
+        <Chat flex='1' />
       </Flex>
     </Flex>
-  </Flex>
+  </MainProvider>
 }
 
 export default App;

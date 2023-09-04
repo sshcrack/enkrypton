@@ -1,4 +1,4 @@
-import { Button, Flex, FlexProps, Input, InputGroup, InputRightElement, Text, useToast } from '@chakra-ui/react';
+import { Button, Flex, FlexProps, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react';
 import { useContext, useEffect, useState } from 'react';
 import { MessageBox } from 'react-chat-elements';
 import 'react-chat-elements/dist/main.css';
@@ -21,8 +21,6 @@ export default function Chat(props: FlexProps) {
     const [msg, setMsg] = useState("")
     const [sending, setSending] = useState(false)
     const [messages, setMessages] = useState([] as Message[])
-
-    const toast = useToast()
 
 
     useEffect(() => {

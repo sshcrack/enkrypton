@@ -13,9 +13,7 @@ export default function UserSidebar({ user, ...props }: ReceiverSidebarProps) {
     const { setActive, active } = useContext(MainContext)
 
     const isActive = user === active
-    const { onionHostname: onionAddr, nickname } = user
-
-    const { hostname } = onionAddr
+    const { onionHostname, nickname } = user
 
     return <Flex
         w='100%'
@@ -28,7 +26,7 @@ export default function UserSidebar({ user, ...props }: ReceiverSidebarProps) {
         onClick={() => setActive(user)}
         {...props}
     >
-        <UserAvatar seed={hostname} />
-        <Text textOverflow='ellipsis' p='3' w='100%' whiteSpace='nowrap' overflow='hidden'>{nickname ?? hostname}</Text>
+        <UserAvatar seed={onionHostname} />
+        <Text textOverflow='ellipsis' p='3' w='100%' whiteSpace='nowrap' overflow='hidden'>{nickname ?? onionHostname}</Text>
     </Flex>
 }

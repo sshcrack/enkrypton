@@ -1,5 +1,5 @@
 mod start_tor;
-mod msg;
+mod ws;
 
 pub use start_tor::*;
-pub use msg::*;
+pub use ws::*;

@@ -16,6 +16,14 @@ export default class MessagingClient extends (EventEmitter as unknown as new () 
     constructor(onionHostname: string) {
         super()
         this.onionHostname = onionHostname;
+
+        const msgEvent = `msg-${this.onionHostname}`
+
+        console.log("Listening on", msgEvent)
+        listen(msgEvent, ({ payload }: Event<WsMessagePayload>) => {
+            console.log("received msg", payload.message, "on", this.onionHostname)
+            this.emit("on_receive", payload.message)
+        }).then(e => this.unlisten = e);
     }
 
     public async destroy() {
@@ -24,9 +32,6 @@ export default class MessagingClient extends (EventEmitter as unknown as new () 
 
     public async connect() {
         await invoke("ws_connect", { onionHostname: this.onionHostname })
-        this.unlisten = await listen(`msg-${this.onionHostname}`, ({ payload }: Event<WsMessagePayload>) => {
-            this.emit("on_receive", payload.message)
-        });
     }
 
     public async send(msg: string) {

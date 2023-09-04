@@ -16,10 +16,10 @@ function App() {
         if (!e)
           return
 
-        const r = [
+        const r: GeneralUser[] = [
           {
             nickname: "Self",
-            onionAddr: new URL(`ws://${e}/ws/`)
+            onionHostname: e
           }
         ]
 

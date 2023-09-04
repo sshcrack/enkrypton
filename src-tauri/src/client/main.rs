@@ -3,6 +3,10 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+use crate::{
+    payloads::{WsClientStatus, WsClientUpdate, WsMessagePayload},
+    util::{get_app, url::UrlOnion},
+};
 use anyhow::{anyhow, Result};
 use futures_util::{
     stream::{SplitSink, SplitStream},
@@ -14,8 +18,6 @@ use tokio::{net::TcpStream, sync::Mutex};
 use tokio_socks::tcp::Socks5Stream;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use url::Url;
-
-use crate::{payloads::WsMessagePayload, util::get_app};
 
 use super::SocksProxy;
 
@@ -48,6 +50,20 @@ impl MessagingClient {
         let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
         let (write, read) = ws_stream.split();
+
+        debug!("Getting app handle...");
+        let app = get_app().await;
+
+        let hostname = onion_addr.to_hostname().unwrap();
+
+        app.emit_all(
+            "ws_client_update",
+            WsClientUpdate {
+                hostname,
+                status: WsClientStatus::CONNECTED,
+            },
+        )?;
+
         return Ok(MessagingClient {
             write: Arc::new(Mutex::new(write)),
             read: Arc::new(Mutex::new(read)),
@@ -95,7 +111,9 @@ impl MessagingClient {
         state
             .by_ref()
             .for_each(move |msg| async {
-                let hostname = self.url.host_str().unwrap();
+                let hostname = self.url.to_hostname().unwrap();
+                println!("Hostname is {}", hostname);
+
                 if let Err(e) = msg {
                     warn!("Read err: {}", e);
                     return;
@@ -122,6 +140,17 @@ impl MessagingClient {
             })
             .await;
 
+
+        let app = get_app().await;
+        let hostname = self.url.to_hostname().unwrap();
+
+        app.emit_all(
+            "ws_client_update",
+            WsClientUpdate {
+                hostname,
+                status: WsClientStatus::DISCONNECTED,
+            },
+        )?;
         Ok(())
     }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import tor from '../bindings/tor';
 import { Text } from '@chakra-ui/react';
+import tor from '../../bindings/tor';
 
 export default function Hostname() {
     const [hostname, setHostname] = useState<string | null>(null)

@@ -3,20 +3,19 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use futures_util::{
-    future, pin_mut,
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
 use log::{debug, error, warn};
-use tauri::async_runtime::block_on;
+use tauri::{async_runtime::block_on, Manager};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_socks::tcp::Socks5Stream;
-use tokio_tungstenite::{
-    client_async_with_config, connect_async, tungstenite::Message, WebSocketStream,
-};
+use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use url::Url;
+
+use crate::{payloads::WsMessagePayload, util::get_app};
 
 use super::SocksProxy;
 
@@ -28,27 +27,32 @@ pub struct MessagingClient {
     write: Arc<Mutex<WriteStream>>,
     read: Arc<Mutex<ReadStream>>,
     listen_thread: Arc<Mutex<Option<JoinHandle<()>>>>,
+    url: Url,
 }
 
 impl MessagingClient {
-    pub async fn new(onion_addr: &str) -> Result<Self> {
+    pub async fn new(onion_hostname: &str) -> Result<Self> {
+        let onion_addr = format!("ws://{}.onion/ws/", onion_hostname);
+
         debug!("Creating proxy...");
         let proxy = SocksProxy::new()?;
         debug!("Connecting Proxy...");
-        let mut onion_addr = Url::parse(onion_addr)?;
-        onion_addr.set_scheme("ws")
+        let mut onion_addr = Url::parse(&onion_addr)?;
+        onion_addr
+            .set_scheme("ws")
             .or(Err(anyhow!("Could not set scheme")))?;
 
         let sock = proxy.connect(&onion_addr).await?;
 
         debug!("Connecting Tungstenite...");
-        let (ws_stream, _) = tokio_tungstenite::client_async(onion_addr, sock).await?;
+        let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
         let (write, read) = ws_stream.split();
         return Ok(MessagingClient {
             write: Arc::new(Mutex::new(write)),
             read: Arc::new(Mutex::new(read)),
             listen_thread: Arc::new(Mutex::new(None)),
+            url: onion_addr,
         });
     }
 
@@ -91,6 +95,7 @@ impl MessagingClient {
         state
             .by_ref()
             .for_each(move |msg| async {
+                let hostname = self.url.host_str().unwrap();
                 if let Err(e) = msg {
                     warn!("Read err: {}", e);
                     return;
@@ -98,9 +103,21 @@ impl MessagingClient {
 
                 let msg = msg.unwrap();
                 if msg.is_text() {
-                    debug!("New Msg: {}", msg.into_text().unwrap())
+                    let msg = msg.into_text().unwrap();
+                    debug!("New Msg: {}", msg);
+
+                    let handle = get_app().await;
+
+                    let res = handle.emit_all(
+                        &format!("msg-{}", hostname),
+                        WsMessagePayload { message: msg },
+                    );
+
+                    if res.is_err() {
+                        error!("Could not send msg payload: {}", res.unwrap_err());
+                    }
                 } else {
-                    debug!("Unknown msg {:#?}", msg)
+                    debug!("Unknown msg {:#?}", msg);
                 }
             })
             .await;

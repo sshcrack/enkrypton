@@ -4,7 +4,7 @@ if (!window.clients)
     window.clients = new ClientMap();
 
 const ws = {
-    get: (onionAddr: string) => window.clients.get(onionAddr)
+    get: (onionHost: string) => window.clients.get(onionHost)
 }
 
 export default ws;

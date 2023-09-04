@@ -3,11 +3,14 @@ use std::{env::current_exe, path::PathBuf, sync::Arc, thread::JoinHandle};
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 
-use tauri::async_runtime::RwLock;
+use tauri::{async_runtime::RwLock, AppHandle};
 
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
 
 lazy_static! {
+    pub static ref APP_HANDLE: Arc<RwLock<Option<AppHandle>>> = RwLock::new(None).into();
+
+
     pub static ref DEFAULT_HTTP_RETURN: String = "Hi, yes I'm connected!".to_string();
 
     pub static ref TOR_BINARY_HASH: String = get_tor_hash();

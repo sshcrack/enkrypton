@@ -31,7 +31,7 @@ export default function UserList({ receivers, ...props }: UserListProps) {
         {...props}
     >
         {
-            receivers.map(user => <UserSidebar key={user.onionAddr.toString()} flex='0' user={user} />)
+            receivers.map(user => <UserSidebar key={user.onionHostname.toString()} flex='0' user={user} />)
         }
     </Flex>
 }

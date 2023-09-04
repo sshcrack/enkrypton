@@ -1,7 +1,7 @@
 use crate::tor::{config::TOR_CLIENT, consts::DEFAULT_HTTP_RETURN};
 
 #[tauri::command]
-pub async fn tor_is_alive(addr: String) -> Result<bool, String> {
+pub async fn tor_is_alive(_addr: String) -> Result<bool, String> {
     let res = TOR_CLIENT
         .get("/")
         .send()

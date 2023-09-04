@@ -7,7 +7,8 @@ export type ConnectFormProps = {
     onConnected: () => unknown
 }
 
-function isAddressValid(value: string) {
+function isAddressValid(_value: string) {
+    //TODO - actually check here lol
     return true;
 }
 

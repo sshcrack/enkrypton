@@ -10,12 +10,12 @@ export type MessagingClientEvents = {
 }
 
 export default class MessagingClient extends (EventEmitter as unknown as new () => TypedEmitter<MessagingClientEvents>) {
-    private readonly onionAddr: string;
+    private readonly onionHostname: string;
     private unlisten: UnlistenFn = () => { };
 
-    constructor(onionAddr: string) {
+    constructor(onionHostname: string) {
         super()
-        this.onionAddr = onionAddr;
+        this.onionHostname = onionHostname;
     }
 
     public async destroy() {
@@ -23,15 +23,13 @@ export default class MessagingClient extends (EventEmitter as unknown as new () 
     }
 
     public async connect() {
-        await invoke("ws_connect", { onionAddr: this.onionAddr })
-        const { hostname } = new URL(this.onionAddr);
-
-        this.unlisten = await listen(`msg-${hostname}`, ({ payload }: Event<WsMessagePayload>) => {
+        await invoke("ws_connect", { onionHostname: this.onionHostname })
+        this.unlisten = await listen(`msg-${this.onionHostname}`, ({ payload }: Event<WsMessagePayload>) => {
             this.emit("on_receive", payload.message)
         });
     }
 
     public async send(msg: string) {
-        return invoke("ws_send", { onionAddr: this.onionAddr, msg });
+        return invoke("ws_send", { onionHostname: this.onionHostname, msg });
     }
 }

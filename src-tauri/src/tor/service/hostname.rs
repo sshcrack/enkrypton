@@ -28,6 +28,7 @@ pub fn get_service_hostname() -> Result<Option<String>> {
         .trim_matches(|c: char| {
             return !c.is_ascii_alphanumeric() && !c.is_ascii_punctuation();
         })
+        .replace(".onion", "")
         .to_string();
     return Ok(Some(buffer));
 }

@@ -15,12 +15,18 @@ use tauri::{
 use crate::{
     payloads::TorStartupErrorPayload,
     tor::{
+        consts::APP_HANDLE,
         manager::{self},
         misc::messages::TorStartError,
     },
 };
 
 pub fn startup(app: &mut App) {
+    let mut state = APP_HANDLE.blocking_write();
+    *state = Some(app.handle());
+
+    drop(state);
+
     let window = app.get_window("main").unwrap();
 
     #[cfg(debug_assertions)] // only include this code on debug builds

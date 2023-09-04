@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use smol::io::AsyncWriteExt;
 use url::Url;
 
-use crate::util::get_servername;
+
 
 use super::{response::Response, Client};
 

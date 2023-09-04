@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use log::debug;
+
 use tokio::net::TcpStream;
 use tokio_socks::tcp::Socks5Stream;
 use url::Url;

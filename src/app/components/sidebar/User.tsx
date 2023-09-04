@@ -13,7 +13,7 @@ export default function UserSidebar({ user, ...props }: ReceiverSidebarProps) {
     const { setActive, active } = useContext(MainContext)
 
     const isActive = user === active
-    const { onionAddr, nickname } = user
+    const { onionHostname: onionAddr, nickname } = user
 
     const { hostname } = onionAddr
 

@@ -1,8 +1,13 @@
 use std::fmt::Display;
 
 use anyhow::{anyhow, Result};
+use lazy_static::lazy_static;
 use log::{debug, error};
+use regex::Regex;
+use tauri::AppHandle;
 use url::Url;
+
+use crate::tor::consts::APP_HANDLE;
 
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where
@@ -20,10 +25,24 @@ pub fn get_servername(url: &Url) -> Result<String> {
         .ok_or(anyhow!("Host is not in the url ({})", url))?;
 
     debug!("Parsing port");
-    let port = url
-        .port_or_known_default()
-        .unwrap_or(80);
+    let port = url.port_or_known_default().unwrap_or(80);
 
     let formatted = format!("{}:{}", host, port);
     Ok(formatted)
+}
+
+pub async fn get_app() -> AppHandle {
+    let state = APP_HANDLE.read().await;
+    let handle = state.as_ref().unwrap();
+
+    return handle.clone();
+}
+
+lazy_static! {
+    pub static ref ONION_REGEX: Regex = Regex::new("^([A-z]|[0-9])+$").unwrap();
+}
+
+pub fn is_onion_hostname(addr: &str) -> bool {
+
+    return ONION_REGEX.is_match(addr);
 }

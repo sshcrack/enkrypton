@@ -13,7 +13,7 @@ pub async fn ws_send(onion_hostname: String, msg: String) -> Result<(), String> 
             Err(e.to_string())
         })?;
 
-    client.send_msg(&msg).await
+    client.send_msg_txt(&msg).await
         .or_else(|e| {
             error!("{}", e);
             Err(e.to_string())

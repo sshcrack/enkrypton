@@ -1,6 +1,10 @@
 use std::{
-    sync::Arc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     thread::{self, JoinHandle},
+    time::Duration,
 };
 
 use crate::{
@@ -23,6 +27,8 @@ use super::SocksProxy;
 
 type WriteStream = SplitSink<WebSocketStream<Socks5Stream<TcpStream>>, Message>;
 type ReadStream = SplitStream<WebSocketStream<Socks5Stream<TcpStream>>>;
+
+pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Clone)]
 pub struct MessagingClient {
@@ -72,10 +78,14 @@ impl MessagingClient {
         });
     }
 
-    pub async fn send_msg(&self, msg: &str) -> Result<()> {
+    pub async fn send_msg_txt(&self, msg: &str) -> Result<()> {
+        return self.send_msg(Message::Text(msg.to_string())).await;
+    }
+
+    pub async fn send_msg(&self, msg: Message) -> Result<()> {
         debug!("Locking write mutex...");
         let mut state = self.write.lock().await;
-        state.send(Message::Text(msg.to_string())).await?;
+        state.send(msg).await?;
 
         Ok(())
     }
@@ -108,41 +118,69 @@ impl MessagingClient {
         debug!("Locking read mutex...");
         let mut state = self.read.try_lock()?;
 
-        state
-            .by_ref()
-            .for_each(move |msg| async {
-                let hostname = self.url.to_hostname().unwrap();
-                println!("Hostname is {}", hostname);
+        let is_listening = Arc::new(AtomicBool::new(false));
 
-                if let Err(e) = msg {
-                    warn!("Read err: {}", e);
-                    return;
+        let is_listening_clone = is_listening.clone();
+        let self_clone = self.clone();
+        let handle = thread::spawn(move || {
+            while is_listening_clone.load(Ordering::Relaxed) {
+                let res = block_on(self_clone.send_msg(Message::Ping(Vec::new())));
+                if res.is_err() {
+                    error!("Could not send heartbeat: {}", res.unwrap_err());
                 }
 
-                let msg = msg.unwrap();
-                if msg.is_text() {
-                    let msg = msg.into_text().unwrap();
-                    debug!("New Msg: {}", msg);
+                thread::sleep(HEARTBEAT_INTERVAL);
+            }
+        });
 
-                    let handle = get_app().await;
+        let self_clone = self.clone();
+        state
+            .by_ref()
+            .for_each_concurrent(2, |msg| {
+                let self_clone = self_clone.clone();
+                async move {
+                    let hostname = self.url.to_hostname().unwrap();
+                    println!("Hostname is {}", hostname);
 
-                    let res = handle.emit_all(
-                        &format!("msg-{}", hostname),
-                        WsMessagePayload { message: msg },
-                    );
-
-                    if res.is_err() {
-                        error!("Could not send msg payload: {}", res.unwrap_err());
+                    if let Err(e) = msg {
+                        warn!("Read err: {}", e);
+                        return;
                     }
-                } else {
-                    debug!("Unknown msg {:#?}", msg);
+
+                    let msg = msg.unwrap();
+                    if msg.is_ping() {
+                        let res = self_clone.send_msg(Message::Pong(Vec::new())).await;
+                        error!("Could not send ping message: {}", res.unwrap_err());
+                    }
+
+                    if msg.is_text() {
+                        let msg = msg.into_text().unwrap();
+                        debug!("New Msg: {}", msg);
+
+                        let handle = get_app().await;
+
+                        let res = handle.emit_all(
+                            &format!("msg-{}", hostname),
+                            WsMessagePayload { message: msg },
+                        );
+
+                        if res.is_err() {
+                            error!("Could not send msg payload: {}", res.unwrap_err());
+                        }
+                    } else {
+                        debug!("Unknown msg {:#?}", msg);
+                    }
                 }
             })
             .await;
 
-
         let app = get_app().await;
         let hostname = self.url.to_hostname().unwrap();
+
+        is_listening.store(false, Ordering::Release);
+        debug!("Waiting for heartbeat handle to exit");
+
+        let _ignore = handle.join();
 
         app.emit_all(
             "ws_client_update",

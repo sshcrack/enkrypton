@@ -1,3 +1,8 @@
 .rce-container-mbox {
     overflow-x: visible;
+    color: black;
+
+    .rce-mbox {
+        background: var(--chakra-colors-whiteAlpha-600);
+    }
 }

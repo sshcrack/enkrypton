@@ -84,7 +84,6 @@ export default function Chat(props: FlexProps) {
                     text={msg}
                     title={selfSent ? "You" : "Other"}
                     titleColor='white'
-                    styles={{ background: "var(--chakra-colors-whiteAlpha-600)", color: "black" }}
                 />
             })}
         </Flex>

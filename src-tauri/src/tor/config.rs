@@ -6,7 +6,7 @@ use port_check::free_local_port;
 
 use crate::client::Client;
 
-use super::consts::get_tor_dir;
+use super::consts::get_root_dir;
 
 #[derive(Debug, Clone)]
 pub struct TorConfig {
@@ -38,6 +38,11 @@ impl TorConfig {
         self.service_port
     }
 
+
+    pub fn service_dir(&self) -> &OsString {
+        return &self.service_dir;
+    }
+
     pub fn get_socks_host(&self) -> String {
         return format!("127.0.0.1:{}", self.socks_port);
     }
@@ -64,7 +69,7 @@ lazy_static! {
 }
 
 fn get_service_dir() -> Result<OsString> {
-    let mut dir = get_tor_dir();
+    let mut dir = get_root_dir();
     dir.push("service");
 
     if !dir.is_dir() {

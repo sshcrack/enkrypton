@@ -16,6 +16,7 @@ lazy_static! {
     pub static ref TOR_BINARY_HASH: String = get_tor_hash();
     pub static ref TOR_BINARY_PATH: PathBuf = get_tor_path();
     pub static ref TOR_THREAD: Arc<RwLock<Option<JoinHandle<()>>>> = Arc::default();
+    pub static ref TOR_START_LOCK: Arc<RwLock<bool>> = Arc::default();
 
     pub static ref TO_TOR_TX: Arc<RwLock<Option<Sender<Client2TorMsg>>>> = Arc::default();
     pub(super) static ref TO_TOR_RX: Arc<RwLock<Option<Receiver<Client2TorMsg>>>> = Arc::default();
@@ -45,19 +46,22 @@ fn get_tor_hash() -> String {
     return String::from(hash);
 }
 
-pub fn get_tor_dir() -> PathBuf {
-    current_exe().unwrap().parent().unwrap().to_path_buf()
+pub fn get_root_dir() -> PathBuf {
+    let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
+    buf.push("enkrypton");
+
+    buf
 }
 
 pub fn get_torrc() -> PathBuf {
-    let mut dir = get_tor_dir();
+    let mut dir = get_root_dir();
     dir.push("torrc");
 
     return dir;
 }
 
 fn get_tor_path() -> PathBuf {
-    let mut tor_write_path = get_tor_dir();
+    let mut tor_write_path = get_root_dir();
     tor_write_path.set_file_name("enkrypton_tor.exe");
 
     return tor_write_path;

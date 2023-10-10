@@ -14,7 +14,7 @@ function App() {
     tor.get_hostname()
       .then(e => {
         if (!e)
-          return
+          return console.error("Failed to get hostname")
 
         const r: GeneralUser[] = [
           {

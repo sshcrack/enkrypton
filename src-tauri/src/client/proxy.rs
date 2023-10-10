@@ -14,7 +14,7 @@ pub struct SocksProxy {
 
 impl SocksProxy {
     pub fn new() -> Result<Self> {
-        let addr = format!("socks5://127.0.0.1:{}", CONFIG.socks_port);
+        let addr = format!("socks5://127.0.0.1:{}", CONFIG.socks_port());
 
         let url = Url::parse(&addr)?;
         let scheme = url.scheme();

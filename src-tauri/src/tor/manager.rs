@@ -22,17 +22,16 @@ use crate::{
 
 use super::{
     config::CONFIG,
-    consts::{get_torrc, TOR_THREAD},
+    consts::{get_torrc, TOR_THREAD, TOR_START_LOCK},
 };
 
 pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
-    CONFIG.initialize();
-
     let already_started = TOR_THREAD.read().await;
     if already_started.is_some() {
         return Err(anyhow!("An Tor instance has already been started."));
     }
 
+    let mut lock = TOR_START_LOCK.write().await;
     drop(already_started);
 
     info!("Checking integrity...");
@@ -92,6 +91,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
 
     let hostname = get_service_hostname()?;
     info!("Onion Service Hostname is {:?}", hostname);
+    *lock = true;
     Ok(())
 }
 

@@ -42,6 +42,6 @@ export function renderPage(Page: () => JSX.Element) {
           <Page />
         </ConsoleListener>
       </ChakraProvider>
-    </React.StrictMode>,
+    </React.StrictMode>
   );
 }

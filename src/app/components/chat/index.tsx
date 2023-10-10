@@ -1,4 +1,4 @@
-import { Button, Flex, FlexProps, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react';
+import { Button, Flex, FlexProps, Input, InputGroup, InputLeftAddon, InputRightElement, Text } from '@chakra-ui/react';
 import { useContext, useEffect, useState } from 'react';
 import { MessageBox } from 'react-chat-elements';
 import 'react-chat-elements/dist/main.css';
@@ -67,13 +67,17 @@ export default function Chat(props: FlexProps) {
         {...props}
     >
         <Flex w='100%' h='100%' flex='1' flexDir='column' overflowX='auto'>
+            <InputGroup>
+                <InputLeftAddon children='Hostname' />
+                <Input value={active?.onionHostname} isReadOnly />
+            </InputGroup>
             {messages.map(({ msg, selfSent, date }, i) => {
                 console.log("processing", msg, selfSent)
                 return <MessageBox
                     position={selfSent ? "right" : "left"}
                     type={'text'}
                     date={date}
-                    focus={messages.length - 1 === i}
+                    focus={false}
                     forwarded={false}
                     id={i}
                     notch={false}

@@ -1,7 +1,8 @@
 use std::{ffi::OsString, fs};
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use lazy_static::lazy_static;
+use port_check::free_local_port;
 
 use crate::client::Client;
 
@@ -9,13 +10,34 @@ use super::consts::get_tor_dir;
 
 #[derive(Debug, Clone)]
 pub struct TorConfig {
-    pub socks_port: u32,
+    socks_port: u16,
 
-    pub service_dir: OsString,
-    pub service_port: u16,
+    service_dir: OsString,
+    service_port: u16,
 }
 
 impl TorConfig {
+    fn new() -> Result<Self> {
+        let socks_port = free_local_port().ok_or(anyhow!("Could not find a free port."))?;
+
+        let service_dir = get_service_dir()?;
+        let service_port = free_local_port().ok_or(anyhow!("Could not find a free service port."))?;
+
+        return Ok(Self {
+            socks_port,
+            service_dir,
+            service_port,
+        });
+    }
+
+    pub fn socks_port(&self) -> u16 {
+        self.socks_port
+    }
+
+    pub fn service_port(&self) -> u16 {
+        self.service_port
+    }
+
     pub fn get_socks_host(&self) -> String {
         return format!("127.0.0.1:{}", self.socks_port);
     }
@@ -37,12 +59,7 @@ HiddenServicePort 80 {}",
 }
 
 lazy_static! {
-    pub static ref CONFIG: TorConfig = TorConfig {
-        socks_port: 14569,
-
-        service_dir: get_service_dir().unwrap(),
-        service_port: 5467
-    };
+    pub static ref CONFIG: TorConfig =  TorConfig::new().unwrap();
     pub static ref TOR_CLIENT: Client = Client::from_config().unwrap();
 }
 

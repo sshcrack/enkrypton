@@ -31,7 +31,7 @@ function App() {
     <Flex w='100%' h='100%' flexDir='column'>
       <Header />
       <Flex w='100%' h='100%'>
-        <UserList receivers={receivers} />
+        <UserList receivers={receivers} setReceivers={setReceivers}/>
         <Chat flex='1' />
       </Flex>
     </Flex>

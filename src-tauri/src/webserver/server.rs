@@ -27,7 +27,7 @@ async fn server_mainloop() -> Result<()> {
         .service(hello)
         .route("/ws/", web::get().to(ws_index))
     })
-        .bind(("127.0.0.1", CONFIG.service_port))?
+        .bind(("127.0.0.1", CONFIG.service_port()))?
         .run()
         .await?;
 

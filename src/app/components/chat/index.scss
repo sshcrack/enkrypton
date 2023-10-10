@@ -2,7 +2,11 @@
     overflow-x: visible;
     color: black;
 
-    .rce-mbox {
-        background: var(--chakra-colors-whiteAlpha-600);
-    }
+}
+
+.rce-mbox {
+    background: var(--chakra-colors-whiteAlpha-600);
+}
+.rce-mbox-right {
+    background: var(--chakra-colors-cyan-700);
 }

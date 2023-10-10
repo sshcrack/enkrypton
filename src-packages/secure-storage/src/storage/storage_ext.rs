@@ -6,14 +6,16 @@ use argon2::{
     Argon2, PasswordVerifier,
 };
 use byteorder::{WriteBytesExt, LE};
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::{
     consts::{FILE_ID_BYTES, KEY_LENGTH},
     encryption::aes::{aes_decrypt, aes_encrypt},
 };
 
-#[derive(Debug)]
-pub struct RawStorageData<T> {
+#[derive(Debug, Zeroize, ZeroizeOnDrop)]
+pub struct SecureStorage<T: zeroize::Zeroize> {
+    #[zeroize(skip)]
     pub(super) pass_hash: PasswordHashString,
     pub(super) iv: Box<[u8]>,
     pub(super) encrypted_data: Box<[u8]>,
@@ -22,9 +24,9 @@ pub struct RawStorageData<T> {
     pub(super) data: Option<T>,
 }
 
-impl<T> RawStorageData<T>
+impl<T> SecureStorage<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug,
+    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
     fn decrypt_crypto_key(&mut self, password: &[u8]) -> Result<()> {
         let argon2 = Argon2::default();

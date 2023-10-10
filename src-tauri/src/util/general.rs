@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::{PathBuf, Path}, env::current_exe};
 
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
@@ -8,6 +8,14 @@ use tauri::AppHandle;
 use url::Url;
 
 use crate::tor::consts::APP_HANDLE;
+
+
+pub fn get_root_dir() -> PathBuf {
+    let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
+    buf.push("enkrypton");
+
+    buf
+}
 
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where

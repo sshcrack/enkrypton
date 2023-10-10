@@ -1,0 +1,16 @@
+use std::sync::Arc;
+
+use lazy_static::lazy_static;
+
+
+mod util;
+mod data;
+mod manager;
+
+pub use manager::*;
+pub use data::*;
+use tokio::sync::RwLock;
+
+lazy_static! {
+    pub static ref STORAGE: Arc<RwLock<StorageManager>> = Arc::new(RwLock::new(StorageManager::new()));
+}

@@ -11,8 +11,9 @@ mod tests {
     use crate::storage::*;
 
     use serde::{Deserialize, Serialize};
+    use zeroize::Zeroize;
 
-    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize, Zeroize)]
     struct TestData {
         test: String,
         hi: u64
@@ -26,10 +27,10 @@ mod tests {
             hi: 69420
         };
 
-        let mut storage = RawStorageData::generate(pass, initial_data).expect("Could not generate storage");
+        let mut storage = SecureStorage::generate(pass, initial_data).expect("Could not generate storage");
         let raw = storage.to_raw().unwrap();
 
-        let new_str = RawStorageData::<TestData>::parse(&raw, pass).unwrap();
+        let new_str = SecureStorage::<TestData>::parse(&raw, pass).unwrap();
         println!("{:?}", new_str);
     }
 }

@@ -3,23 +3,24 @@ use std::fmt::Debug;
 use anyhow::{anyhow, Result};
 use argon2::password_hash::{Encoding, PasswordHashString};
 use byteorder::{ReadBytesExt, LE};
+use zeroize::Zeroize;
 
-use crate::{consts::{IV_LENGTH, FILE_ID_BYTES}, RawStorageData};
+use crate::{consts::{IV_LENGTH, FILE_ID_BYTES}, SecureStorage};
 
 const U64_BYTES: usize = u64::BITS as usize / 8usize;
 
 pub trait Parsable<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug,
+    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
-    fn parse(raw: &[u8], pass: &[u8]) -> Result<RawStorageData<T>>;
+    fn parse(raw: &[u8], pass: &[u8]) -> Result<SecureStorage<T>>;
 }
 
-impl<T> Parsable<T> for RawStorageData<T>
+impl<T> Parsable<T> for SecureStorage<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug,
+    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
-    fn parse(raw: &[u8], pass: &[u8]) -> Result<RawStorageData<T>> {
+    fn parse(raw: &[u8], pass: &[u8]) -> Result<SecureStorage<T>> {
         let mut buffer = Vec::from(raw);
         if raw.len() < FILE_ID_BYTES.len() {
             return Err(anyhow!("Could not parse file, too short"));
@@ -53,7 +54,7 @@ where
         }
 
         let iv = buffer.drain(0..*IV_LENGTH).collect();
-        let mut constructed = RawStorageData {
+        let mut constructed = SecureStorage {
             pass_hash: hash,
             iv,
             encrypted_data: buffer.into_boxed_slice(),

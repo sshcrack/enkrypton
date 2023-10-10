@@ -3,21 +3,22 @@ use std::fmt::Debug;
 use anyhow::{Result, anyhow};
 use argon2::{Argon2, password_hash::{SaltString, rand_core::OsRng}, PasswordHasher};
 use openssl::rand::rand_bytes;
+use zeroize::Zeroize;
 
-use crate::{RawStorageData, consts::{IV_LENGTH, KEY_LENGTH}};
+use crate::{SecureStorage, consts::{IV_LENGTH, KEY_LENGTH}};
 
 pub trait Generate<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug,
+    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
-    fn generate(pass: &[u8], data: T) -> Result<RawStorageData<T>>;
+    fn generate(pass: &[u8], data: T) -> Result<SecureStorage<T>>;
 }
 
-impl<T> Generate<T> for RawStorageData<T>
+impl<T> Generate<T> for SecureStorage<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug,
+    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
-    fn generate(pass: &[u8], data: T) -> Result<RawStorageData<T>> {
+    fn generate(pass: &[u8], data: T) -> Result<SecureStorage<T>> {
         let mut iv = vec![0u8; *IV_LENGTH];
         rand_bytes(&mut iv)?;
 

@@ -1,9 +1,11 @@
-use std::{env::current_exe, path::PathBuf, sync::Arc, thread::JoinHandle};
+use std::{path::PathBuf, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 
 use tauri::{async_runtime::RwLock, AppHandle};
+
+use crate::util::get_root_dir;
 
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
 
@@ -44,13 +46,6 @@ fn get_tor_hash() -> String {
     hex::decode(hash).unwrap();
 
     return String::from(hash);
-}
-
-pub fn get_root_dir() -> PathBuf {
-    let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
-    buf.push("enkrypton");
-
-    buf
 }
 
 pub fn get_torrc() -> PathBuf {

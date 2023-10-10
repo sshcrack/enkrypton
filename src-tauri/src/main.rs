@@ -6,27 +6,25 @@ mod client;
 mod commands;
 mod payloads;
 mod startup;
+mod storage;
 mod tor;
-mod webserver;
 mod util;
-
-
-
-
+mod webserver;
 
 use log::{error, info, LevelFilter};
 
+use commands::ws::*;
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
-use commands::ws::*;
 use tor::manager;
 use webserver::server::start_webserver;
 
 use crate::commands::restart;
-use crate::commands::tor::{tor_check, tor_hostname, tor_is_alive};
+use crate::commands::tor::*;
+use crate::commands::storage::*;
 fn main() {
     block_on(setup_channels());
     start_webserver();
@@ -42,9 +40,18 @@ fn main() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
-            tor_check, restart, tor_hostname, tor_is_alive,
-            ws_connect, ws_send
-            ])
+            restart,
+
+            tor_check,
+            tor_hostname,
+            tor_is_alive,
+
+            ws_connect,
+            ws_send,
+
+            storage_is_initialized,
+            storage_is_valid
+        ])
         .on_window_event(|event| {
             let window = event.window();
             let windows = window.windows();

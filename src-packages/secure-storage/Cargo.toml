@@ -16,3 +16,4 @@ openssl = "0.10.57"
 secstr = "0.5.1"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
+zeroize = { version = "1.6.0", features = ["zeroize_derive", "derive"] }

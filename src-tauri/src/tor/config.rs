@@ -4,9 +4,7 @@ use anyhow::{Result, anyhow};
 use lazy_static::lazy_static;
 use port_check::free_local_port;
 
-use crate::client::Client;
-
-use super::consts::get_root_dir;
+use crate::{client::Client, util::get_root_dir};
 
 #[derive(Debug, Clone)]
 pub struct TorConfig {

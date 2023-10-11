@@ -27,6 +27,6 @@ pub async fn inner_func(pass: &str) -> Result<()> {
         }
     }
 
-    state.try_unlock(pass.as_bytes())?;
+    state.try_unlock(pass.as_bytes()).await?;
     return Ok(());
 }

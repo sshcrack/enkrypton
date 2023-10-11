@@ -3,14 +3,14 @@
 use sysinfo::{ProcessExt, System, SystemExt};
 use tauri::{async_runtime::block_on, Runtime};
 
-use crate::tor::{manager::wait_and_stop_tor, consts::TOR_BINARY_PATH};
+use crate::{tor::consts::TOR_BINARY_PATH, util::on_exit};
 
 #[tauri::command]
 pub fn restart<R: Runtime>(
     app: tauri::AppHandle<R>,
     _window: tauri::Window<R>,
 ) -> Result<(), String> {
-    block_on(wait_and_stop_tor()).or_else(|e| Err(e.to_string()))?;
+    block_on(on_exit()).or_else(|e| Err(e.to_string()))?;
 
     let tor_path = TOR_BINARY_PATH.file_name().unwrap();
     let tor_path = tor_path.to_str().unwrap();

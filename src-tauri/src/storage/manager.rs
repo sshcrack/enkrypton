@@ -4,7 +4,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self, JoinHandle},
+    thread,
 };
 
 use anyhow::{anyhow, Result};
@@ -13,8 +13,8 @@ use secure_storage::{Generate, Parsable, SecureStorage};
 use tokio::{
     fs::{remove_file, File},
     io::{AsyncReadExt, AsyncWriteExt},
-    spawn,
     sync::RwLock,
+    task::{spawn, JoinHandle},
 };
 
 use super::{util::get_storage_path, StorageData};
@@ -30,6 +30,8 @@ pub struct StorageManager {
     storage: Arc<RwLock<Option<Storage>>>,
 
     should_exit: Arc<AtomicBool>,
+    dirty: Arc<AtomicBool>,
+
     save_thread: Option<JoinHandle<()>>,
 }
 
@@ -43,6 +45,7 @@ impl StorageManager {
             path: f_path,
             storage: Arc::new(RwLock::new(None)),
             should_exit: Arc::new(AtomicBool::new(false)),
+            dirty: Arc::new(AtomicBool::new(false)),
             save_thread: None,
         };
 
@@ -51,12 +54,12 @@ impl StorageManager {
         e
     }
 
-    pub fn exit_blocking(&self) -> Result<()> {
+    pub async fn exit(&mut self) -> Result<()> {
         self.should_exit.store(true, Ordering::Relaxed);
         let val = self.save_thread.take();
 
         if let Some(v) = val {
-            v.join().or_else(|e| Err(anyhow!("Could not join save thread")))?;
+            v.await?;
         }
 
         Ok(())
@@ -65,6 +68,7 @@ impl StorageManager {
     // Auto-saving every 20 seconds
     fn run_save_thread(&mut self) {
         let temp = self.storage.clone();
+        let dirty = self.dirty.clone();
         let path = self.path.clone();
 
         let should_exit = self.should_exit.clone();
@@ -73,6 +77,9 @@ impl StorageManager {
                 //TODO Cleanup
 
                 thread::sleep(std::time::Duration::from_secs(20));
+                if !dirty.load(Ordering::Relaxed) {
+                    continue;
+                }
 
                 let mut storage = temp.write().await;
                 if storage.is_none() {
@@ -81,13 +88,13 @@ impl StorageManager {
 
                 // Copied from self.save()
                 debug!("Writing to {:?}...", path);
-                let mut f = File::create(path).await;
+                let f = File::create(path.clone()).await;
                 if f.is_err() {
                     error!("Could not open storage file: {}", f.unwrap_err());
                     continue;
                 }
 
-                let f = f.unwrap();
+                let mut f = f.unwrap();
                 debug!("Getting raw...");
 
                 let s = storage.as_mut().unwrap();
@@ -100,7 +107,13 @@ impl StorageManager {
                 let raw = raw.unwrap();
 
                 debug!("Writing total of {} bytes...", raw.len());
-                f.write_all(&raw).await?;
+                let res = f.write_all(&raw).await;
+                if res.is_err() {
+                    error!("Could not write to storage file: {}", res.unwrap_err());
+                    continue;
+                }
+
+                dirty.store(false, Ordering::Relaxed);
             }
         });
 
@@ -127,7 +140,7 @@ impl StorageManager {
             Storage::parse(&buf)?
         };
 
-        self.storage = Some(Arc::new(RwLock::new(storage)));
+        self.storage.write().await.replace(storage);
         self.has_parsed = true;
 
         if newly_generated {
@@ -169,9 +182,23 @@ impl StorageManager {
         Ok(())
     }
 
+    pub fn mark_dirty(&self) {
+        self.dirty.store(true, Ordering::Relaxed);
+    }
+
+    pub async fn data(&self) -> Option<StorageData> {
+        let state = self.storage.read().await;
+        if state.is_none() {
+            return None;
+        }
+
+        let inner = state.as_ref().unwrap();
+        return inner.data.clone();
+    }
+
     pub async fn modify_storage<Func, T>(&mut self, f: Func) -> Result<T>
     where
-        Func: Fn(&mut Storage) -> Result<T>,
+        Func: FnOnce(&mut Storage) -> Result<T>,
     {
         let mut storage = self.storage.write().await;
 

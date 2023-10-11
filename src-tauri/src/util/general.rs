@@ -7,7 +7,7 @@ use regex::Regex;
 use tauri::AppHandle;
 use url::Url;
 
-use crate::tor::consts::APP_HANDLE;
+use crate::{tor::{consts::APP_HANDLE, manager::{stop_tor, wait_for_exit}}, storage::STORAGE};
 
 
 pub fn get_root_dir() -> PathBuf {
@@ -57,4 +57,22 @@ lazy_static! {
 pub fn is_onion_hostname(addr: &str) -> bool {
 
     return ONION_REGEX.is_match(addr);
+}
+
+
+
+
+
+pub async fn on_exit() -> anyhow::Result<()> {
+    debug!("Aquiring storage lock...");
+
+    let mut e = STORAGE.write().await;
+    debug!("Saving storage...");
+    e.save().await?;
+
+    stop_tor().await?;
+    wait_for_exit().await;
+    e.exit().await?;
+
+    Ok(())
 }

@@ -94,6 +94,7 @@ export function ChatInner(props: FlexProps) {
         setMsg("")
 
         const id = Date.now()
+        console.log("Add msg on send")
         addMessage({ msg, self_sent: true, date: id })
         setAdditional(id, { failed: false, sending: true })
         setFocus(Math.random())

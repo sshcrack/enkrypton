@@ -1,4 +1,6 @@
-use crate::storage::{STORAGE, StorageData};
+use anyhow::anyhow;
+
+use crate::storage::{StorageData, STORAGE};
 
 #[tauri::command]
 pub async fn storage_set(data_raw: String) -> Result<(), String> {
@@ -10,7 +12,15 @@ pub async fn storage_set(data_raw: String) -> Result<(), String> {
     let data = serde_json::from_str::<StorageData>(&data_raw)
         .or_else(|e| Err(format!("Could not parse storage data: {}", e)))?;
 
-    storage.modify_storage(|e| e.data = Some(data)).await?;
+    storage
+        .modify_storage(move |e| {
+            e.data = Some(data);
+
+            Ok(())
+        })
+        .await
+        .or_else(|e| Err(format!("Could not update storage: {:?}", e)))?;
+    storage.mark_dirty();
 
     Ok(())
 }

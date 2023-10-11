@@ -12,7 +12,7 @@ export type ReceiverSidebarProps = {
 export default function UserSidebar({ user, ...props }: ReceiverSidebarProps) {
     const { setActive, active } = useContext(MainContext)
 
-    const isActive = user === active
+    const isActive = user.onionHostname === active?.onionHostname
     const { onionHostname, nickname } = user
 
     return <Flex

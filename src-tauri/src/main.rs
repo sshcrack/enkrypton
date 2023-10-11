@@ -25,6 +25,7 @@ use webserver::server::start_webserver;
 use crate::commands::restart;
 use crate::commands::storage::*;
 use crate::commands::tor::*;
+use crate::util::on_exit;
 fn main() {
     block_on(setup_channels());
     start_webserver();
@@ -71,7 +72,7 @@ fn main() {
             match event.event() {
                 WindowEvent::Destroyed => {
                     info!("Exiting...");
-                    let res = block_on(manager::wait_and_stop_tor());
+                    let res = block_on(on_exit());
                     if res.is_err() {
                         error!("Could not stop tor: {}", res.unwrap_err());
                     }

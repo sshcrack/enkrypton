@@ -17,7 +17,7 @@ use crate::{
             messages::{Client2TorMsg, Tor2ClientMsg, TorStartError},
             tools::{get_from_tor_rx, get_to_tor_tx},
         }, service::get_service_hostname,
-    },
+    }, storage::STORAGE,
 };
 
 use super::{
@@ -126,11 +126,5 @@ pub async fn stop_tor() -> anyhow::Result<()> {
     info!("Sending exit signal...");
     state.send(Client2TorMsg::Exit()).await?;
 
-    Ok(())
-}
-
-pub async fn wait_and_stop_tor() -> anyhow::Result<()> {
-    stop_tor().await?;
-    wait_for_exit().await;
     Ok(())
 }

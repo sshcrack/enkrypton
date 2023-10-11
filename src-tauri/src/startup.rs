@@ -18,7 +18,7 @@ use crate::{
         consts::APP_HANDLE,
         manager::{self},
         misc::messages::TorStartError,
-    },
+    }, util::on_exit,
 };
 
 pub fn startup(app: &mut App) {
@@ -93,7 +93,7 @@ pub fn startup(app: &mut App) {
 
         debug!("Running stop on main thread");
         let r = handle.run_on_main_thread(|| {
-            block_on(manager::wait_and_stop_tor()).unwrap();
+            block_on(on_exit()).unwrap();
         });
 
         handle.exit(0);

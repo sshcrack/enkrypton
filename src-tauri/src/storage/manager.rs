@@ -1,11 +1,20 @@
-use std::path::Path;
+use std::{
+    path::Path,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread::{self, JoinHandle},
+};
 
 use anyhow::{anyhow, Result};
-use log::debug;
+use log::{debug, error};
 use secure_storage::{Generate, Parsable, SecureStorage};
 use tokio::{
-    fs::File,
-    io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
+    fs::{remove_file, File},
+    io::{AsyncReadExt, AsyncWriteExt},
+    spawn,
+    sync::RwLock,
 };
 
 use super::{util::get_storage_path, StorageData};
@@ -15,23 +24,87 @@ pub type Storage = SecureStorage<StorageData>;
 pub struct StorageManager {
     path: Box<Path>,
 
-
     is_unlocked: bool,
     has_parsed: bool,
 
-    storage: Option<Storage>,
+    storage: Arc<RwLock<Option<Storage>>>,
+
+    should_exit: Arc<AtomicBool>,
+    save_thread: Option<JoinHandle<()>>,
 }
 
 impl StorageManager {
     pub fn new() -> Self {
         let f_path = get_storage_path();
 
-        Self {
+        let mut e = Self {
             is_unlocked: false,
             has_parsed: false,
             path: f_path,
-            storage: None,
+            storage: Arc::new(RwLock::new(None)),
+            should_exit: Arc::new(AtomicBool::new(false)),
+            save_thread: None,
+        };
+
+        e.run_save_thread();
+
+        e
+    }
+
+    pub fn exit_blocking(&self) -> Result<()> {
+        self.should_exit.store(true, Ordering::Relaxed);
+        let val = self.save_thread.take();
+
+        if let Some(v) = val {
+            v.join().or_else(|e| Err(anyhow!("Could not join save thread")))?;
         }
+
+        Ok(())
+    }
+
+    // Auto-saving every 20 seconds
+    fn run_save_thread(&mut self) {
+        let temp = self.storage.clone();
+        let path = self.path.clone();
+
+        let should_exit = self.should_exit.clone();
+        let handle = spawn(async move {
+            while !should_exit.load(Ordering::Relaxed) {
+                //TODO Cleanup
+
+                thread::sleep(std::time::Duration::from_secs(20));
+
+                let mut storage = temp.write().await;
+                if storage.is_none() {
+                    continue;
+                }
+
+                // Copied from self.save()
+                debug!("Writing to {:?}...", path);
+                let mut f = File::create(path).await;
+                if f.is_err() {
+                    error!("Could not open storage file: {}", f.unwrap_err());
+                    continue;
+                }
+
+                let f = f.unwrap();
+                debug!("Getting raw...");
+
+                let s = storage.as_mut().unwrap();
+                let raw = s.to_raw();
+                if raw.is_err() {
+                    error!("Could not get raw storage: {}", raw.unwrap_err());
+                    continue;
+                }
+
+                let raw = raw.unwrap();
+
+                debug!("Writing total of {} bytes...", raw.len());
+                f.write_all(&raw).await?;
+            }
+        });
+
+        self.save_thread = Some(handle)
     }
 
     /**
@@ -40,20 +113,11 @@ impl StorageManager {
     pub async fn read_or_generate(&mut self, pass: &str) -> Result<()> {
         let pass = pass.as_bytes();
 
+        let mut newly_generated = false;
         let storage = if !self.exists() {
             debug!("Generating storage...");
-            let mut storage = Storage::generate(pass, StorageData::default())?;
-
-            debug!("Writing to {:?}...", &self.path);
-            let mut f = File::create(&self.path).await?;
-
-            debug!("Getting raw...");
-            let raw = storage.to_raw()?;
-            debug!("Writing total of {} bytes...", raw.len());
-            f.write_all(&raw).await?;
-
-            self.is_unlocked = true;
-            storage
+            newly_generated = true;
+            Storage::generate(pass, StorageData::default())?
         } else {
             let mut f = File::open(&self.path).await?;
 
@@ -63,24 +127,62 @@ impl StorageManager {
             Storage::parse(&buf)?
         };
 
-        self.storage = Some(storage);
+        self.storage = Some(Arc::new(RwLock::new(storage)));
         self.has_parsed = true;
+
+        if newly_generated {
+            self.save().await?;
+            self.is_unlocked = true;
+        }
+
         Ok(())
     }
 
-    pub fn verify_password(&self, pass: &[u8]) -> Result<()> {
-        let storage = self.storage()?;
-        storage.verify_password(pass)?;
-
-        Ok(())
-    }
-
-    pub fn try_unlock(&mut self, pass: &[u8]) -> Result<()> {
-        let storage = self.storage_mut()?;
-        storage.try_decrypt(pass)?;
+    pub async fn try_unlock(&mut self, pass: &[u8]) -> Result<()> {
+        self.modify_storage(move |e| e.try_decrypt(pass)).await?;
 
         self.is_unlocked = true;
         Ok(())
+    }
+
+    pub async fn save(&mut self) -> Result<()> {
+        debug!("Writing to {:?}...", &self.path);
+        let mut f = File::create(&self.path).await?;
+
+        debug!("Getting raw...");
+        let raw = self.modify_storage(|e| e.to_raw()).await?;
+        debug!("Writing total of {} bytes...", raw.len());
+        f.write_all(&raw).await?;
+
+        Ok(())
+    }
+
+    pub async fn delete(&mut self) -> Result<()> {
+        if !self.exists() {
+            return Ok(());
+        }
+
+        remove_file(&self.path).await?;
+        self.has_parsed = false;
+        self.is_unlocked = false;
+
+        Ok(())
+    }
+
+    pub async fn modify_storage<Func, T>(&mut self, f: Func) -> Result<T>
+    where
+        Func: Fn(&mut Storage) -> Result<T>,
+    {
+        let mut storage = self.storage.write().await;
+
+        if storage.is_none() {
+            return Err(anyhow!("Storage is not initialized"));
+        }
+
+        let unwrapped = storage.as_mut().unwrap();
+        let res = f(unwrapped);
+
+        Ok(res?)
     }
 
     pub fn is_unlocked(&self) -> bool {
@@ -93,23 +195,5 @@ impl StorageManager {
 
     pub fn has_parsed(&self) -> bool {
         return self.has_parsed;
-    }
-
-    pub fn storage(&self) -> Result<&Storage> {
-        let r = self.storage.as_ref();
-        if r.is_some() {
-            return Ok(r.unwrap());
-        }
-
-        Err(anyhow!("Storage not initialized"))
-    }
-
-    pub fn storage_mut(&mut self) -> Result<&mut Storage> {
-        let r = self.storage.as_mut();
-        if r.is_some() {
-            return Ok(r.unwrap());
-        }
-
-        Err(anyhow!("Storage not initialized"))
     }
 }

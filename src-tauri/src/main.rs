@@ -51,7 +51,14 @@ fn main() {
 
             storage_exists,
             storage_is_unlocked,
-            storage_unlock_or_create
+            storage_unlock_or_create,
+
+            storage_delete,
+            storage_set,
+            storage_get,
+            storage_save,
+
+            splashscreen_closed
         ])
         .on_window_event(|event| {
             let window = event.window();

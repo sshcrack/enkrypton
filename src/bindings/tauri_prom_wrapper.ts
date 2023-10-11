@@ -4,7 +4,8 @@ import { TorStartupErrorPayload } from './rs/TorStartupErrorPayload';
 
 type Event2Payload = {
     "tor_start": StartTorPayload,
-    "tor_start_error": TorStartupErrorPayload
+    "tor_start_error": TorStartupErrorPayload,
+    "splashscreen_closed": null
 }
 
 export function listenSync<E extends keyof Event2Payload>(event: E, handler: (payload: Event<Event2Payload[E]>) => unknown) {

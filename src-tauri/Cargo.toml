@@ -1,6 +1,6 @@
 [package]
 name = "enkrypton"
-version = "0.0.0"
+version = "1.0.0"
 description = "🗨️Message anybody on the tor network\n🔒E2E - RSA\nThis app was created for my facharbeit"
 authors = ["sshcrack"]
 license = ""

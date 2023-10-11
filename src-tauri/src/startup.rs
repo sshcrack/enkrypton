@@ -54,6 +54,7 @@ pub fn startup(app: &mut App) {
             if res.is_ok() {
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();
+                splashscreen_window.app_handle().emit_all("splashscreen_closed", ()).unwrap();
             }
 
             if res.is_err() {

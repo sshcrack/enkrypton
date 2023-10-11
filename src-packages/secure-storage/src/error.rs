@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Errors {
     PasswordError(argon2::password_hash::Error),
     ParsePassword(argon2::password_hash::Error),
@@ -14,8 +14,6 @@ pub enum Errors {
     RandomIV(openssl::error::ErrorStack),
     GenerateHash(argon2::password_hash::Error)
 }
-
-impl std::error::Error for Errors {}
 
 impl std::fmt::Display for Errors {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

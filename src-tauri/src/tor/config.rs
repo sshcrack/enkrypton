@@ -12,6 +12,8 @@ pub struct TorConfig {
 
     service_dir: OsString,
     service_port: u16,
+
+    data_dir: OsString,
 }
 
 impl TorConfig {
@@ -19,10 +21,12 @@ impl TorConfig {
         let socks_port = free_local_port().ok_or(anyhow!("Could not find a free port."))?;
 
         let service_dir = get_service_dir()?;
+        let data_dir = get_data_dir()?;
         let service_port = free_local_port().ok_or(anyhow!("Could not find a free service port."))?;
 
         return Ok(Self {
             socks_port,
+            data_dir,
             service_dir,
             service_port,
         });
@@ -53,10 +57,12 @@ impl TorConfig {
         return format!(
             "SocksPort {}
 HiddenServiceDir \"{}\"
-HiddenServicePort 80 {}",
+HiddenServicePort 80 {}
+DataDirectory \"{}\"",
             self.get_socks_host(),
             self.service_dir.to_string_lossy().replace("\\", "/"),
-            self.get_hidden_service_host()
+            self.get_hidden_service_host(),
+            self.data_dir.to_string_lossy().replace("\\", "/")
         );
     }
 }
@@ -69,6 +75,17 @@ lazy_static! {
 fn get_service_dir() -> Result<OsString> {
     let mut dir = get_root_dir();
     dir.push("service");
+
+    if !dir.is_dir() {
+        fs::create_dir(&dir)?;
+    }
+
+    return Ok(dir.into_os_string());
+}
+
+fn get_data_dir() -> Result<OsString> {
+    let mut dir = get_root_dir();
+    dir.push("data");
 
     if !dir.is_dir() {
         fs::create_dir(&dir)?;

@@ -9,13 +9,11 @@ import Chat from './components/chat';
 
 function App() {
   const [receivers, setReceivers] = useState<GeneralUser[]>([])
+  const [retry, setRetry] = useState(0)
 
   useEffect(() => {
     tor.get_hostname()
       .then(e => {
-        if (!e)
-          return console.error("Failed to get hostname")
-
         const r: GeneralUser[] = [
           {
             nickname: "Self",
@@ -24,6 +22,9 @@ function App() {
         ]
 
         setReceivers(r)
+      }).catch(e => {
+        setTimeout(() => setRetry(retry + 1), 100)
+        return console.error("Failed to get hostname, retrying", e)
       })
   }, [])
 
@@ -31,7 +32,7 @@ function App() {
     <Flex w='100%' h='100%' flexDir='column'>
       <Header />
       <Flex w='100%' h='100%'>
-        <UserList receivers={receivers} setReceivers={setReceivers}/>
+        <UserList receivers={receivers} setReceivers={setReceivers} />
         <Chat flex='1' />
       </Flex>
     </Flex>

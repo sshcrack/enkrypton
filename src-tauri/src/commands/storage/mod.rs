@@ -1,7 +1,7 @@
-mod is_valid;
-mod is_initialized;
-mod initialize;
+mod unlocked;
+mod exists;
+mod unlock_or_create;
 
-pub use is_valid::*;
-pub use initialize::*;
-pub use is_initialized::*;
+pub use unlocked::*;
+pub use unlock_or_create::*;
+pub use exists::*;

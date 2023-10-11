@@ -23,8 +23,8 @@ use tor::manager;
 use webserver::server::start_webserver;
 
 use crate::commands::restart;
-use crate::commands::tor::*;
 use crate::commands::storage::*;
+use crate::commands::tor::*;
 fn main() {
     block_on(setup_channels());
     start_webserver();
@@ -49,8 +49,9 @@ fn main() {
             ws_connect,
             ws_send,
 
-            storage_is_initialized,
-            storage_is_valid
+            storage_exists,
+            storage_is_unlocked,
+            storage_unlock_or_create
         ])
         .on_window_event(|event| {
             let window = event.window();

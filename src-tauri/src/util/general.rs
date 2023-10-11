@@ -1,4 +1,4 @@
-use std::{fmt::Display, path::{PathBuf, Path}, env::current_exe};
+use std::{fmt::Display, path::PathBuf, env::current_exe, fs::create_dir_all};
 
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
@@ -13,6 +13,10 @@ use crate::tor::consts::APP_HANDLE;
 pub fn get_root_dir() -> PathBuf {
     let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
     buf.push("enkrypton");
+
+    if !buf.is_dir() {
+        create_dir_all(&buf).unwrap();
+    }
 
     buf
 }

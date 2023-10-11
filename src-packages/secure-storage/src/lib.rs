@@ -1,8 +1,9 @@
 mod encryption;
 mod storage;
 mod consts;
+mod error;
 
-
+pub use error::*;
 pub use storage::*;
 
 
@@ -13,7 +14,7 @@ mod tests {
     use serde::{Deserialize, Serialize};
     use zeroize::Zeroize;
 
-    #[derive(Debug, Clone, Serialize, Deserialize, Zeroize)]
+    #[derive(Debug, Clone, Serialize, Deserialize, Zeroize, PartialEq, Eq, PartialOrd, Ord)]
     struct TestData {
         test: String,
         hi: u64
@@ -27,10 +28,12 @@ mod tests {
             hi: 69420
         };
 
-        let mut storage = SecureStorage::generate(pass, initial_data).expect("Could not generate storage");
+        let mut storage = SecureStorage::generate(pass, initial_data.clone()).expect("Could not generate storage");
         let raw = storage.to_raw().unwrap();
 
-        let new_str = SecureStorage::<TestData>::parse(&raw, pass).unwrap();
+        let mut new_str = SecureStorage::<TestData>::parse(&raw).unwrap();
+        new_str.try_decrypt(pass).unwrap();
+        assert_eq!(&initial_data, new_str.data.as_ref().unwrap(), "Test data not the same");
         println!("{:?}", new_str);
     }
 }

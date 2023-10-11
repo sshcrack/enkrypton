@@ -1,35 +1,43 @@
-import { useEffect, useState } from "react"
-import "./App.scss";
-import ErrorScreen from './components/error';
-import LoadingScreen from './components/loading';
-import { TorStartupErrorPayload } from '../bindings/rs/TorStartupErrorPayload';
-import { listenSync } from '../bindings/tauri_prom_wrapper';
-import tor from '../bindings/tor';
-//import { info, error } from "tauri-plugin-log-api";
+import { useEffect, useState } from 'react'
+import storage from "../bindings/storage"
+import { Button, Flex, Input, Text, useToast } from '@chakra-ui/react'
+import TorStart from './TorStart';
 
-function App() {
-  const [percentage, setCurrPercentage] = useState(0);
-  const [status, setStatus] = useState("Initializing...");
-  const [error, setError] = useState<TorStartupErrorPayload | null>(null)
-  console.log("app page")
+export default function App() {
+  const toast = useToast();
+
+  const [unlocked, setUnlocked] = useState(null as boolean | null)
+  const [pwd, setPwd] = useState("");
+  const [loading, setLoading] = useState(false)
+
 
   useEffect(() => {
-    const unlisten_start = listenSync("tor_start", ({ payload }) => {
-      setCurrPercentage(payload.progress)
-      setStatus(payload.message)
-    });
-
-    let unlisten_error = listenSync("tor_start_error", ({ payload }) => setError(payload));
-    tor.send_ready();
-
-    return () => {
-      unlisten_start && unlisten_start();
-      unlisten_error && unlisten_error()
-    }
+    storage.is_unlocked()
+      .then(unlocked => setUnlocked(unlocked))
   }, [])
 
+  const unlock = () => {
+    setLoading(true)
+    storage.unlockOrCreate(pwd)
+      .then(() => {
+        setUnlocked(true)
+      })
+      .catch(e => toast({
+        title: "Error",
+        description: e
+      }))
+      .finally(() => setLoading(false))
+  }
 
-  return error ? <ErrorScreen error={error} /> : <LoadingScreen progress={percentage} status={status} />
+  if (!unlocked) {
+    return <Flex w='100%' h='100%' flexDir='column' justifyContent='space-between'>
+      <Text>Unlocked: {unlocked ? "true" : "false"}</Text>
+
+      <Input type="text" placeholder='Enter password' value={pwd} onChange={e => setPwd(e.target.value)} />
+      <Button isLoading={loading} colorScheme='green' onClick={() => unlock()}>Submit</Button>
+    </Flex>
+  }
+
+
+  return <TorStart />
 }
-
-export default App;

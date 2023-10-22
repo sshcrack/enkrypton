@@ -4,12 +4,16 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread,
+    thread, fs::{Permissions, self},
 };
 
 use anyhow::{anyhow, Result};
 use log::{debug, error};
 use secure_storage::{Generate, Parsable, SecureStorage};
+
+#[cfg(target_family="unix")]
+use smol::fs::unix::PermissionsExt;
+
 use tokio::{
     fs::{remove_file, File},
     io::{AsyncReadExt, AsyncWriteExt},
@@ -38,6 +42,10 @@ pub struct StorageManager {
 impl StorageManager {
     pub fn new() -> Self {
         let f_path = get_storage_path();
+
+        #[cfg(target_family="unix")]
+        fs::set_permissions(&f_path, Permissions::from_mode(0o700)).unwrap();
+
 
         let mut e = Self {
             is_unlocked: false,

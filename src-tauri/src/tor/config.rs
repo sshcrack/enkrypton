@@ -1,8 +1,13 @@
-use std::{ffi::OsString, fs};
+use std::{
+    ffi::OsString,
+    fs::{self, Permissions},
+};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
 use port_check::free_local_port;
+#[cfg(target_family="unix")]
+use smol::fs::unix::PermissionsExt;
 
 use crate::{client::Client, util::get_root_dir};
 
@@ -21,8 +26,13 @@ impl TorConfig {
         let socks_port = free_local_port().ok_or(anyhow!("Could not find a free port."))?;
 
         let service_dir = get_service_dir()?;
+
+        #[cfg(target_family = "unix")]
+        fs::set_permissions(&service_dir, Permissions::from_mode(0o700)).unwrap();
+
         let data_dir = get_data_dir()?;
-        let service_port = free_local_port().ok_or(anyhow!("Could not find a free service port."))?;
+        let service_port =
+            free_local_port().ok_or(anyhow!("Could not find a free service port."))?;
 
         return Ok(Self {
             socks_port,
@@ -39,7 +49,6 @@ impl TorConfig {
     pub fn service_port(&self) -> u16 {
         self.service_port
     }
-
 
     pub fn service_dir(&self) -> &OsString {
         return &self.service_dir;
@@ -68,7 +77,7 @@ DataDirectory \"{}\"",
 }
 
 lazy_static! {
-    pub static ref CONFIG: TorConfig =  TorConfig::new().unwrap();
+    pub static ref CONFIG: TorConfig = TorConfig::new().unwrap();
     pub static ref TOR_CLIENT: Client = Client::from_config().unwrap();
 }
 

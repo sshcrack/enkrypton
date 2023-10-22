@@ -79,8 +79,8 @@ fn get_tor_zip_path() -> PathBuf {
 fn get_tor_path() -> PathBuf {
     let tor_write_path = get_root_dir();
     #[cfg(target_os="windows")]
-    return tor_write_path.join("enkrypton_tor.exe");
+    return tor_write_path.join("tor.exe");
 
     #[cfg(target_os="linux")]
-    return tor_write_path.join("enkrypton_tor");
+    return tor_write_path.join("tor");
 }

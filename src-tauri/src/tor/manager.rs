@@ -9,7 +9,7 @@ use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
 use crate::{
-    payloads::StartTorPayload,
+    messaging::payloads::StartTorPayload,
     tor::{
         mainloop::tor_main_loop,
         misc::{

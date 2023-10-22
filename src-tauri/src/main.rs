@@ -2,14 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 /** This crate just describes the ws and https client.*/
-mod client;
 mod commands;
-mod payloads;
 mod startup;
 mod storage;
 mod tor;
 mod util;
-mod webserver;
+mod messaging;
 
 use log::{error, info, LevelFilter};
 
@@ -19,7 +17,7 @@ use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
-use webserver::server::start_webserver;
+use messaging::webserver::server::start_webserver;
 
 use crate::commands::restart;
 use crate::commands::storage::*;

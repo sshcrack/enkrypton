@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    payloads::{WsClientStatus, WsClientUpdate, WsMessagePayload},
+    messaging::payloads::{WsClientStatus, WsClientUpdate, WsMessagePayload},
     util::{get_app, url::UrlOnion},
 };
 use anyhow::{anyhow, Result};

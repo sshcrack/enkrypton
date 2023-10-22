@@ -1,6 +1,6 @@
 use log::{debug, error};
 
-use crate::client::{ClientManager, MessagingClient};
+use crate::messaging::client::{ClientManager, MessagingClient};
 
 #[tauri::command]
 pub async fn ws_connect(onion_hostname: String) -> Result<(), String> {

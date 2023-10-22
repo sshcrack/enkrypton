@@ -12,7 +12,7 @@ use port_check::free_local_port;
 #[cfg(target_family="unix")]
 use smol::fs::unix::PermissionsExt;
 
-use crate::{client::Client, util::get_root_dir};
+use crate::{messaging::client::Client, util::get_root_dir};
 
 #[derive(Debug, Clone)]
 pub struct TorConfig {

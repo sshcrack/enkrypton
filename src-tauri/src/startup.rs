@@ -13,7 +13,7 @@ use tauri::{
 };
 
 use crate::{
-    payloads::TorStartupErrorPayload,
+    messaging::payloads::TorStartupErrorPayload,
     tor::{
         consts::APP_HANDLE,
         manager::{self},

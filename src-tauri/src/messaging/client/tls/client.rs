@@ -10,7 +10,7 @@ use tokio_socks::tcp::Socks5Stream;
 use url::Url;
 use webpki_roots::TLS_SERVER_ROOTS;
 
-use crate::client::SocksProxy;
+use crate::messaging::client::SocksProxy;
 
 use super::request::Request;
 

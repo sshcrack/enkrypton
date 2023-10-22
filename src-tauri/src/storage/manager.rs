@@ -4,13 +4,15 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread, fs::{Permissions, self},
+    thread,
 };
 
 use anyhow::{anyhow, Result};
 use log::{debug, error};
 use secure_storage::{Generate, Parsable, SecureStorage};
 
+#[cfg(target_family="unix")]
+use std::fs::{Permissions, self};
 #[cfg(target_family="unix")]
 use smol::fs::unix::PermissionsExt;
 

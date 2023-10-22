@@ -1,7 +1,10 @@
 use std::{
     ffi::OsString,
-    fs::{self, Permissions},
+    fs,
 };
+
+#[cfg(target_family="unix")]
+use std::fs::Permissions;
 
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;

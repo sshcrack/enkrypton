@@ -15,7 +15,6 @@ lazy_static! {
 
     pub static ref DEFAULT_HTTP_RETURN: String = "Hi, yes I'm connected!".to_string();
 
-    pub static ref TOR_ZIP_HASH: String = get_tor_hash();
     pub static ref TOR_ZIP_PATH: PathBuf = get_tor_zip_path();
 
     pub static ref TOR_BINARY_HASH: String = get_tor_binary_hash();
@@ -45,36 +44,19 @@ pub async fn setup_channels() {
     FROM_TOR_RX.write().await.replace(from_rx);
 }
 
-fn get_tor_hash() -> String {
-    #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
-    let hash = include_str!("../../assets/windows/x86_64/tor.zip.hash");
-
-    #[cfg(all(target_os ="windows", target_arch = "x86", not(target_arch="x86_64")))]
-    let hash = include_str!("../../assets/windows/i686/tor.zip.hash");
-
-    #[cfg(all(target_os ="linux", target_arch = "x86_64"))]
-    let hash = include_str!("../../assets/linux/x86_64/tor.zip.hash");
-
-    #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
-    let hash = include_str!("../../assets/windows/i686/tor.zip.hash");
-
-    hex::decode(hash).unwrap();
-
-    return String::from(hash);
-}
 
 fn get_tor_binary_hash() -> String {
     #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
-    let hash = include_str!("../../assets/windows/x86_64/tor.exe.hash");
+    let hash = include_str!("../assets/windows/x86_64/tor.exe.hash");
 
     #[cfg(all(target_os ="windows", target_arch = "x86", not(target_arch="x86_64")))]
-    let hash = include_str!("../../assets/windows/i686/tor.exe.hash");
+    let hash = include_str!("../assets/windows/i686/tor.exe.hash");
 
     #[cfg(all(target_os ="linux", target_arch = "x86_64"))]
-    let hash = include_str!("../../assets/linux/x86_64/tor.hash");
+    let hash = include_str!("../assets/linux/x86_64/tor.hash");
 
     #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
-    let hash = include_str!("../../assets/windows/i686/tor.hash");
+    let hash = include_str!("../assets/windows/i686/tor.hash");
 
     hex::decode(hash).unwrap();
 
@@ -89,19 +71,16 @@ pub fn get_torrc() -> PathBuf {
 }
 
 fn get_tor_zip_path() -> PathBuf {
-    let mut tor_write_path = get_root_dir();
-    tor_write_path.set_file_name("enkrypton_tor.zip");
+    let tor_write_path = get_root_dir();
 
-    return tor_write_path;
+    return tor_write_path.join("enkrypton_tor.zip");
 }
 
 fn get_tor_path() -> PathBuf {
-    let mut tor_write_path = get_root_dir();
+    let tor_write_path = get_root_dir();
     #[cfg(target_os="windows")]
-    tor_write_path.set_file_name("enkrypton_tor.exe");
+    return tor_write_path.join("enkrypton_tor.exe");
 
     #[cfg(target_os="linux")]
-    tor_write_path.set_file_name("enkrypton_tor");
-
-    return tor_write_path;
+    return tor_write_path.join("enkrypton_tor");
 }

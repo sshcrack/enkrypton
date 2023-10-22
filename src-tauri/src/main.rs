@@ -19,7 +19,6 @@ use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
 use tor::consts::setup_channels;
-use tor::manager;
 use webserver::server::start_webserver;
 
 use crate::commands::restart;

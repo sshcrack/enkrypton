@@ -12,7 +12,7 @@ use crate::{tor::{consts::APP_HANDLE, manager::{stop_tor, wait_for_exit}}, stora
 
 pub fn get_root_dir() -> PathBuf {
     let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
-    buf.push("enkrypton");
+    buf.push("enkrypton_root/");
 
     if !buf.is_dir() {
         create_dir_all(&buf).unwrap();

@@ -17,7 +17,7 @@ use crate::{
             messages::{Client2TorMsg, Tor2ClientMsg, TorStartError},
             tools::{get_from_tor_rx, get_to_tor_tx},
         }, service::get_service_hostname,
-    }, storage::STORAGE,
+    }
 };
 
 use super::{

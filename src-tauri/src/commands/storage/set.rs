@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-
 use crate::storage::{StorageData, STORAGE};
 
 #[tauri::command]

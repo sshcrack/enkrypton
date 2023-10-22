@@ -1,5 +1,4 @@
 use std::{
-    os::windows::process::CommandExt,
     process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -7,10 +6,13 @@ use std::{
     },
     thread::{self},
 };
+#[cfg(target_os="windows")]
+use std::os::windows::process::CommandExt;
+
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use crate::tor::{
-    consts::{get_torrc, TOR_ZIP_PATH},
+    consts::{get_torrc, TOR_BINARY_PATH},
     misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
@@ -18,6 +20,7 @@ use anyhow::{anyhow, Result};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
+#[cfg(target_os="windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 /**
@@ -26,11 +29,16 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
  */
 pub(super) async fn tor_main_loop() -> Result<()> {
     info!("Starting tor...");
-    let child = Command::new(TOR_ZIP_PATH.clone())
-        .args(["-f", &get_torrc().to_string_lossy()])
-        .stdout(Stdio::piped())
-        .creation_flags(CREATE_NO_WINDOW)
-        .spawn()?;
+
+    let mut child = Command::new(TOR_BINARY_PATH.clone());
+    child.args(["-f", &get_torrc().to_string_lossy()]);
+    child.stdout(Stdio::piped());
+
+
+    #[cfg(target_os="windows")]
+    child.creation_flags(CREATE_NO_WINDOW);
+
+    let child = child.spawn()?;
     let id = child.id();
 
     let should_exit = Arc::new(AtomicBool::new(false));

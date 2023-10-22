@@ -3,7 +3,7 @@ use std::{fs::File, io::{self, Write}};
 use anyhow::Result;
 use sha2::{Digest, Sha256};
 
-use crate::tor::consts::{TOR_BINARY_PATH, TOR_BINARY_HASH};
+use crate::tor::consts::{TOR_ZIP_PATH, TOR_ZIP_HASH};
 
 
 /**
@@ -11,7 +11,7 @@ Checks for the binary of tor at TOR_BINARY_PATH and extracts the tor
 binary if the file does not exist or the hash is wrong
 */
 pub fn check_integrity() -> Result<()> {
-    let is_valid = TOR_BINARY_PATH.is_file() && is_tor_binary_valid().unwrap_or(false);
+    let is_valid = TOR_ZIP_PATH.is_file() && is_tor_binary_valid().unwrap_or(false);
 
     if !is_valid {
         extract_tor()?;
@@ -20,16 +20,31 @@ pub fn check_integrity() -> Result<()> {
     Ok(())
 }
 
+
+
 fn extract_tor() -> Result<()> {
-    let mut f = File::create(TOR_BINARY_PATH.clone())?;
-    f.write_all(include_bytes!("../../assets/tor.exe"))?;
+
+    #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
+    let tor_zip = include_bytes!("../../assets/windows/x86_64/tor.zip");
+
+    #[cfg(all(target_os ="windows", target_arch = "x86", not(target_arch="x86_64")))]
+    let tor_zip = include_bytes!("../../assets/windows/i686/tor.zip");
+
+    #[cfg(all(target_os ="linux", target_arch = "x86_64"))]
+    let tor_zip = include_bytes!("../../assets/linux/x86_64/tor.zip");
+
+    #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
+    let tor_zip = include_bytes!("../../assets/windows/i686/tor.zip");
+
+    let mut f = File::create(TOR_ZIP_PATH.clone())?;
+    f.write_all(tor_zip)?;
 
     Ok(())
 }
 
 
 fn is_tor_binary_valid() -> Result<bool> {
-    let mut file = File::open(TOR_BINARY_PATH.clone())?;
+    let mut file = File::open(TOR_ZIP_PATH.clone())?;
 
     // create a Sha256 object
     let mut hasher = Sha256::new();
@@ -40,5 +55,5 @@ fn is_tor_binary_valid() -> Result<bool> {
     let result = hasher.finalize();
     let result_hex = hex::encode(result);
 
-    Ok(result_hex == TOR_BINARY_HASH.clone())
+    Ok(result_hex == TOR_ZIP_HASH.clone())
 }

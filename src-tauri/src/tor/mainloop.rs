@@ -10,7 +10,7 @@ use std::{
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use crate::tor::{
-    consts::{get_torrc, TOR_BINARY_PATH},
+    consts::{get_torrc, TOR_ZIP_PATH},
     misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
@@ -26,7 +26,7 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
  */
 pub(super) async fn tor_main_loop() -> Result<()> {
     info!("Starting tor...");
-    let child = Command::new(TOR_BINARY_PATH.clone())
+    let child = Command::new(TOR_ZIP_PATH.clone())
         .args(["-f", &get_torrc().to_string_lossy()])
         .stdout(Stdio::piped())
         .creation_flags(CREATE_NO_WINDOW)

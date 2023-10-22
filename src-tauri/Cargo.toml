@@ -49,9 +49,9 @@ futures-util = "0.3.28"
 async-trait = "0.1.73"
 regex = "1.9.5"
 port_check = "0.1.5"
-keyring = { version = "2.0.5", default-features = false }
 secure-storage = { path = "../src-packages/secure-storage"}
 zeroize = { version = "1.6.0", features = ["derive"] }
+zip-extract = "0.1.2"
 
 [dev-dependencies]
 

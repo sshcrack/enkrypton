@@ -107,7 +107,7 @@ impl StorageManager {
                 let mut f = f.unwrap();
                 debug!("Getting raw...");
 
-                let s = storage.as_mut().unwrap();
+                let s: &mut SecureStorage<StorageData> = storage.as_mut().unwrap();
                 let raw = s.to_raw();
                 if raw.is_err() {
                     error!("Could not get raw storage: {}", raw.unwrap_err());

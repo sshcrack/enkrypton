@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 mod util;
 mod data;
 mod manager;
+pub mod encryption;
 
 pub use manager::*;
 pub use data::*;

@@ -12,16 +12,16 @@ use crate::{
 
 const U64_BYTES: usize = u64::BITS as usize / 8usize;
 
-pub trait Parsable<T>
+pub trait Parsable<'a, T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
+    T: serde::de::Deserialize<'a> + serde::Serialize + Debug + Zeroize,
 {
     fn parse(raw: &[u8]) -> Result<SecureStorage<T>>;
 }
 
-impl<T> Parsable<T> for SecureStorage<T>
+impl<'a, T> Parsable<'a, T> for SecureStorage<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
+    T: serde::de::Deserialize<'a> + serde::Serialize + Debug + Zeroize,
 {
     /**
      * Don't forget to call self.decrypt!

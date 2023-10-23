@@ -5,6 +5,6 @@ use log::{debug, error};
 pub async fn ws_send(onion_hostname: String, msg: String) -> Result<(), String> {
     debug!("Sending {} to {}", msg, onion_hostname);
 
-    // [...]
+    //TODO [...]
     Ok(())
 }

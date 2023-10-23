@@ -6,18 +6,12 @@ use std::{
     thread::{self, JoinHandle},
     time::Duration,
 };
-
-use crate::{
-    messaging::payloads::{WsClientStatus, WsClientUpdate, WsMessagePayload},
-    util::{get_app, url::UrlOnion},
-};
 use anyhow::{anyhow, Result};
 use futures_util::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use log::{debug, error, warn};
-use tauri::{async_runtime::block_on, Manager};
+use log::debug;
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_socks::tcp::Socks5Stream;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};

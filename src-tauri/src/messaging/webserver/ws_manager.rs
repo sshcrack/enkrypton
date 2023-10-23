@@ -1,19 +1,26 @@
 use actix::{Actor, StreamHandler};
-use actix_web_actors::ws::{self, ProtocolError, Message};
+use actix_web_actors::ws::{self, Message, ProtocolError};
+use log::debug;
+use smol::future::block_on;
+
+use crate::messaging::MESSAGING;
+
 
 pub struct MessagingServer {
-
+    receiver: Option<String>,
 }
-
 
 impl Actor for MessagingServer {
     type Context = ws::WebsocketContext<Self>;
 
-    fn started(&mut self, ctx: &mut Self::Context) {
-    }
+    fn started(&mut self, ctx: &mut Self::Context) {}
 
     fn stopped(&mut self, ctx: &mut Self::Context) {
-        
+        if let Some(onion_host) = &self.receiver {
+            debug!("Removing link for {}", onion_host);
+
+            block_on(MESSAGING.write()).remove_link(onion_host);
+        }
     }
 }
 

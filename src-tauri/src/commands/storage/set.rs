@@ -11,8 +11,8 @@ pub async fn storage_set(data_raw: String) -> Result<(), String> {
         .map_err(|e| format!("Could not parse storage data: {}", e))?;
 
     storage
-        .modify_storage(move |e| {
-            e.data = Some(data);
+        .modify_storage_data(move |e| {
+            *e = data;
 
             Ok(())
         })

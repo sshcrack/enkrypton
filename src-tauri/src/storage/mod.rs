@@ -4,6 +4,7 @@ use lazy_static::lazy_static;
 
 
 mod util;
+pub mod helpers;
 mod data;
 mod manager;
 pub mod encryption;

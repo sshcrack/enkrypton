@@ -1,3 +1,4 @@
+use actix_web::web::Bytes;
 use actix_web_actors::ws::Message as ActixMessage;
 use bincode::ErrorKind;
 use duplicate::duplicate_item;
@@ -5,7 +6,9 @@ use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
 mod client_2_server;
 mod server_2_client;
+mod identity;
 
+pub use identity::*;
 pub use client_2_server::*;
 pub use server_2_client::*;
 
@@ -16,6 +19,17 @@ impl TryInto<Vec<u8>> for name {
 
     fn try_into(self) -> std::result::Result<Vec<u8>, Self::Error> {
         bincode::serialize(&self)
+    }
+}
+
+
+#[duplicate_item(name; [C2SPacket]; [S2CPacket])]
+impl TryInto<Bytes> for name {
+    type Error = Box<ErrorKind>;
+
+    fn try_into(self) -> std::result::Result<Bytes, Self::Error> {
+        let b: Vec<u8> = self.try_into()?;
+        Ok(Bytes::from(b))
     }
 }
 

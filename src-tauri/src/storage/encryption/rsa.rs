@@ -1,6 +1,6 @@
 use openssl::{
     pkey::{Private, Public},
-    rsa::Rsa,
+    rsa::Rsa, error::ErrorStack,
 };
 use serde::{
     de,
@@ -39,6 +39,17 @@ impl <'a> Deserialize<'a> for PrivateKey {
 
 #[derive(Clone, Debug)]
 pub struct PublicKey(pub Rsa<Public>);
+
+//TODO idk do it better i guess
+impl TryInto<PublicKey> for PrivateKey {
+    type Error = ErrorStack;
+
+    fn try_into(self) -> Result<PublicKey, Self::Error> {
+        let pem = self.0.public_key_to_pem()?;
+        Rsa::public_key_from_pem(pem.as_slice())
+            .map(|e| PublicKey(e))
+    }
+}
 
 impl Serialize for PublicKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

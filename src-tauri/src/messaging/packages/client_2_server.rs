@@ -1,32 +1,39 @@
 use anyhow::{anyhow, Result};
-use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer};
+use openssl::{pkey::PKey, sign::Signer};
 use serde::{Deserialize, Serialize};
 
-use crate::{storage::STORAGE, tor::service::get_service_hostname};
+use crate::{
+    storage::{
+        helpers::GetPrivateKey, StorageManager,
+    },
+    tor::{service::get_service_hostname, consts::DIGEST},
+};
+
+use super::Identity;
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum C2SPacket {
-    VerifyIdentity(Vec<u8>),
+    SetIdentity(Identity),
+    IdentityVerified,
+    Message(Vec<u8>),
 }
 
 impl C2SPacket {
-    pub async fn verify() -> Result<Self> {
-        let storage = STORAGE.read().await;
+    pub async fn identity(receiver: &str) -> Result<Self> {
         let own_hostname = get_service_hostname()
             .await?
             .ok_or(anyhow!("Could not get own hostname"))?;
 
-        let signature = storage
-            .get_data(|e| {
-                let keypair = PKey::from_rsa(e.priv_key.0.clone())?;
-                let mut signer = Signer::new(MessageDigest::sha256(), &keypair)?;
+        let priv_key = StorageManager::get_or_create_private_key(receiver).await?;
+        let pub_key = priv_key.clone().try_into()?;
 
-                signer.update(own_hostname.as_bytes())?;
-                Ok(signer.sign_to_vec()?)
-            })
-            .await?;
+        let keypair = PKey::from_rsa(priv_key.0)?;
+        let mut signer = Signer::new(*DIGEST, &keypair)?;
 
-        Ok(C2SPacket::VerifyIdentity(signature))
+        signer.update(own_hostname.as_bytes())?;
+        let signature = signer.sign_to_vec()?;
+
+        Ok(C2SPacket::SetIdentity(Identity { hostname: receiver.to_string(), signature, pub_key }))
     }
 }

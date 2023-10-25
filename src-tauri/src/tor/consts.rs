@@ -3,6 +3,7 @@ use std::{path::PathBuf, sync::Arc, thread::JoinHandle};
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 
+use openssl::hash::MessageDigest;
 use tauri::{async_runtime::RwLock, AppHandle};
 
 use crate::util::get_root_dir;
@@ -31,6 +32,8 @@ lazy_static! {
 
     /* In total 20 log messages to keep in memory */
     pub(super) static ref MAX_LOG_SIZE: usize = 20;
+
+    pub static ref DIGEST: MessageDigest = MessageDigest::md5();
 }
 
 pub async fn setup_channels() {

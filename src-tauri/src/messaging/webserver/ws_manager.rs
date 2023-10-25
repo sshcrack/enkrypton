@@ -1,34 +1,28 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use actix::{Actor, ActorContext, AsyncContext, StreamHandler};
 use actix_web::web::Bytes;
 use actix_web_actors::ws::{self, Message, ProtocolError};
 use anyhow::Result;
 use async_channel::{Receiver, Sender};
-use lazy_static::lazy_static;
 use log::{debug, error};
 use smol::future::block_on;
 
 use crate::messaging::{
     packages::{C2SPacket, S2CPacket},
-    MESSAGING,
+    MESSAGING, HEARTBEAT_TIMEOUT,
 };
 
-lazy_static! {
-    pub static ref TIMEOUT: Duration = Duration::from_secs(10);
-}
+
+pub type ServerChannels = (Receiver<C2SPacket>, Sender<S2CPacket>);
 
 pub struct WsActor {
     // From Packets being sent from the server to the client
     s_rx: Receiver<S2CPacket>,
-    s_tx: Sender<S2CPacket>,
+    pub s_tx: Sender<S2CPacket>,
 
     // For clients being sent from the client to the server
-    c_rx: Receiver<C2SPacket>,
+    pub c_rx: Receiver<C2SPacket>,
     c_tx: Sender<C2SPacket>,
     receiver: Option<String>,
     last_heartbeat: Instant,
@@ -58,7 +52,7 @@ impl Actor for WsActor {
         });
 
         ctx.run_interval(Duration::from_secs(1), |a, ctx| {
-            let timed_out = a.last_heartbeat.elapsed() > *TIMEOUT;
+            let timed_out = a.last_heartbeat.elapsed() > *HEARTBEAT_TIMEOUT;
 
             if !timed_out {
                 return;
@@ -73,17 +67,19 @@ impl Actor for WsActor {
         });
     }
 
-    fn stopped(&mut self, ctx: &mut Self::Context) {
+    fn stopped(&mut self, _: &mut Self::Context) {
+        self.c_tx.close();
+        self.s_tx.close();
         if let Some(onion_host) = &self.receiver {
-            debug!("Removing link for {}", onion_host);
+            debug!("Removing connection for {}", onion_host);
 
-            block_on(MESSAGING.write()).remove_link(onion_host);
+            block_on(MESSAGING.write()).remove_connection(onion_host);
         }
     }
 }
 
 impl WsActor {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let (s_tx, s_rx) = async_channel::unbounded();
         let (c_tx, c_rx) = async_channel::unbounded();
 
@@ -98,10 +94,22 @@ impl WsActor {
         }
     }
 
-    async fn inner_handle(&mut self, bin: Bytes, ctx: &mut <Self as Actor>::Context) -> Result<()> {
-        let bin = bin.to_vec();
+    pub async fn inner_handle(&mut self, packet: C2SPacket, ctx: &mut <Self as Actor>::Context) -> Result<()> {
+        match packet {
+            C2SPacket::SetIdentity(identity) => {
+                identity.verify().await?;
 
-        let packet = C2SPacket::try_from(&bin)?;
+                let mut messaging = MESSAGING.write().await;
+                messaging.insert_server(&identity.hostname, &self);
+
+                let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
+                ctx.binary(b);
+            },
+            packet => {
+                // We didn't handle this packet so redirecting it
+                self.c_tx.send(packet).await?;
+            }
+        }
         Ok(())
     }
 }
@@ -114,11 +122,27 @@ impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
                 ctx.pong(&msg);
                 self.last_heartbeat = Instant::now();
             }
-            Ok(ws::Message::Text(text)) => ctx.text(text),
+            Ok(ws::Message::Text(_)) => {},
             Ok(ws::Message::Binary(bin)) => {
-                let res = block_on(self.inner_handle(bin, ctx));
+                let res = C2SPacket::try_from(&bin.to_vec());
                 if let Err(e) = res {
-                    error!("Could not handle packet: {:?}", e);
+                    error!("Could not parse packet: {:?}", e);
+                    return;
+                }
+
+                if self.c_tx.is_closed() {
+                    error!("Client receive channel close, stopping actor");
+                    ctx.stop();
+                    return;
+                }
+
+                let packet = res.unwrap();
+                let res = self.inner_handle(packet, ctx);
+                let res = block_on(res);
+
+                if res.is_err() {
+                    error!("Could not handle packet: {:?}", res.unwrap_err());
+                    return;
                 }
             }
             _ => (),

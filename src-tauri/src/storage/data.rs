@@ -17,10 +17,6 @@ pub struct StorageData {
     //FIXME don't just skip this, key is pretty important to erase
     #[zeroize(skip)]
     pub chats: HashMap<String, StorageChat>,
-    #[ts(skip)]
-    //FIXME don't just skip this, key is pretty important to erase
-    #[zeroize(skip)]
-    pub priv_key: PrivateKey,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Zeroize, ZeroizeOnDrop, TS)]
@@ -29,11 +25,30 @@ pub struct StorageChat {
     #[zeroize(skip)]
     pub messages: Vec<ChatMessage>,
     pub nickname: Option<String>,
+
+    // Remote public key
     #[ts(skip)]
     #[zeroize(skip)]
-    pub pub_key: PublicKey,
+    pub pub_key: Option<PublicKey>,
     #[zeroize(skip)]
-    pub id: String,
+    pub receiver_onion: String,
+    // Private Key of this client (to decrypt messages)
+    #[zeroize(skip)]
+    #[ts(skip)]
+    pub priv_key: PrivateKey,
+}
+
+impl StorageChat {
+    pub fn new(onion_host: &str) -> Self {
+        Self {
+            receiver_onion: onion_host.to_string(),
+            messages: Vec::new(),
+            nickname: None,
+
+            pub_key: None,
+            priv_key: generate_pair()
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Zeroize, ZeroizeOnDrop, TS)]
@@ -47,12 +62,9 @@ pub struct ChatMessage {
 
 impl Default for StorageData {
     fn default() -> Self {
-        let key = generate_pair();
-
         Self {
             nicknames: HashMap::new(),
             chats: HashMap::new(),
-            priv_key: key
         }
     }
 }

@@ -224,6 +224,7 @@ impl StorageManager {
         return Err(anyhow!("Storage not initialized yet."))
     }
 
+
     pub async fn modify_storage<Func, T>(&mut self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut Storage) -> Result<T>,
@@ -239,6 +240,19 @@ impl StorageManager {
         self.mark_dirty();
 
         Ok(res?)
+    }
+
+    pub async fn modify_storage_data<Func, T>(&mut self, f: Func) -> Result<T>
+    where
+        Func: FnOnce(&mut StorageData) -> Result<T>,
+    {
+        self.modify_storage(|e| {
+            if let Some(data) = e.data.as_mut() {
+                return f(data)
+            }
+
+            return Err(anyhow!("Storage not initialized"))
+        }).await
     }
 
     pub fn is_unlocked(&self) -> bool {

@@ -33,7 +33,7 @@ where
 
         let pass_hash = argon2
             .hash_password(pass, &salt)
-            .or_else(|e| bail!(Errors::GenerateHash(e)))?;
+            .map_err(|e| Errors::GenerateHash(e))?;
 
         let mut crypto_key = vec![0u8; *KEY_LENGTH];
 
@@ -42,7 +42,7 @@ where
 
         argon2
             .hash_password_into(&pass, &salt_raw, &mut crypto_key) //
-            .or_else(|e| bail!(Errors::CryptoKeyError(e)))?;
+            .map_err(|e| Errors::CryptoKeyError(e))?;
 
         let crypto_key = crypto_key.into_boxed_slice();
         let iv = iv.into_boxed_slice();

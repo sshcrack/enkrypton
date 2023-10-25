@@ -1,10 +1,6 @@
 use std::collections::HashMap;
 
-use openssl::{
-    pkey::{Private, Public},
-    rsa::Rsa,
-};
-use serde::{Deserialize, Serialize, ser::SerializeStruct};
+use serde::{Deserialize, Serialize};
 
 use ts_rs::TS;
 use zeroize::{Zeroize, ZeroizeOnDrop};

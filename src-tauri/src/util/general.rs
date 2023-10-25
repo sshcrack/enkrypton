@@ -64,7 +64,7 @@ pub fn is_onion_hostname(addr: &str) -> bool {
 
 
 pub async fn on_exit() -> anyhow::Result<()> {
-    debug!("Aquiring storage lock...");
+    debug!("Acquiring storage lock...");
 
     let mut e = STORAGE.write().await;
     debug!("Saving storage...");

@@ -8,7 +8,7 @@ pub async fn storage_set(data_raw: String) -> Result<(), String> {
     }
 
     let data = serde_json::from_str::<StorageData>(&data_raw)
-        .or_else(|e| Err(format!("Could not parse storage data: {}", e)))?;
+        .map_err(|e| format!("Could not parse storage data: {}", e))?;
 
     storage
         .modify_storage(move |e| {
@@ -17,8 +17,7 @@ pub async fn storage_set(data_raw: String) -> Result<(), String> {
             Ok(())
         })
         .await
-        .or_else(|e| Err(format!("Could not update storage: {:?}", e)))?;
-    storage.mark_dirty();
+        .map_err(|e| format!("Could not update storage: {:?}", e))?;
 
     Ok(())
 }

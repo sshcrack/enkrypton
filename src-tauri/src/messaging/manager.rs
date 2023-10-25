@@ -4,11 +4,11 @@ use anyhow::Result;
 use lazy_static::lazy_static;
 use tokio::sync::RwLock;
 
-use super::{client::MessagingClient, webserver::ws_manager::MessagingServer};
+use super::{client::MessagingClient, webserver::ws_manager::WsActor};
 
 pub enum Role {
     Client2Server(MessagingClient),
-    Server2Client(MessagingServer)
+    Server2Client(WsActor)
 }
 
 pub struct MessagingManager {
@@ -33,7 +33,7 @@ impl MessagingManager {
         Ok(())
     }
 
-    pub(super) async fn insert_server(&mut self, onion_host: &str, messaging: MessagingServer) -> Result<()> {
+    pub(super) async fn insert_server(&mut self, onion_host: &str, messaging: WsActor) -> Result<()> {
         self.connections.insert(onion_host.to_string(), Role::Server2Client(messaging));
 
         Ok(())

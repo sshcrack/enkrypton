@@ -206,6 +206,24 @@ impl StorageManager {
         return inner.data.clone();
     }
 
+    pub async fn get_data<T, Func>(&self, f: Func) -> Result<T>
+    where
+        Func: FnOnce(&StorageData) -> Result<T>
+    {
+        let storage = self.storage.read().await;
+        if let Some(s) = storage.as_ref() {
+            let d = s.data.as_ref();
+            if d.is_none() {
+                return Err(anyhow!("Storage not initialized yet."));
+            }
+
+            let d = d.unwrap();
+            return f(&d)
+        }
+
+        return Err(anyhow!("Storage not initialized yet."))
+    }
+
     pub async fn modify_storage<Func, T>(&mut self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut Storage) -> Result<T>,
@@ -218,6 +236,7 @@ impl StorageManager {
 
         let unwrapped = storage.as_mut().unwrap();
         let res = f(unwrapped);
+        self.mark_dirty();
 
         Ok(res?)
     }

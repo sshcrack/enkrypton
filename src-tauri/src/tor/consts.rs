@@ -31,8 +31,6 @@ lazy_static! {
 
     /* In total 20 log messages to keep in memory */
     pub(super) static ref MAX_LOG_SIZE: usize = 20;
-
-    pub static ref INITIAL_MSG: String = "Hi, I'm using Enkrypton!".to_string();
 }
 
 pub async fn setup_channels() {

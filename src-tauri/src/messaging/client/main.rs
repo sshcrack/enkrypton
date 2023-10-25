@@ -17,6 +17,8 @@ use tokio_socks::tcp::Socks5Stream;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use url::Url;
 
+use crate::messaging::packages::Packets;
+
 use super::SocksProxy;
 
 type WriteStream = SplitSink<WebSocketStream<Socks5Stream<TcpStream>>, Message>;
@@ -33,6 +35,9 @@ pub struct MessagingClient {
 
 impl MessagingClient {
     pub async fn new(onion_hostname: &str) -> Result<Self> {
+        debug!("Creating verify packet...");
+        let verify_packet = Packets::verify().await?;
+
         let onion_addr = format!("ws://{}.onion/ws/", onion_hostname);
 
         debug!("Creating proxy...");
@@ -48,7 +53,11 @@ impl MessagingClient {
         debug!("Connecting Tungstenite...");
         let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
-        let (write, read) = ws_stream.split();
+        let (mut write, read) = ws_stream.split();
+
+        debug!("Sending verify packet");
+        write.send(verify_packet.try_into()?).await?;
+
         return Ok(MessagingClient {
             write: Arc::new(Mutex::new(write)),
             read: Arc::new(Mutex::new(read)),

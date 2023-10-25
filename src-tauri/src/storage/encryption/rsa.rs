@@ -3,12 +3,12 @@ use openssl::{
     rsa::Rsa,
 };
 use serde::{
-    de::{self, DeserializeOwned},
+    de,
     ser, Deserialize, Deserializer, Serialize, Serializer,
 };
 
 #[derive(Clone, Debug)]
-pub struct PrivateKey(Rsa<Private>);
+pub struct PrivateKey(pub Rsa<Private>);
 
 impl Serialize for PrivateKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -38,7 +38,7 @@ impl <'a> Deserialize<'a> for PrivateKey {
 
 
 #[derive(Clone, Debug)]
-pub struct PublicKey(Rsa<Public>);
+pub struct PublicKey(pub Rsa<Public>);
 
 impl Serialize for PublicKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

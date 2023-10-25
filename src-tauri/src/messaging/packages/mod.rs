@@ -1,26 +1,48 @@
-pub enum Packets {
-    DisconnectMultipleConnections,
-    VerifyIdentity(Vec<u8>),
-    IdentityVerified,
-    PublicKey,
-    Message
-}
+use actix_web_actors::ws::Message as ActixMessage;
+use bincode::ErrorKind;
+use duplicate::duplicate_item;
+use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
-impl Packets {
-    pub fn id(&self) -> u8 {
-        match self {
-            Packets::DisconnectMultipleConnections => todo!(),
-            Packets::VerifyIdentity(_) => todo!(),
-            Packets::IdentityVerified => todo!(),
-            Packets::PublicKey => todo!(),
-            Packets::Message => todo!(),
-        }
+mod client_2_server;
+mod server_2_client;
+
+pub use client_2_server::*;
+pub use server_2_client::*;
+
+
+#[duplicate_item(name; [C2SPacket]; [S2CPacket])]
+impl TryInto<Vec<u8>> for name {
+    type Error = Box<ErrorKind>;
+
+    fn try_into(self) -> std::result::Result<Vec<u8>, Self::Error> {
+        bincode::serialize(&self)
     }
 }
 
-impl From<&[u8]> for Packets {
-    fn from(value: &[u8]) -> Self {
-        let id = value[0];
-        
+#[duplicate_item(name; [C2SPacket]; [S2CPacket])]
+impl TryFrom<&Vec<u8>> for name {
+    type Error = Box<ErrorKind>;
+
+    fn try_from(bin: &Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        bincode::deserialize(bin)
+    }
+}
+
+impl TryInto<TungsteniteMessage> for C2SPacket {
+    type Error = Box<ErrorKind>;
+
+    fn try_into(self) -> std::result::Result<TungsteniteMessage, Self::Error> {
+        let res = TungsteniteMessage::Binary(self.try_into()?);
+        Ok(res)
+    }
+}
+
+impl TryInto<ActixMessage> for S2CPacket {
+    type Error = Box<ErrorKind>;
+
+    fn try_into(self) -> Result<ActixMessage, Self::Error> {
+        let res: Vec<u8> = self.try_into()?;
+
+        Ok(ActixMessage::Binary(res.into()))
     }
 }

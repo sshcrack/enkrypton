@@ -8,6 +8,7 @@ mod storage;
 mod tor;
 mod util;
 mod messaging;
+mod encryption;
 
 use log::{error, info, LevelFilter};
 

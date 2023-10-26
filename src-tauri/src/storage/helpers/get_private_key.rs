@@ -1,6 +1,7 @@
 use anyhow::Result;
 
-use crate::storage::{encryption::PrivateKey, STORAGE, StorageChat, StorageManager};
+use crate::storage::{STORAGE, StorageChat, StorageManager};
+use crate::encryption::PrivateKey;
 use async_trait::async_trait;
 
 #[async_trait]

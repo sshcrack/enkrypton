@@ -3,12 +3,15 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
 use log::info;
+use tauri::Manager;
 use tokio::sync::RwLock;
 
-use super::{client::MessagingClient, webserver::ws_manager::WsActor, Connection};
+use crate::{util::get_app, messaging::payloads::{WsClientUpdate, WsClientStatus}};
+
+use super::{client::MessagingClient, Connection};
 
 pub struct MessagingManager {
-    connections: HashMap<String, Connection>,
+    pub(super) connections: HashMap<String, Connection>,
 }
 
 lazy_static! {
@@ -29,18 +32,17 @@ impl MessagingManager {
         let client = MessagingClient::new(&onion_hostname).await?;
 
         info!("[CLIENT]: New Connection for {}", onion_hostname);
+
+        let conn = Connection::new_client(onion_hostname, client).await;
         self.connections
-            .insert(onion_hostname.to_string(), Connection::new_client(client));
+            .insert(onion_hostname.to_string(), conn);
 
+        let handle = get_app().await;
+        handle.emit_all("ws_client_update", WsClientUpdate {
+            hostname: onion_hostname.to_string(),
+            status: WsClientStatus::CONNECTED
+        })?;
         Ok(())
-    }
-
-    pub(super) fn insert_server(&mut self, onion_host: &str, a: &WsActor) {
-        info!("[SERVER]: New Connection for {}", onion_host);
-        self.connections.insert(
-            onion_host.to_string(),
-            Connection::new_server((a.c_rx.clone(), a.s_tx.clone())),
-        );
     }
 
     pub async fn get_or_connect(&mut self, onion_host: &str) -> Result<Connection> {
@@ -53,16 +55,7 @@ impl MessagingManager {
             return Ok(c.clone());
         }
 
-        return Err(anyhow!("Could not establish connection"))
-    }
-
-    pub async fn get_connection(&self, onion_host: &str) -> Result<Connection> {
-        let res = self.connections.get(onion_host);
-        if let Some(c) = res {
-            return Ok(c.clone());
-        }
-
-        return Err(anyhow!("Could not establish connection"))
+        return Err(anyhow!("Could not establish connection"));
     }
 
     pub fn is_connected(&self, onion_host: &str) -> bool {

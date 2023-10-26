@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use super::encryption::{generate_pair, PublicKey, PrivateKey};
+use crate::encryption::{PublicKey, PrivateKey, generate_pair};
+
 
 // Only one Storage instance is allowed.
 #[derive(TS, Clone, Debug, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]

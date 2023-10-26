@@ -7,7 +7,6 @@ mod util;
 pub mod helpers;
 mod data;
 mod manager;
-pub mod encryption;
 
 pub use manager::*;
 pub use data::*;

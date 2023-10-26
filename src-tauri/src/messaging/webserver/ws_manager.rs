@@ -9,9 +9,11 @@ use log::{debug, error};
 use smol::future::block_on;
 
 use crate::messaging::{
-    packages::{C2SPacket, S2CPacket},
+    packets::{C2SPacket, S2CPacket},
     MESSAGING, HEARTBEAT_TIMEOUT,
 };
+
+use super::manager_ext::ManagerExt;
 
 
 pub type ServerChannels = (Receiver<C2SPacket>, Sender<S2CPacket>);
@@ -33,6 +35,7 @@ impl Actor for WsActor {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         let rx = self.s_rx.clone();
+
         ctx.add_stream(async_stream::stream! {
             loop {
                 let res = rx.recv().await;
@@ -96,18 +99,32 @@ impl WsActor {
 
     pub async fn inner_handle(&mut self, packet: C2SPacket, ctx: &mut <Self as Actor>::Context) -> Result<()> {
         match packet {
+            C2SPacket::IdentityVerified => {
+                if let Some(onion_host) = &self.receiver {
+                    let mut messaging = MESSAGING.write().await;
+                    messaging.set_self_verified(&onion_host, &self).await;
+                } else {
+                    error!("Received IdentityVerified packet but no onion host was set");
+                }
+
+            },
             C2SPacket::SetIdentity(identity) => {
                 identity.verify().await?;
 
                 let mut messaging = MESSAGING.write().await;
-                messaging.insert_server(&identity.hostname, &self);
+                self.receiver = Some(identity.hostname.clone());
+                messaging.set_remote_verified(&identity.hostname, &self).await;
 
                 let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
+
+                let verify_p: Bytes = S2CPacket::identity(&identity.hostname).await?.try_into()?;
+
+                ctx.binary(verify_p);
                 ctx.binary(b);
             },
-            packet => {
-                // We didn't handle this packet so redirecting it
-                self.c_tx.send(packet).await?;
+            C2SPacket::Message(msg) => {
+                // Sending the message to main handler
+                self.c_tx.send(C2SPacket::Message(msg)).await?;
             }
         }
         Ok(())

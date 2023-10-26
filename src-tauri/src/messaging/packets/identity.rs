@@ -3,8 +3,7 @@ use log::{warn, info};
 use openssl::{pkey::PKey, sign::Verifier};
 use serde::{Serialize, Deserialize};
 
-use crate::{storage::{encryption::PublicKey, STORAGE, StorageChat}, tor::consts::DIGEST};
-
+use crate::{storage::{STORAGE, StorageChat}, tor::consts::DIGEST, encryption::PublicKey};
 
 
 #[derive(Debug, Serialize, Deserialize)]

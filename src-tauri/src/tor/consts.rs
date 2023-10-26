@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc, thread::JoinHandle};
 use async_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 
-use openssl::hash::MessageDigest;
+use openssl::{hash::MessageDigest, rsa::Padding};
 use tauri::{async_runtime::RwLock, AppHandle};
 
 use crate::util::get_root_dir;
@@ -34,6 +34,7 @@ lazy_static! {
     pub(super) static ref MAX_LOG_SIZE: usize = 20;
 
     pub static ref DIGEST: MessageDigest = MessageDigest::md5();
+    pub static ref RSA_PADDING: Padding = Padding::PKCS1;
 }
 
 pub async fn setup_channels() {

@@ -12,6 +12,9 @@ pub async fn ws_send(onion_hostname: String, msg: String) -> Result<(), String> 
     let conn = manager.get_or_connect(&onion_hostname).await
         .map_err(|e| e.to_string())?;
 
+    debug!("Waiting until verified...");
+
+    manager.wait_until_verified(&onion_hostname).await.map_err(|e| e.to_string())?;
     debug!("Sending...");
     conn.send_msg(&msg).await
         .map_err(|e| e.to_string())?;

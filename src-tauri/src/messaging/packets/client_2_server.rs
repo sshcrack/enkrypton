@@ -21,7 +21,7 @@ pub enum C2SPacket {
 
 impl C2SPacket {
     pub async fn identity(receiver: &str) -> Result<Self> {
-        let own_hostname = get_service_hostname()
+        let own_hostname = get_service_hostname(true)
             .await?
             .ok_or(anyhow!("Could not get own hostname"))?;
 

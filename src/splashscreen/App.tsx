@@ -19,6 +19,7 @@ export default function App() {
   const [pwd, setPwd] = useState("");
   const [loading, setLoading] = useState(false)
   const [passInvalid, setPassInvalid] = useState(false);
+  const [submittedOnce, setSubmittedOnce] = useState(false);
 
   useEffect(() => {
     storage.is_unlocked()
@@ -43,14 +44,17 @@ export default function App() {
           description: e
         })
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        setLoading(false)
+        setSubmittedOnce(true)
+      })
   }
 
   if (!unlocked) {
     return <Flex w='100%' h='100%' flexDir='column' justifyContent='space-between' p='2'>
       <Heading size='md'>Unlock Enkrypton</Heading>
 
-      <FormControl isInvalid={passInvalid || pwd.length === 0}>
+      <FormControl isInvalid={(passInvalid || pwd.length === 0) && submittedOnce}>
         <FormLabel>Password</FormLabel>
         <Input
           type='password'
@@ -70,7 +74,7 @@ export default function App() {
             </FormErrorMessage>
           ) :
             (
-              <FormHelperText>Enter password to enter.</FormHelperText>
+              <FormHelperText>Enter password to unlock.</FormHelperText>
             )}
       </FormControl>
       <Button isLoading={loading} colorScheme='green' onClick={() => unlock()} w='50%' alignSelf='center'>Submit</Button>

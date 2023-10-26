@@ -5,7 +5,7 @@ use actix_web::web::Bytes;
 use actix_web_actors::ws::{self, Message, ProtocolError};
 use anyhow::Result;
 use async_channel::{Receiver, Sender};
-use log::{debug, error};
+use log::{debug, error, info};
 use smol::future::block_on;
 
 use crate::messaging::{
@@ -109,6 +109,7 @@ impl WsActor {
 
             },
             C2SPacket::SetIdentity(identity) => {
+                info!("[SERVER] Verifying identity...");
                 identity.verify().await?;
 
                 let mut messaging = MESSAGING.write().await;
@@ -118,6 +119,7 @@ impl WsActor {
                 let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
 
                 let verify_p: Bytes = S2CPacket::identity(&identity.hostname).await?.try_into()?;
+                info!("[SERVER] Identity verified. Sending packet.");
 
                 ctx.binary(verify_p);
                 ctx.binary(b);

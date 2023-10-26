@@ -5,7 +5,7 @@ use tokio::{fs::File, io::{BufReader, AsyncReadExt}};
 
 use crate::tor::config::CONFIG;
 
-pub async fn get_service_hostname() -> Result<Option<String>> {
+pub async fn get_service_hostname(client: bool) -> Result<Option<String>> {
     let dir = &CONFIG.service_dir();
     let mut hostname_path = PathBuf::from(dir);
     hostname_path.push("hostname");
@@ -26,5 +26,11 @@ pub async fn get_service_hostname() -> Result<Option<String>> {
         })
         .replace(".onion", "")
         .to_string();
+
+    #[cfg(feature="dev")]
+    {
+        buffer = format!("{}-dev-{}", buffer, if client { "client"} else { "server" });
+    }
+
     return Ok(Some(buffer));
 }

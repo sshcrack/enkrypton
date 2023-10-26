@@ -16,11 +16,11 @@ pub enum S2CPacket {
 
 impl S2CPacket {
     pub async fn identity(receiver: &str) -> Result<Self> {
-        let own_hostname = get_service_hostname()
+        let own_hostname = get_service_hostname(false)
             .await?
             .ok_or(anyhow!("Could not get own hostname"))?;
 
-        let priv_key = StorageManager::get_or_create_private_key(receiver).await?;
+        let priv_key: crate::encryption::PrivateKey = StorageManager::get_or_create_private_key(receiver).await?;
         let pub_key = priv_key.clone().try_into()?;
 
         let keypair = PKey::from_rsa(priv_key.0)?;
@@ -30,7 +30,7 @@ impl S2CPacket {
         let signature = signer.sign_to_vec()?;
 
         Ok(S2CPacket::VerifyIdentity(Identity {
-            hostname: receiver.to_string(),
+            hostname: own_hostname,
             signature,
             pub_key,
         }))

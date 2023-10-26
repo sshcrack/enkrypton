@@ -6,7 +6,7 @@ use crate::{
 #[tauri::command]
 pub async fn tor_hostname() -> Result<String, String> {
     let _ = TOR_START_LOCK.read().await;
-    let res = get_service_hostname().await.or_else(|e| to_str_err(e)())?;
+    let res = get_service_hostname(false).await.or_else(|e| to_str_err(e)())?;
 
     if let Some(res) = res {
         if res.is_empty() {

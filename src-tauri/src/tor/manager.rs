@@ -89,7 +89,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
         }
     }
 
-    let hostname = get_service_hostname().await?;
+    let hostname = get_service_hostname(true).await?;
     info!("Onion Service Hostname is {:?}", hostname);
     *lock = true;
     Ok(())

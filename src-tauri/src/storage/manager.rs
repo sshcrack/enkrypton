@@ -124,6 +124,7 @@ impl StorageManager {
                 }
 
                 dirty.store(false, Ordering::Relaxed);
+                debug!("Done.");
             }
         });
 

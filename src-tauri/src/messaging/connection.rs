@@ -14,7 +14,7 @@ use super::{
 };
 use actix_web::Either;
 use anyhow::{anyhow, Result};
-use async_channel::Receiver;
+use async_channel::{Receiver, Sender};
 use log::{debug, error, warn};
 use smol::block_on;
 use tauri::Manager;
@@ -42,16 +42,38 @@ pub struct Connection {
     pub(super) self_verified: Arc<RwLock<bool>>,
     pub(super) verified: Arc<RwLock<bool>>,
     host: String,
+
+    notifier_ready_tx: Sender<()>,
+    notifier_ready_rx: Receiver<()>
 }
 
 impl Connection {
+    pub(super) async fn notify_verified(&self) -> Result<()> {
+        self.notifier_ready_tx.send(()).await?;
+        Ok(())
+    }
+
+    pub async fn wait_until_verified(&self) -> Result<()> {
+        if *self.self_verified.read().await && *self.verified.read().await {
+            return Ok(())
+        }
+
+        self.notifier_ready_rx.recv().await?;
+        Ok(())
+    }
+
     pub async fn new_client(host: &str, c: MessagingClient) -> Self {
+        let (tx, rx) = async_channel::unbounded();
+
         let mut s = Self {
             info: Arc::new(RwLock::new(ConnInfo::Client(c))),
             read_thread: Arc::new(None),
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
             host: host.to_string(),
+
+            notifier_ready_tx: tx,
+            notifier_ready_rx: rx
         };
 
         s.spawn_read_thread().await;
@@ -61,12 +83,17 @@ impl Connection {
 
     /// This function assumes the identity has already been verified
     pub async fn new_server(host: &str, c: ServerChannels) -> Self {
+        let (tx, rx) = async_channel::unbounded();
+
         let mut s = Self {
             info: Arc::new(RwLock::new(ConnInfo::Server(c))),
             read_thread: Arc::new(None),
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
             host: host.to_string(),
+
+            notifier_ready_tx: tx,
+            notifier_ready_rx: rx
         };
 
         s.spawn_read_thread().await;
@@ -76,7 +103,7 @@ impl Connection {
 
     pub async fn spawn_read_thread(&mut self) {
         if self.read_thread.is_some() {
-            warn!("Could not spawn read thread, already exists");
+            warn!("Could not spawn read thread, already exists ({:?})", self);
             return;
         }
 

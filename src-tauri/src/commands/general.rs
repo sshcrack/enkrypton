@@ -5,6 +5,7 @@ use tauri::{async_runtime::block_on, Runtime};
 
 use crate::{tor::consts::TOR_ZIP_PATH, util::on_exit};
 
+/// Restarts this application
 #[tauri::command]
 pub fn restart<R: Runtime>(
     app: tauri::AppHandle<R>,

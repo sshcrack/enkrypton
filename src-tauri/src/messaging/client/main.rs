@@ -108,7 +108,8 @@ impl MessagingClient {
             let res = block_on(temp);
 
             if let Err(e) = res {
-                if e.to_string().contains("AlreadyClosed") {
+                let err_msg = format!("{:?}", e);
+                if err_msg.contains("AlreadyClosed") {
                     debug!("Closing heartbeat thread...");
                     break;
                 }

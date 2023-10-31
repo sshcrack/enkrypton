@@ -24,10 +24,14 @@ use crate::commands::restart;
 use crate::commands::storage::*;
 use crate::commands::tor::*;
 use crate::util::on_exit;
+
+/// This is the main loop of this application, basically does everything
 fn main() {
     block_on(setup_channels());
+    // Start the local server which is used for receiving / sending messages to clients
     start_webserver();
 
+    // Builds the Application and sets the logging level to debug
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -38,6 +42,7 @@ fn main() {
                 .level(LevelFilter::Debug)
                 .build(),
         )
+        // Registering all commands
         .invoke_handler(tauri::generate_handler![
             restart,
 
@@ -59,6 +64,7 @@ fn main() {
 
             splashscreen_closed
         ])
+        // Closes the tor process when the application is closing
         .on_window_event(|event| {
             let window = event.window();
             let windows = window.windows();
@@ -78,6 +84,7 @@ fn main() {
                 _ => {}
             }
         })
+        // Starts the application and shows just the splashscreen for now.
         .setup(|app| {
             startup(app);
             return Ok(());

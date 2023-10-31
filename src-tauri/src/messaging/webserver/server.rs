@@ -1,6 +1,6 @@
 use std::thread;
 
-use actix_web::{App, HttpServer, web};
+use actix_web::{web, App, HttpServer};
 use anyhow::Result;
 use log::{error, info};
 use tauri::async_runtime::block_on;
@@ -9,6 +9,7 @@ use crate::tor::config::CONFIG;
 
 use super::routes::{hello, ws_index};
 
+/// Starts the local webserver in a new thread and runs the server_mainloop
 pub fn start_webserver() {
     thread::spawn(|| {
         let res = block_on(server_mainloop());
@@ -21,15 +22,19 @@ pub fn start_webserver() {
     });
 }
 
+/// Just initializes a new async webserver and listens just to local connections and to the specified port
 async fn server_mainloop() -> Result<()> {
     HttpServer::new(|| {
         return App::new()
-        .service(hello)
-        .route("/ws/", web::get().to(ws_index))
+            // Return the default message to tell other clients that this server is actually alive
+            .service(hello)
+            // The websocket endpoint
+            .route("/ws/", web::get().to(ws_index));
     })
-        .bind(("127.0.0.1", CONFIG.service_port()))?
-        .run()
-        .await?;
+    // Bind just to localhost and run
+    .bind(("127.0.0.1", CONFIG.service_port()))?
+    .run()
+    .await?;
 
     return Ok(());
 }

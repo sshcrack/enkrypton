@@ -40,7 +40,10 @@ function InnerApp() {
   const [update, setUpdate] = useState(0)
 
   //TODO do more efficiently and not that scuffed
-  useEffect(() => { ws.addClientUpdateListener((_) => setUpdate(Math.random()))}, [update])
+  useEffect(() => ws.addClientUpdateListener((_) => {
+    setUpdate(Math.random())
+    console.log("Received payload, updating")
+  }), [])
 
   useEffect(() => {
     tor.get_hostname().then(e => setHostname(e)).catch(e => {
@@ -50,6 +53,7 @@ function InnerApp() {
   }, [retryHostname])
 
   useEffect(() => {
+    console.log("Refreshing user list", !!data, !!hostname)
     if (!data || !hostname)
       return;
 
@@ -70,7 +74,7 @@ function InnerApp() {
 
 
     setReceivers(saved_users)
-  }, [hostname, data])
+  }, [hostname, data, update])
 
   return <Flex w='100%' h='100%' flexDir='column'>
     <Header />

@@ -27,6 +27,8 @@ const ws = {
 
 
 listen("ws_client_update", ({ payload }: Event<WsClientUpdate>) => {
+    listeners.map(l => l(payload))
+    console.log("Received update", payload)
     const { hostname, status } = payload;
     if (status === 'DISCONNECTED' && window.clients.has(hostname)) {
         const client = ws.get(hostname);

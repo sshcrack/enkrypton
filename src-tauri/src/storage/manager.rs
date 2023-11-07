@@ -8,8 +8,9 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
-use log::{debug, error};
+use log::{debug, error, warn};
 use secure_storage::{Generate, Parsable, SecureStorage};
+use tauri::Manager;
 
 #[cfg(target_family="unix")]
 use std::fs::{Permissions, self};
@@ -22,6 +23,8 @@ use tokio::{
     sync::RwLock,
     task::{spawn, JoinHandle},
 };
+
+use crate::tor::consts::APP_HANDLE;
 
 use super::{util::get_storage_path, StorageData};
 
@@ -212,8 +215,15 @@ impl StorageManager {
     }
 
     /// Marks the storage as dirty (so it is saved later)
-    pub fn mark_dirty(&self) {
+    pub async fn mark_dirty(&self) {
         self.dirty.store(true, Ordering::Relaxed);
+        let res =APP_HANDLE.read().await.as_ref()
+        .ok_or(anyhow!("app handle not there"))
+        .map(|e| e.emit_all("storage_changed", ()));
+
+        if res.is_err() {
+            warn!("Could not emit dirty event: {:?}", res.unwrap_err());
+        }
     }
 
     /// Gets and clones the current data
@@ -258,7 +268,7 @@ impl StorageManager {
 
         let unwrapped = storage.as_mut().unwrap();
         let res = f(unwrapped);
-        self.mark_dirty();
+        self.mark_dirty().await;
 
         Ok(res?)
     }

@@ -68,6 +68,10 @@ impl Connection {
                 "Could not send client update, app handle not there"
             ))
             .and_then(|e| {
+                block_on(block_on(STORAGE.read()).get_data(|e| {
+                    println!("Current chats are: {:?}", e.chats);
+                    Ok(())
+                })).unwrap();
                 e.emit_all(
                     "ws_client_update",
                     WsClientUpdate {
@@ -198,7 +202,7 @@ impl Connection {
                 }
 
                 let msg = msg.unwrap();
-                debug!("Reading conn...");
+                debug!("Reading conn for {}...", receiver_host);
                 let storage = block_on(STORAGE.read());
 
                 let tmp = receiver_host.clone();
@@ -221,7 +225,12 @@ impl Connection {
 
                 let priv_key = priv_key.unwrap();
                 let msg = rsa_decrypt(msg, priv_key);
-                let msg = String::from_utf8(msg);
+                if msg.is_err() {
+                    error!("Could not decrypt message: {:?}", msg.unwrap_err());
+                    continue;
+                }
+
+                let msg = String::from_utf8(msg.unwrap());
                 if let Err(e) = msg {
                     error!("Could not parse message: {:?}", e);
                     continue;
@@ -272,7 +281,7 @@ impl Connection {
             .await?;
 
         println!("Sending");
-        let bin = rsa_encrypt(raw, &pub_key);
+        let bin = rsa_encrypt(raw, &pub_key)?;
 
         // encrypt here
         match &*self.info.read().await {

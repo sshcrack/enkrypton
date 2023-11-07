@@ -1,3 +1,4 @@
+use anyhow::Result;
 use openssl::{
     error::ErrorStack,
     pkey::{Private, Public, PKey},
@@ -81,40 +82,40 @@ pub fn generate_pair() -> PrivateKey {
     PrivateKey(res)
 }
 
-pub fn rsa_encrypt(data: Vec<u8>, key: &PublicKey) -> Vec<u8> {
+pub fn rsa_encrypt(data: Vec<u8>, key: &PublicKey) -> Result<Vec<u8>> {
     let key = key.0.clone();
 
     // Generate a keypair
-    let key = PKey::from_rsa(key).unwrap();
+    let key = PKey::from_rsa(key)?;
 
     // Encrypt the data with RSA PKCS1
-    let mut encrypter = Encrypter::new(&key).unwrap();
-    encrypter.set_rsa_padding(*RSA_PADDING).unwrap();
+    let mut encrypter = Encrypter::new(&key)?;
+    encrypter.set_rsa_padding(*RSA_PADDING)?;
 
     // Create an output buffer
-    let buffer_len = encrypter.encrypt_len(&data).unwrap();
+    let buffer_len = encrypter.encrypt_len(&data)?;
     let mut encrypted = vec![0; buffer_len];
 
     // Encrypt and truncate the buffer
-    let encrypted_len = encrypter.encrypt(&data, &mut encrypted).unwrap();
+    let encrypted_len = encrypter.encrypt(&data, &mut encrypted)?;
     encrypted.truncate(encrypted_len);
 
-    encrypted
+    Ok(encrypted)
 }
 
-pub fn rsa_decrypt(encrypted: Vec<u8>, key: PrivateKey) -> Vec<u8> {
-    let key = PKey::from_rsa(key.0.clone()).unwrap();
+pub fn rsa_decrypt(encrypted: Vec<u8>, key: PrivateKey) -> Result<Vec<u8>> {
+    let key = PKey::from_rsa(key.0.clone())?;
 
-    let mut decrypter = Decrypter::new(&key).unwrap();
-    decrypter.set_rsa_padding(*RSA_PADDING).unwrap();
+    let mut decrypter = Decrypter::new(&key)?;
+    decrypter.set_rsa_padding(*RSA_PADDING)?;
 
     // Create an output buffer
-    let buffer_len = decrypter.decrypt_len(&encrypted).unwrap();
+    let buffer_len = decrypter.decrypt_len(&encrypted)?;
     let mut decrypted = vec![0; buffer_len];
 
     // Encrypt and truncate the buffer
-    let decrypted_len = decrypter.decrypt(&encrypted, &mut decrypted).unwrap();
+    let decrypted_len = decrypter.decrypt(&encrypted, &mut decrypted)?;
     decrypted.truncate(decrypted_len);
 
-    decrypted
+    Ok(decrypted)
 }

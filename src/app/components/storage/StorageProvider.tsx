@@ -18,7 +18,6 @@ export function StorageProvider({ children }: React.PropsWithChildren<{}>) {
     const [data, setData] = useState<StorageData | null>(null);
     const [waitingForUpdate, setWaitingForUpdate] = useState(false);
 
-    const [update, setUpdate] = useState(0)
     const [locked, setLocked] = useState(true)
 
     const debouncedData = useDebounce(data, 350)
@@ -41,18 +40,26 @@ export function StorageProvider({ children }: React.PropsWithChildren<{}>) {
 
     // Just initial set of data
     useEffect(() => {
+        if (locked)
+            return console.debug("Locked, not listening to event")
+
+        return storage.onStorageDirty(() => {
+            setLocked(true)
+            storage.get()
+                .then(e => {
+                    setData(e)
+                    setLocked(false)
+                })
+        })
+    }, [locked])
+
+    useEffect(() => {
         storage.get()
             .then(e => {
                 setData(e)
                 setLocked(false)
             })
-            .catch(e => {
-                console.error(e)
-                setTimeout(() => {
-                    setUpdate(update + 1)
-                }, 100)
-            })
-    }, [update])
+    }, [])
 
 
     return <StorageContext.Provider value={{

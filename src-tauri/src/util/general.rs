@@ -1,4 +1,4 @@
-use std::{fmt::Display, path::PathBuf, env::current_exe, fs::create_dir_all};
+use std::{fmt::Display, path::PathBuf, env::current_exe, fs::create_dir_all, time::SystemTime};
 
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
@@ -77,4 +77,9 @@ pub async fn on_exit() -> anyhow::Result<()> {
     e.exit().await?;
 
     Ok(())
+}
+
+
+pub fn now_millis() -> u128 {
+    SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u128
 }

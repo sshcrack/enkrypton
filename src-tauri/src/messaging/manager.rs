@@ -3,10 +3,8 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
 use log::info;
-use tauri::Manager;
 use tokio::sync::RwLock;
 
-use crate::{util::get_app, messaging::payloads::{WsClientUpdate, WsClientStatus}};
 
 use super::{client::MessagingClient, Connection};
 
@@ -37,11 +35,6 @@ impl MessagingManager {
         self.connections.write().await
             .insert(onion_hostname.to_string(), conn);
 
-        let handle = get_app().await;
-        handle.emit_all("ws_client_update", WsClientUpdate {
-            hostname: onion_hostname.to_string(),
-            status: WsClientStatus::CONNECTED
-        })?;
         Ok(())
     }
 

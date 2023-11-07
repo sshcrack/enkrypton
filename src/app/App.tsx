@@ -8,6 +8,7 @@ import MainProvider from './components/MainProvider';
 import Chat from './components/chat';
 import { StorageContext, StorageProvider } from './components/storage/StorageProvider';
 import { listenSync } from '../bindings/tauri_prom_wrapper';
+import ws from '../bindings/ws';
 
 function App() {
   //TODO disable
@@ -34,36 +35,42 @@ function App() {
 function InnerApp() {
   const { data } = useContext(StorageContext)
   const [receivers, setReceivers] = useState<GeneralUser[]>([])
-  const [retry, setRetry] = useState(0)
+  const [hostname, setHostname] = useState<string | null>(null)
+  const [retryHostname, setRetryHostname] = useState(0)
+  const [update, setUpdate] = useState(0)
+
+  //TODO do more efficiently and not that scuffed
+  useEffect(() => { ws.addClientUpdateListener((_) => setUpdate(Math.random()))}, [update])
 
   useEffect(() => {
-    if (!data)
+    tor.get_hostname().then(e => setHostname(e)).catch(e => {
+      setTimeout(() => setRetryHostname(retryHostname + 1), 100)
+      return console.error("Failed to get hostname, retrying", e)
+    });
+  }, [retryHostname])
+
+  useEffect(() => {
+    if (!data || !hostname)
       return;
 
-    tor.get_hostname()
-      .then(e => {
-        const saved_users: GeneralUser[] = Object.entries(data.chats)
-          .map(([k, v]) => {
-            return {
-              nickname: k === e ? "Self" : v.nickname ?? undefined,
-              onionHostname: k
-            } as GeneralUser
-          })
-
-        if (!saved_users.some(e => e.nickname === "Self")) {
-          saved_users.push({
-            nickname: "Self",
-            onionHostname: e
-          })
-        }
-
-
-        setReceivers(saved_users)
-      }).catch(e => {
-        setTimeout(() => setRetry(retry + 1), 100)
-        return console.error("Failed to get hostname, retrying", e)
+    const saved_users: GeneralUser[] = Object.entries(data.chats)
+      .map(([k, v]) => {
+        return {
+          nickname: k === hostname ? "Self" : v.nickname ?? undefined,
+          onionHostname: k
+        } as GeneralUser
       })
-  }, [data])
+
+    if (!saved_users.some(savedUsr => savedUsr.nickname === "Self")) {
+      saved_users.push({
+        nickname: "Self",
+        onionHostname: hostname
+      })
+    }
+
+
+    setReceivers(saved_users)
+  }, [hostname, data])
 
   return <Flex w='100%' h='100%' flexDir='column'>
     <Header />

@@ -8,10 +8,7 @@ use async_channel::{Receiver, Sender};
 use log::{debug, error, info};
 use smol::future::block_on;
 
-use crate::messaging::{
-    packets::{C2SPacket, S2CPacket},
-    MESSAGING, HEARTBEAT_TIMEOUT,
-};
+use crate::messaging::{packets::{C2SPacket, S2CPacket}, HEARTBEAT_TIMEOUT, MESSAGING};
 
 use super::manager_ext::ManagerExt;
 
@@ -103,6 +100,7 @@ impl WsActor {
                 if let Some(onion_host) = &self.receiver {
                     let messaging = MESSAGING.read().await;
                     messaging.set_self_verified(&onion_host, &self).await;
+                    messaging.check_verify_status(&onion_host).await?;
                 } else {
                     error!("Received IdentityVerified packet but no onion host was set");
                 }
@@ -115,6 +113,7 @@ impl WsActor {
                 let messaging = MESSAGING.read().await;
                 self.receiver = Some(identity.hostname.clone());
                 messaging.set_remote_verified(&identity.hostname, &self).await;
+                messaging.check_verify_status(&identity.hostname).await?;
 
                 let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
 
@@ -123,7 +122,7 @@ impl WsActor {
 
                 ctx.binary(verify_p);
                 ctx.binary(b);
-            },
+            }
             C2SPacket::Message(msg) => {
                 // Sending the message to main handler
                 self.c_tx.send(C2SPacket::Message(msg)).await?;

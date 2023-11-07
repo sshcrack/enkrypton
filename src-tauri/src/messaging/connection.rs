@@ -4,10 +4,13 @@ use std::{
 };
 
 use crate::{
-    encryption::{rsa_decrypt, rsa_encrypt}, messaging::payloads::WsMessagePayload, util::get_app, storage::STORAGE,
+    encryption::{rsa_decrypt, rsa_encrypt},
+    messaging::payloads::{WsMessagePayload, WsClientUpdate, WsClientStatus},
+    storage::{helpers::ChatStorageHelper, STORAGE},
+    util::get_app, tor::consts::APP_HANDLE,
 };
 
-#[cfg(feature="dev")]
+#[cfg(feature = "dev")]
 use crate::tor::service::get_service_hostname;
 
 use super::{
@@ -18,7 +21,7 @@ use super::{
 use actix_web::Either;
 use anyhow::{anyhow, Result};
 use async_channel::{Receiver, Sender};
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use smol::block_on;
 use tauri::Manager;
 use tokio::sync::RwLock;
@@ -47,18 +50,45 @@ pub struct Connection {
     receiver_host: String,
 
     notifier_ready_tx: Sender<()>,
-    notifier_ready_rx: Receiver<()>
+    notifier_ready_rx: Receiver<()>,
 }
 
 impl Connection {
     pub(super) async fn notify_verified(&self) -> Result<()> {
+        info!(
+            "Verified ourselves for connection {:?}!",
+            self.receiver_host
+        );
+
+        let res = APP_HANDLE
+            .read()
+            .await
+            .as_ref()
+            .ok_or(anyhow!(
+                "Could not send client update, app handle not there"
+            ))
+            .and_then(|e| {
+                e.emit_all(
+                    "ws_client_update",
+                    WsClientUpdate {
+                        hostname: self.receiver_host.clone(),
+                        status: WsClientStatus::CONNECTED,
+                    },
+                )?;
+                Ok(())
+            });
+
+        if let Err(e) = res {
+            error!("Could not send client update: {:?}", e);
+        }
+
         self.notifier_ready_tx.send(()).await?;
         Ok(())
     }
 
     pub async fn wait_until_verified(&self) -> Result<()> {
         if *self.self_verified.read().await && *self.verified.read().await {
-            return Ok(())
+            return Ok(());
         }
 
         self.notifier_ready_rx.recv().await?;
@@ -76,7 +106,7 @@ impl Connection {
             receiver_host: receiver_host.to_string(),
 
             notifier_ready_tx: tx,
-            notifier_ready_rx: rx
+            notifier_ready_rx: rx,
         };
 
         s.spawn_read_thread().await;
@@ -96,7 +126,7 @@ impl Connection {
             receiver_host: receiver_host.to_string(),
 
             notifier_ready_tx: tx,
-            notifier_ready_rx: rx
+            notifier_ready_rx: rx,
         };
 
         s.spawn_read_thread().await;
@@ -114,10 +144,10 @@ impl Connection {
         let verified = self.verified.clone();
         let self_verified = self.self_verified.clone();
 
-        #[cfg(not(feature="dev"))]
+        #[cfg(not(feature = "dev"))]
         let receiver_host: String = self.receiver_host.clone();
 
-        #[cfg(feature="dev")]
+        #[cfg(feature = "dev")]
         let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
 
         let handle = thread::spawn(move || {
@@ -199,11 +229,22 @@ impl Connection {
 
                 let msg = msg.unwrap();
                 let event_name = &format!("msg-{}", receiver_host);
-                println!("Received message: {}, Sending payload to {}", msg, event_name);
+                println!(
+                    "Received message: {}, Sending payload to {}",
+                    msg, event_name
+                );
+
+                let res = block_on(
+                    block_on(STORAGE.read()) // ..
+                        .add_msg(&receiver_host, false, &msg), //..
+                );
+
+                if res.is_err() {
+                    error!("Could not modify storage data: {:?}", res.unwrap_err());
+                }
 
                 let handle = block_on(get_app());
-                let res =
-                    handle.emit_all(event_name, WsMessagePayload { message: msg });
+                let res = handle.emit_all(event_name, WsMessagePayload { message: msg });
                 if res.is_err() {
                     error!("Could not emit message: {:?}", res.unwrap_err());
                     return;
@@ -219,12 +260,16 @@ impl Connection {
 
         let tmp = self.receiver_host.clone();
         println!("Reading pubkey...");
-        let pub_key = STORAGE.read().await.get_data(|e| {
-            e.chats
-                .get(&tmp)
-                .and_then(|e| e.pub_key.clone())
-                .ok_or(anyhow!("The pub key was empty (should never happen)"))
-        }).await?;
+        let pub_key = STORAGE
+            .read()
+            .await
+            .get_data(|e| {
+                e.chats
+                    .get(&tmp)
+                    .and_then(|e| e.pub_key.clone())
+                    .ok_or(anyhow!("The pub key was empty (should never happen)"))
+            })
+            .await?;
 
         println!("Sending");
         let bin = rsa_encrypt(raw, &pub_key);
@@ -241,6 +286,15 @@ impl Connection {
                 s.send(packet).await?;
                 Ok(())
             }
-        }
+        }?;
+
+        // Adding if successful
+        STORAGE
+            .read()
+            .await
+            .add_msg(&self.receiver_host, true, msg)
+            .await?;
+
+        Ok(())
     }
 }

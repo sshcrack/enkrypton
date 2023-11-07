@@ -65,3 +65,4 @@ duplicate = "1.0.0"
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
 dev = [ ]
+enable-console = [ ]

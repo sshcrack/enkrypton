@@ -52,6 +52,7 @@ pub fn startup(app: &mut App) {
             .await;
 
             if res.is_ok() {
+                window.open_devtools();
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();
                 splashscreen_window.app_handle().emit_all("splashscreen_closed", ()).unwrap();

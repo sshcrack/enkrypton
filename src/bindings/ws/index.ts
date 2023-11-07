@@ -6,8 +6,23 @@ if (!window.clients)
     window.clients = new ClientMap();
 
 
+
+type Func = (payload: WsClientUpdate) => unknown;
+const listeners: Func[] = [];
+
 const ws = {
-    get: (onionHost: string) => window.clients.get(onionHost)
+    get: (onionHost: string) => window.clients.get(onionHost),
+    addClientUpdateListener: (callback: (payload: WsClientUpdate) => unknown) => {
+        listeners.push(callback)
+
+        return () => {
+            const index = listeners.indexOf(callback)
+            if (index === -1)
+                return console.error("Could not remove manual listener")
+
+            listeners.splice(index, 1)
+        }
+    }
 }
 
 

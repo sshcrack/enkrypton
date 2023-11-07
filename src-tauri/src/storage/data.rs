@@ -58,7 +58,7 @@ pub struct ChatMessage {
     pub self_sent: bool,
     //TODO Add actual encryption
     pub msg: String,
-    pub date: usize,
+    pub date: u128,
 }
 
 impl Default for StorageData {

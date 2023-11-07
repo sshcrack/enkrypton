@@ -40,11 +40,10 @@ impl MessagingClient {
         debug!("Creating verify packet...");
         let verify_packet = C2SPacket::identity(onion_hostname).await?;
 
-        let mut connect_host = onion_hostname.to_string();
+        #[cfg(not(feature="dev"))]
+        let connect_host = onion_hostname.to_string();
         #[cfg(feature = "dev")]
-        {
-            connect_host = connect_host.replace("-dev-server", "").replace("-dev-client", "")
-        }
+        let  connect_host = onion_hostname.replace("-dev-server", "").replace("-dev-client", "");
         let onion_addr = format!("ws://{}.onion/ws/", connect_host);
 
         debug!("Creating proxy...");

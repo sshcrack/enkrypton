@@ -1,11 +1,14 @@
 use anyhow::Result;
-use log::error;
+use log::{error, debug};
 
 use crate::storage::STORAGE;
 
 #[tauri::command]
 pub async fn storage_unlock_or_create(pass: &str) -> Result<(), String> {
+    
+    debug!("Unlock");
     let res = inner_func(pass).await;
+    debug!("Done");
 
     if res.is_err() {
         let e = res.unwrap_err();

@@ -1,6 +1,6 @@
 import { Button, Flex, Heading, Text } from '@chakra-ui/react'
 import { invoke } from '@tauri-apps/api/tauri';
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { invokeWindowTauri } from '../../tools/tauri';
 import { TorStartupErrorPayload } from '../../bindings/rs/TorStartupErrorPayload';
 //import { window } from "@tauri-apps/api"
@@ -9,8 +9,12 @@ export type ErrorScreenProps = {
     error: TorStartupErrorPayload
 }
 
+const ERROR_TOR_CODE = "No, it's still there.  Exiting."
 export default function ErrorScreen({ error }: ErrorScreenProps) {
     const logs = error.logs;
+    const should_kill = logs?.some(e => e.includes(ERROR_TOR_CODE)) ?? false
+    const [isRestarting, setRestarting] = useState(false)
+
     useEffect(() => {
         const window = "splashscreen"
         invokeWindowTauri(window, "setDecorations", true)
@@ -48,7 +52,16 @@ export default function ErrorScreen({ error }: ErrorScreenProps) {
                 </Flex>
             </Flex>
 
-            <Button onClick={() => invoke("restart").then(() => console.log("Restarting..."))} size='xl' colorScheme='orange' padding='5'>Restart</Button>
+            <Button
+            onClick={() => {console.log("Restarting...")
+                invoke("restart", { killOldTor: should_kill }).then(() => console.log("Should be started already lol"))
+                setRestarting(true)
+            }}
+            size='xl'
+            colorScheme='orange'
+            padding='5'
+            isLoading={isRestarting}
+            >Restart</Button>
         </Flex>
     </Flex>
 }

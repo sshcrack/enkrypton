@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use log::{warn, info};
+use log::{warn, info, debug};
 use openssl::{pkey::PKey, sign::Verifier};
 use serde::{Serialize, Deserialize};
 
@@ -19,13 +19,15 @@ impl Identity {
     pub async fn verify(&self) -> Result<()> {
         let Identity {  hostname: remote_host, pub_key, signature} = self;
 
-        let storage = STORAGE.read().await;
-        let local_pub_key = storage.get_data(|e| {
+        debug!("Reading to verify...");
+        let local_pub_key = STORAGE.read().await.get_data(|e| {
             let key = e.chats.get(remote_host)
                 .and_then(|e| e.pub_key.clone());
 
             return Ok(key)
         }).await?;
+
+        debug!("Done");
 
         if let Some(local_pub_key) = local_pub_key {
             info!("Verifying for hostname: {:?}", remote_host);
@@ -43,9 +45,7 @@ impl Identity {
             Ok(())
         } else {
             info!("No chat with hostname '{}' yet. Adding new receiver...", remote_host);
-            drop(storage);
-            let mut storage = STORAGE.write().await;
-            storage.modify_storage_data(|e| {
+            STORAGE.read().await.modify_storage_data(|e| {
                 let res = e.chats.entry(remote_host.clone())
                     .or_insert_with(|| StorageChat::new(&remote_host));
 
@@ -53,6 +53,7 @@ impl Identity {
 
                 Ok(())
             }).await?;
+            debug!("Done.");
 
             Ok(())
         }

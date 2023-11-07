@@ -34,6 +34,6 @@ impl C2SPacket {
         signer.update(own_hostname.as_bytes())?;
         let signature = signer.sign_to_vec()?;
 
-        Ok(C2SPacket::SetIdentity(Identity { hostname: receiver.to_string(), signature, pub_key }))
+        Ok(C2SPacket::SetIdentity(Identity { hostname: own_hostname.to_string(), signature, pub_key }))
     }
 }

@@ -5,7 +5,7 @@ use crate::messaging::MESSAGING;
 #[tauri::command]
 pub async fn ws_connect(onion_hostname: String) -> Result<(), String> {
     debug!("Getting or creating client...");
-    if MESSAGING.read().await.is_connected(&onion_hostname) {
+    if MESSAGING.read().await.is_connected(&onion_hostname).await {
         return Ok(());
     }
 

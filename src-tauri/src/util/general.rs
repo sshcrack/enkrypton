@@ -54,6 +54,7 @@ lazy_static! {
     pub static ref ONION_REGEX: Regex = Regex::new("^([A-z]|[0-9])+$").unwrap();
 }
 
+/// Used for validation of the given onion address
 pub fn is_onion_hostname(addr: &str) -> bool {
 
     return ONION_REGEX.is_match(addr);

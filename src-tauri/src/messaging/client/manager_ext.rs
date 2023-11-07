@@ -12,7 +12,7 @@ pub trait ManagerExt {
 #[async_trait]
 impl ManagerExt for MessagingManager {
     async fn set_remote_verified(&self, onion_host: &str) -> Result<()> {
-        let res = self.connections.get(onion_host)
+        let res = self.connections.read().await.get(onion_host).cloned()
             .ok_or(anyhow!("set_remote_verified should only be callable after a connection is established"))?;
 
         *res.verified.write().await = true;
@@ -20,7 +20,7 @@ impl ManagerExt for MessagingManager {
     }
 
     async fn set_self_verified(&self, onion_host: &str) -> Result<()> {
-        let res = self.connections.get(onion_host)
+        let res = self.connections.read().await.get(onion_host).cloned()
             .ok_or(anyhow!("set_remote_verified should only be callable after a connection is established"))?;
 
         *res.self_verified.write().await = true;

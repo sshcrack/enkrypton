@@ -92,9 +92,7 @@ pub fn startup(app: &mut App) {
         while !term.load(Ordering::Relaxed) {}
 
         debug!("Running stop on main thread");
-        let r = handle.run_on_main_thread(|| {
-            block_on(on_exit()).unwrap();
-        });
+        let r = block_on(on_exit());
 
         handle.exit(0);
 

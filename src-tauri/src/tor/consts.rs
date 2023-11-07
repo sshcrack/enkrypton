@@ -19,9 +19,6 @@ lazy_static! {
     /// The message to send when enkrypton is up and running (at path /)
     pub static ref DEFAULT_HTTP_RETURN: String = "Hi, yes I'm connected!".to_string();
 
-    /// This is the path to the tor binary in zip
-    pub static ref TOR_ZIP_PATH: PathBuf = get_tor_zip_path();
-
     /// Hash of the Tor binary, used to verify the integrity of the binary
     pub static ref TOR_BINARY_HASH: String = get_tor_binary_hash();
     /// The actual path to the binary
@@ -92,12 +89,6 @@ pub fn get_torrc() -> PathBuf {
     dir.push("torrc");
 
     return dir;
-}
-/// Path to the tor binary which is still zipped up
-fn get_tor_zip_path() -> PathBuf {
-    let tor_write_path = get_root_dir();
-
-    return tor_write_path.join("enkrypton_tor.zip");
 }
 
 /// Path to the extracted tor binary, again this is platform specific

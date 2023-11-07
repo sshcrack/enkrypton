@@ -7,7 +7,7 @@ use crate::messaging::MESSAGING;
 pub async fn ws_send(onion_hostname: String, msg: String) -> Result<(), String> {
     debug!("Sending {} to {}", msg, onion_hostname);
 
-    let mut manager = MESSAGING.write().await;
+    let manager = MESSAGING.read().await;
     debug!("Getting...");
     let conn = manager.get_or_connect(&onion_hostname).await
         .map_err(|e| e.to_string())?;

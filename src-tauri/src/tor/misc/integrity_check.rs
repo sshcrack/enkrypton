@@ -1,9 +1,10 @@
 use std::{fs::File, io::{self, Cursor}};
 
 use anyhow::Result;
+use log::error;
 use sha2::{Digest, Sha256};
 
-use crate::tor::consts::{TOR_ZIP_PATH, TOR_BINARY_PATH, TOR_BINARY_HASH};
+use crate::tor::consts::{TOR_BINARY_PATH, TOR_BINARY_HASH};
 
 
 /**
@@ -11,9 +12,10 @@ Checks for the binary of tor at TOR_BINARY_PATH and extracts the tor
 binary if the file does not exist or the hash is wrong
 */
 pub fn check_integrity() -> Result<()> {
-    let is_valid = TOR_ZIP_PATH.is_file() && is_tor_binary_valid().unwrap_or(false);
+    let is_valid = is_tor_binary_valid().unwrap_or(false);
 
     if !is_valid {
+        error!("Tor is not valid. Extracting...");
         extract_tor()?;
     }
 

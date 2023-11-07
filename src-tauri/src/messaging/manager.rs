@@ -11,7 +11,7 @@ use crate::{util::get_app, messaging::payloads::{WsClientUpdate, WsClientStatus}
 use super::{client::MessagingClient, Connection};
 
 pub struct MessagingManager {
-    pub(super) connections: HashMap<String, Connection>,
+    pub(super) connections: Arc<RwLock<HashMap<String, Connection>>>,
 }
 
 lazy_static! {
@@ -24,17 +24,17 @@ lazy_static! {
 impl MessagingManager {
     fn new() -> Self {
         MessagingManager {
-            connections: HashMap::new(),
+            connections: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    async fn connect(&mut self, onion_hostname: &str) -> Result<()> {
+    async fn connect(&self, onion_hostname: &str) -> Result<()> {
         let client = MessagingClient::new(&onion_hostname).await?;
 
         info!("[CLIENT]: New Connection for {}", onion_hostname);
 
         let conn = Connection::new_client(onion_hostname, client).await;
-        self.connections
+        self.connections.write().await
             .insert(onion_hostname.to_string(), conn);
 
         let handle = get_app().await;
@@ -45,12 +45,12 @@ impl MessagingManager {
         Ok(())
     }
 
-    pub async fn get_or_connect(&mut self, onion_host: &str) -> Result<Connection> {
-        if !self.connections.contains_key(onion_host) {
+    pub async fn get_or_connect(&self, onion_host: &str) -> Result<Connection> {
+        if !self.connections.read().await.contains_key(onion_host) {
             self.connect(&onion_host).await?;
         }
 
-        let res = self.connections.get(onion_host);
+        let res = self.connections.read().await.get(onion_host).cloned();
         if let Some(c) = res {
             return Ok(c.clone());
         }
@@ -59,18 +59,18 @@ impl MessagingManager {
     }
 
     pub async fn wait_until_verified(&self, onion_host: &str) -> Result<()> {
-        if !self.connections.contains_key(onion_host) {
+        if !self.connections.read().await.contains_key(onion_host) {
             return Err(anyhow!("Connection does not exist"));
         }
 
-        let conn = self.connections.get(onion_host).unwrap();
+        let conn = self.connections.read().await.get(onion_host).cloned().unwrap();
         conn.wait_until_verified().await?;
         Ok(())
     }
 
 
     pub(super) async fn check_verify_status(&self, onion_host: &str) -> Result<()> {
-        let res = self.connections.get(onion_host)
+        let res = self.connections.read().await.get(onion_host).cloned()
             .ok_or(anyhow!("check_verify_status should only be callable after a connection is established"))?;
 
         let remote_verified = *res.verified.read().await;
@@ -83,11 +83,11 @@ impl MessagingManager {
         Ok(())
     }
 
-    pub fn is_connected(&self, onion_host: &str) -> bool {
-        self.connections.contains_key(onion_host)
+    pub async fn is_connected(&self, onion_host: &str) -> bool {
+        self.connections.read().await.contains_key(onion_host)
     }
 
-    pub fn remove_connection(&mut self, onion_host: &str) {
-        self.connections.remove(onion_host);
+    pub async fn remove_connection(&self, onion_host: &str) {
+        self.connections.write().await.remove(onion_host);
     }
 }

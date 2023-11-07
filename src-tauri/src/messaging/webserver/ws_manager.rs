@@ -76,7 +76,7 @@ impl Actor for WsActor {
         if let Some(onion_host) = &self.receiver {
             debug!("Removing connection for {}", onion_host);
 
-            block_on(MESSAGING.write()).remove_connection(onion_host);
+            block_on(block_on(MESSAGING.read()).remove_connection(onion_host));
         }
     }
 }
@@ -101,7 +101,7 @@ impl WsActor {
         match packet {
             C2SPacket::IdentityVerified => {
                 if let Some(onion_host) = &self.receiver {
-                    let mut messaging = MESSAGING.write().await;
+                    let messaging = MESSAGING.read().await;
                     messaging.set_self_verified(&onion_host, &self).await;
                 } else {
                     error!("Received IdentityVerified packet but no onion host was set");
@@ -112,7 +112,7 @@ impl WsActor {
                 info!("[SERVER] Verifying identity...");
                 identity.verify().await?;
 
-                let mut messaging = MESSAGING.write().await;
+                let messaging = MESSAGING.read().await;
                 self.receiver = Some(identity.hostname.clone());
                 messaging.set_remote_verified(&identity.hostname, &self).await;
 

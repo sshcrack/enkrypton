@@ -186,7 +186,7 @@ impl StorageManager {
     }
 
     /// Saves the current storage to the file
-    pub async fn save(&mut self) -> Result<()> {
+    pub async fn save(&self) -> Result<()> {
         debug!("Writing to {:?}...", &self.path);
         let mut f = File::create(&self.path).await?;
 
@@ -246,7 +246,7 @@ impl StorageManager {
     }
 
 
-    pub async fn modify_storage<Func, T>(&mut self, f: Func) -> Result<T>
+    pub async fn modify_storage<Func, T>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut Storage) -> Result<T>,
     {
@@ -263,7 +263,7 @@ impl StorageManager {
         Ok(res?)
     }
 
-    pub async fn modify_storage_data<Func, T>(&mut self, f: Func) -> Result<T>
+    pub async fn modify_storage_data<Func, T>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut StorageData) -> Result<T>,
     {

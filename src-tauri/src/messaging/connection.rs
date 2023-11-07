@@ -4,8 +4,11 @@ use std::{
 };
 
 use crate::{
-    encryption::{rsa_decrypt, rsa_encrypt}, messaging::payloads::WsMessagePayload, storage::STORAGE, util::get_app,
+    encryption::{rsa_decrypt, rsa_encrypt}, messaging::payloads::WsMessagePayload, util::get_app, storage::STORAGE,
 };
+
+#[cfg(feature="dev")]
+use crate::tor::service::get_service_hostname;
 
 use super::{
     client::MessagingClient,
@@ -41,7 +44,7 @@ pub struct Connection {
     read_thread: Arc<Option<JoinHandle<()>>>,
     pub(super) self_verified: Arc<RwLock<bool>>,
     pub(super) verified: Arc<RwLock<bool>>,
-    host: String,
+    receiver_host: String,
 
     notifier_ready_tx: Sender<()>,
     notifier_ready_rx: Receiver<()>
@@ -62,7 +65,7 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn new_client(host: &str, c: MessagingClient) -> Self {
+    pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
         let (tx, rx) = async_channel::unbounded();
 
         let mut s = Self {
@@ -70,7 +73,7 @@ impl Connection {
             read_thread: Arc::new(None),
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
-            host: host.to_string(),
+            receiver_host: receiver_host.to_string(),
 
             notifier_ready_tx: tx,
             notifier_ready_rx: rx
@@ -82,7 +85,7 @@ impl Connection {
     }
 
     /// This function assumes the identity has already been verified
-    pub async fn new_server(host: &str, c: ServerChannels) -> Self {
+    pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
         let (tx, rx) = async_channel::unbounded();
 
         let mut s = Self {
@@ -90,7 +93,7 @@ impl Connection {
             read_thread: Arc::new(None),
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
-            host: host.to_string(),
+            receiver_host: receiver_host.to_string(),
 
             notifier_ready_tx: tx,
             notifier_ready_rx: rx
@@ -111,7 +114,12 @@ impl Connection {
         let verified = self.verified.clone();
         let self_verified = self.self_verified.clone();
 
-        let host: String = self.host.clone();
+        #[cfg(not(feature="dev"))]
+        let receiver_host: String = self.receiver_host.clone();
+
+        #[cfg(feature="dev")]
+        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
+
         let handle = thread::spawn(move || {
             loop {
                 let msg = match &receiver {
@@ -160,9 +168,10 @@ impl Connection {
                 }
 
                 let msg = msg.unwrap();
+                debug!("Reading conn...");
                 let storage = block_on(STORAGE.read());
 
-                let tmp = host.clone();
+                let tmp = receiver_host.clone();
                 let priv_key = storage.get_data(|e| {
                     e.chats
                         .get(&tmp)
@@ -170,7 +179,11 @@ impl Connection {
                         .ok_or(anyhow!("The private key was empty (should never happen)"))
                 });
 
+                debug!("Getting res future");
+
                 let priv_key = block_on(priv_key);
+                debug!("Done");
+                drop(storage);
                 if priv_key.is_err() {
                     error!("Could not get private key: {:?}", priv_key.unwrap_err());
                     continue;
@@ -185,11 +198,12 @@ impl Connection {
                 }
 
                 let msg = msg.unwrap();
-                println!("Received message: {}", msg);
+                let event_name = &format!("msg-{}", receiver_host);
+                println!("Received message: {}, Sending payload to {}", msg, event_name);
 
                 let handle = block_on(get_app());
                 let res =
-                    handle.emit_all(&format!("msg-{}", host), WsMessagePayload { message: msg });
+                    handle.emit_all(event_name, WsMessagePayload { message: msg });
                 if res.is_err() {
                     error!("Could not emit message: {:?}", res.unwrap_err());
                     return;
@@ -203,7 +217,8 @@ impl Connection {
     pub async fn send_msg(&self, msg: &str) -> Result<()> {
         let raw = msg.as_bytes().to_vec();
 
-        let tmp = self.host.clone();
+        let tmp = self.receiver_host.clone();
+        println!("Reading pubkey...");
         let pub_key = STORAGE.read().await.get_data(|e| {
             e.chats
                 .get(&tmp)
@@ -211,6 +226,7 @@ impl Connection {
                 .ok_or(anyhow!("The pub key was empty (should never happen)"))
         }).await?;
 
+        println!("Sending");
         let bin = rsa_encrypt(raw, &pub_key);
 
         // encrypt here

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::debug;
 
 use crate::storage::{STORAGE, StorageChat, StorageManager};
 use crate::encryption::PrivateKey;
@@ -12,8 +13,8 @@ pub trait GetPrivateKey {
 #[async_trait]
 impl GetPrivateKey for StorageManager {
     async fn get_or_create_private_key(receiver: &str) -> Result<PrivateKey> {
-        let storage = STORAGE.read().await;
-        let mut priv_key = storage
+        debug!("Get or create");
+        let mut priv_key = STORAGE.read().await
             .get_data(|e| {
                 let k = e.chats.get(receiver).and_then(|e| Some(e.priv_key.clone()));
 
@@ -21,10 +22,10 @@ impl GetPrivateKey for StorageManager {
             })
             .await?;
 
+            debug!("Done 1");
         if priv_key.is_none() {
-            drop(storage);
-            let mut storage = STORAGE.write().await;
-            priv_key = storage
+            debug!("None, write");
+            priv_key = STORAGE.read().await
                 .modify_storage_data(|e| {
                     if !e.chats.contains_key(receiver) {
                         e.chats
@@ -36,6 +37,7 @@ impl GetPrivateKey for StorageManager {
                     Ok(priv_key)
                 })
                 .await?;
+            debug!("Done");
         }
 
         Ok(priv_key.expect("Should always be true"))

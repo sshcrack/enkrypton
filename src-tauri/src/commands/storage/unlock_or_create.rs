@@ -1,7 +1,7 @@
 use anyhow::Result;
 use log::{error, debug};
 
-use crate::storage::STORAGE;
+use storage_internal::STORAGE;
 
 #[tauri::command]
 pub async fn storage_unlock_or_create(pass: &str) -> Result<(), String> {

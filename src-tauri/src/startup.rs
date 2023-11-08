@@ -7,19 +7,15 @@ use std::{
 };
 
 use log::{debug, error, warn};
+use payloads::payloads::TorStartupErrorPayload;
+use shared::APP_HANDLE;
 use tauri::{
     async_runtime::{self, block_on},
     App, Manager,
 };
+use tor_proxy::{manager, misc::messages::TorStartError};
 
-use crate::{
-    messaging::payloads::TorStartupErrorPayload,
-    tor::{
-        consts::APP_HANDLE,
-        manager::{self},
-        misc::messages::TorStartError,
-    }, util::on_exit,
-};
+use crate::util::on_exit;
 
 pub fn startup(app: &mut App) {
     let mut state = APP_HANDLE.blocking_write();

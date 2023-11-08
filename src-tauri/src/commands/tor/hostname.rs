@@ -1,7 +1,6 @@
-use crate::{
-    tor::{consts::TOR_START_LOCK, service::get_service_hostname},
-    util::to_str_err,
-};
+use tor_proxy::{service::get_service_hostname, consts::TOR_START_LOCK};
+
+use crate::util::to_str_err;
 
 #[tauri::command]
 pub async fn tor_hostname() -> Result<String, String> {

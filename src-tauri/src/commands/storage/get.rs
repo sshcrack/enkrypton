@@ -1,4 +1,4 @@
-use crate::storage::{StorageData, STORAGE};
+use storage_internal::{STORAGE, StorageData};
 
 #[tauri::command]
 pub async fn storage_get() -> Result<StorageData, String> {

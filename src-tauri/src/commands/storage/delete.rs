@@ -1,4 +1,4 @@
-use crate::storage::STORAGE;
+use storage_internal::STORAGE;
 
 #[tauri::command]
 pub async fn storage_delete() -> Result<(), String> {

@@ -1,4 +1,5 @@
-use crate::tor::{config::TOR_CLIENT, consts::DEFAULT_HTTP_RETURN};
+use messaging::client::TOR_CLIENT;
+use shared::DEFAULT_HTTP_RETURN;
 
 #[tauri::command]
 pub async fn tor_is_alive(_addr: String) -> Result<bool, String> {

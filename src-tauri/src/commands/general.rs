@@ -2,8 +2,9 @@
 
 use sysinfo::{System, SystemExt, ProcessExt};
 use tauri::Runtime;
+use tor_proxy::consts::TOR_BINARY_PATH;
 
-use crate::{util::on_exit, tor::consts::TOR_BINARY_PATH};
+use crate::util::on_exit;
 
 /// Restarts this application
 #[tauri::command]

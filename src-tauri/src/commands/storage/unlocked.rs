@@ -1,6 +1,6 @@
 use log::debug;
 
-use crate::storage::STORAGE;
+use storage_internal::STORAGE;
 
 #[tauri::command]
 pub async fn storage_is_unlocked() -> Result<bool, String> {

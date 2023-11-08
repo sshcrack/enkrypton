@@ -1,6 +1,5 @@
 use log::debug;
-
-use crate::messaging::MESSAGING;
+use messaging::general::MESSAGING;
 
 
 #[tauri::command]

@@ -1,7 +1,5 @@
 use log::debug;
-
-use crate::storage::{StorageData, STORAGE};
-
+use storage_internal::{StorageData, STORAGE};
 #[tauri::command]
 pub async fn storage_set(data_raw: String) -> Result<(), String> {
     if !(STORAGE.read().await).is_unlocked() {

@@ -1277,19 +1277,21 @@ dependencies = [
  "hex",
  "lazy_static",
  "log",
+ "messaging",
  "openssl",
  "payloads",
  "port_check",
  "rand 0.8.5",
  "regex",
  "rustls",
- "secure-storage",
  "serde",
  "serde_bytes",
  "serde_json",
  "sha2",
+ "shared",
  "signal-hook",
  "smol",
+ "storage-internal",
  "sysinfo",
  "tauri",
  "tauri-build",
@@ -2390,6 +2392,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "messaging"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "actix-web",
+ "actix-web-actors",
+ "anyhow",
+ "async-channel 2.1.0",
+ "async-rustls",
+ "async-stream",
+ "async-trait",
+ "encryption",
+ "futures-util",
+ "lazy_static",
+ "log",
+ "openssl",
+ "payloads",
+ "rustls",
+ "serde",
+ "serde_json",
+ "shared",
+ "smol",
+ "storage-internal",
+ "tauri",
+ "tokio",
+ "tokio-socks",
+ "tokio-tungstenite",
+ "tor-proxy",
+ "url",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -3715,6 +3750,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbe866e1e51e8260c9eed836a042a5e7f6726bb2b411dffeaa712e19c388f23b"
 dependencies = [
  "loom",
+]
+
+[[package]]
+name = "storage-internal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "encryption",
+ "lazy_static",
+ "log",
+ "secure-storage",
+ "serde",
+ "shared",
+ "tauri",
+ "tokio",
+ "ts-rs",
+ "zeroize",
 ]
 
 [[package]]

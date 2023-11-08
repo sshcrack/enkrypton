@@ -4,19 +4,17 @@
 /** This crate just describes the ws and https client.*/
 mod commands;
 mod startup;
-mod storage;
 mod util;
-mod messaging;
-mod encryption;
 
 use log::{error, info, LevelFilter};
 
 use commands::ws::*;
+use messaging::server::server::start_webserver;
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
-use messaging::webserver::server::start_webserver;
+use tor_proxy::consts::setup_tor_channels;
 
 use crate::commands::restart;
 use crate::commands::storage::*;
@@ -25,7 +23,7 @@ use crate::util::on_exit;
 
 /// This is the main loop of this application, basically does everything
 fn main() {
-    block_on(setup_channels());
+    block_on(setup_tor_channels());
     // Start the local server which is used for receiving / sending messages to clients
     start_webserver();
 

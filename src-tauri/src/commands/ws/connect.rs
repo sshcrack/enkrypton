@@ -1,6 +1,5 @@
 use log::debug;
-
-use crate::messaging::MESSAGING;
+use messaging::general::MESSAGING;
 
 #[tauri::command]
 pub async fn ws_connect(onion_hostname: String) -> Result<(), String> {

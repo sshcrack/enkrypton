@@ -1,13 +1,11 @@
-use std::{fmt::Display, path::PathBuf, env::current_exe, fs::create_dir_all, time::SystemTime};
+use std::fmt::Display;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use lazy_static::lazy_static;
 use log::{debug, error};
 use regex::Regex;
-use tauri::AppHandle;
-use url::Url;
-
-use crate::{tor::{consts::APP_HANDLE, manager::{stop_tor, wait_for_exit}}, storage::STORAGE};
+use storage_internal::STORAGE;
+use tor_proxy::manager::{stop_tor, wait_for_exit};
 
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where
@@ -23,7 +21,9 @@ lazy_static! {
     pub static ref ONION_REGEX: Regex = Regex::new("^([A-z]|[0-9])+$").unwrap();
 }
 
+//TODO implement in finished product
 /// Used for validation of the given onion address
+#[allow(dead_code)]
 pub fn is_onion_hostname(addr: &str) -> bool {
 
     return ONION_REGEX.is_match(addr);

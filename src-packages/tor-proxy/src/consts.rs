@@ -34,7 +34,7 @@ lazy_static! {
 }
 
 /// Sets all channels up. Documentation is at the channels themselves
-pub async fn setup_channels() {
+pub async fn setup_tor_channels() {
     let (to_tx, to_rx) = async_channel::unbounded::<Client2TorMsg>();
     let (from_tx, from_rx) = async_channel::unbounded::<Tor2ClientMsg>();
 

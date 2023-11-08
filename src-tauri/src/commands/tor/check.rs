@@ -1,6 +1,7 @@
-use crate::{tor::config::TOR_CLIENT, util::to_str_err};
-
+use messaging::client::TOR_CLIENT;
 use serde::Deserialize;
+
+use crate::util::to_str_err;
 
 #[derive(Deserialize, Debug, Clone)]
 #[allow(dead_code)]

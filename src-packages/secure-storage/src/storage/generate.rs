@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use anyhow::{bail, Result};
 use argon2::{
-    password_hash::{rand_core::OsRng, SaltString},
+    password_hash::{rand_core::OsRng, SaltString, Salt},
     Argon2, PasswordHasher,
 };
 use openssl::rand::rand_bytes;
@@ -29,15 +29,16 @@ where
         rand_bytes(&mut iv).or_else(|e| bail!(Errors::RandomIV(e)))?;
 
         let argon2 = Argon2::default();
-        let salt = SaltString::generate(&mut OsRng);
+        let salt_str = SaltString::generate(&mut OsRng);
+        let salt = Salt::from(&salt_str);
 
         let pass_hash = argon2
-            .hash_password(pass, &salt)
+            .hash_password(pass, salt)
             .map_err(|e| Errors::GenerateHash(e))?;
 
         let mut crypto_key = vec![0u8; *KEY_LENGTH];
 
-        //TODO really this?
+        //NOTE seems scuffed but actually works so we take it alright
         let salt_raw = salt.as_str().as_bytes();
 
         argon2

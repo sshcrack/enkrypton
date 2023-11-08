@@ -40,7 +40,6 @@ impl<'a> Deserialize<'a> for PrivateKey {
 #[derive(Clone, Debug)]
 pub struct PublicKey(pub Rsa<Public>);
 
-//TODO idk do it better i guess
 impl TryInto<PublicKey> for PrivateKey {
     type Error = ErrorStack;
 

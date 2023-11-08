@@ -4,7 +4,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread,
+    thread, time::Duration,
 };
 
 use anyhow::{anyhow, Result};
@@ -102,7 +102,7 @@ impl StorageManager {
             while !should_exit.load(Ordering::Relaxed) {
                 //TODO Cleanup
 
-                thread::sleep(std::time::Duration::from_secs(20));
+                thread::sleep(Duration::from_secs(20));
                 // Return if none of the files have been modified
                 if !dirty.load(Ordering::Relaxed) {
                     continue;

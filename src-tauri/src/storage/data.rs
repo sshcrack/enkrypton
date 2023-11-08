@@ -12,10 +12,10 @@ use crate::encryption::{PublicKey, PrivateKey, generate_pair};
 #[derive(TS, Clone, Debug, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]
 #[ts(export)]
 pub struct StorageData {
-    //FIXME don't just skip this
+    // don't just skip this
     #[zeroize(skip)]
     pub nicknames: HashMap<String, String>,
-    //FIXME don't just skip this, key is pretty important to erase
+    //REVIEW don't just skip this, key is pretty important to erase
     #[zeroize(skip)]
     pub chats: HashMap<String, StorageChat>,
 }
@@ -40,9 +40,9 @@ pub struct StorageChat {
 }
 
 impl StorageChat {
-    pub fn new(onion_host: &str) -> Self {
+    pub fn new(receiver_onion: &str) -> Self {
         Self {
-            receiver_onion: onion_host.to_string(),
+            receiver_onion: receiver_onion.to_string(),
             messages: Vec::new(),
             nickname: None,
 
@@ -56,7 +56,7 @@ impl StorageChat {
 #[ts(export)]
 pub struct ChatMessage {
     pub self_sent: bool,
-    //TODO Add actual encryption
+    //NOTE This message should not be lying around in memory unencrypted I guess
     pub msg: String,
     pub date: u128,
 }

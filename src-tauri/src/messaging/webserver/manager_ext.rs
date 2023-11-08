@@ -28,15 +28,14 @@ impl ManagerExt for MessagingManager {
     }
 
     async fn get_or_insert(&self, onion_host: &str, a: &WsActor) -> Connection {
-        let e = self.connections
-            .write().await
-            .entry(onion_host.to_string())
-            .or_insert_with(||{
-                let c = Connection::new_server(onion_host, (a.c_rx.clone(), a.s_tx.clone()));
+        let r = self.connections.read().await.get(onion_host).cloned();
+        if let Some(r) = r {
+            return r;
+        }
 
-                //TODO don't block
-                block_on(c)
-            }).clone();
+        let c = Connection::new_server(onion_host, (a.c_rx.clone(), a.s_tx.clone())).await;
+        let e = self.connections
+            .write().await.insert(onion_host.to_string(), c.clone());
 
         e
     }

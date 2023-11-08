@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-argon2 = { version = "0.5.2", features = ["std"] }
+argon2 = { version = "0.5.2", features = ["std", "password-hash"] }
 byteorder = "1.5.0"
 lazy_static = "1.4.0"
 log = "0.4.20"

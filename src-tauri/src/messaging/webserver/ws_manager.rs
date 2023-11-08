@@ -107,7 +107,7 @@ impl WsActor {
 
             },
             C2SPacket::SetIdentity(identity) => {
-                info!("[SERVER] Verifying identity...");
+                info!("[SERVER] Verifying identity for {:?}...", identity);
                 identity.verify().await?;
 
                 let messaging = MESSAGING.read().await;

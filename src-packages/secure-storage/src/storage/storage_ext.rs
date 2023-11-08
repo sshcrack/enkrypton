@@ -34,7 +34,7 @@ where
 
         let mut crypto_key = vec![0u8; *KEY_LENGTH];
 
-        //TODO really this?
+        //NOTE seems scuffed but actually works so we take it alright
         let salt_raw = hash.salt.unwrap().as_str().as_bytes();
 
         argon2

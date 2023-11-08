@@ -183,7 +183,7 @@ impl MessagingClient {
         match packet {
             S2CPacket::DisconnectMultipleConnections => todo!(),
             S2CPacket::VerifyIdentity(identity) => {
-                info!("[CLIENT] Verifying identity...");
+                info!("[CLIENT] Verifying identity for {:?}...", identity);
                 identity.verify().await?;
                 let mgr = MESSAGING.read().await;
                 mgr.set_remote_verified(receiver).await?;

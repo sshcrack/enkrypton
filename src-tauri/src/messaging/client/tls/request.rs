@@ -20,7 +20,7 @@ impl<'a> Request<'a> {
         Self {
             client,
             headers: HashMap::new(),
-            //REVIEW - Maybe add other methods later?
+            //NOTE just a placeholder for now
             method: method.to_string(),
             url: url.to_string(),
         }
@@ -50,9 +50,7 @@ impl<'a> Request<'a> {
         return Ok(format!("{}{}\r\n\r\n", start, headers));
     }
 
-    /**
-     * TODO (maybe?) support other protocols than https
-     */
+    //NOTE we don't actually support https at it is a secured request to tor already
     pub async fn send(self) -> Result<Response> {
         let url = Url::parse(&self.url)?;
         let mut path = url.path();

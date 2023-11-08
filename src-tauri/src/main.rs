@@ -5,7 +5,6 @@
 mod commands;
 mod startup;
 mod storage;
-mod tor;
 mod util;
 mod messaging;
 mod encryption;
@@ -17,7 +16,6 @@ use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_plugin_log::LogTarget;
-use tor::consts::setup_channels;
 use messaging::webserver::server::start_webserver;
 
 use crate::commands::restart;

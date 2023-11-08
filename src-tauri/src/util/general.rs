@@ -9,18 +9,6 @@ use url::Url;
 
 use crate::{tor::{consts::APP_HANDLE, manager::{stop_tor, wait_for_exit}}, storage::STORAGE};
 
-
-pub fn get_root_dir() -> PathBuf {
-    let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
-    buf.push("enkrypton_root/");
-
-    if !buf.is_dir() {
-        create_dir_all(&buf).unwrap();
-    }
-
-    buf
-}
-
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where
     E: ToString + Display,

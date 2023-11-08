@@ -1,5 +1,6 @@
 [package]
 name = "payloads"
+description = "Payloads between rust and typescript, packets being sent between client and server"
 version = "0.1.0"
 edition = "2021"
 

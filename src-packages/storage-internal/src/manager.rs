@@ -8,9 +8,10 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
-use directories::get_storage_path;
+use shared::get_storage_path;
 use log::{debug, error, warn};
 use secure_storage::{Generate, Parsable, SecureStorage};
+use shared::APP_HANDLE;
 use tauri::Manager;
 
 #[cfg(target_family="unix")]

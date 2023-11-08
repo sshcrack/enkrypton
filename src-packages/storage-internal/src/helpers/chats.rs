@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-use directories::util::now_millis;
+use shared::util::now_millis;
 
 use crate::{StorageManager, ChatMessage};
 

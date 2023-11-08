@@ -1,18 +1,13 @@
 use std::{path::PathBuf, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
-use directories::get_tor_path;
+use shared::get_tor_path;
 use lazy_static::lazy_static;
 use tokio::sync::RwLock;
-use tauri::AppHandle;
-
 
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
 
 lazy_static! {
-    /// The message to send when enkrypton is up and running (at path /)
-    pub static ref DEFAULT_HTTP_RETURN: String = "Hi, yes I'm connected!".to_string();
-
     /// Hash of the Tor binary, used to verify the integrity of the binary
     pub static ref TOR_BINARY_HASH: String = get_tor_binary_hash();
     /// The actual path to the binary

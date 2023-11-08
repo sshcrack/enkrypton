@@ -1,4 +1,4 @@
-mod consts;
+pub mod consts;
 
 use anyhow::Result;
 use openssl::{

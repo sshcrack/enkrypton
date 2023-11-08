@@ -1158,13 +1158,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "directories"
-version = "0.1.0"
-dependencies = [
- "anyhow",
-]
-
-[[package]]
 name = "dirs-next"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2428,19 +2421,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "misc"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "lazy_static",
- "log",
- "openssl",
- "payloads",
- "storage-internal",
-]
-
-[[package]]
 name = "ndk"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3595,6 +3575,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "port_check",
+ "tauri",
+ "tokio",
+]
+
+[[package]]
 name = "signal-hook"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3724,24 +3715,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbe866e1e51e8260c9eed836a042a5e7f6726bb2b411dffeaa712e19c388f23b"
 dependencies = [
  "loom",
-]
-
-[[package]]
-name = "storage-internal"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "directories",
- "encryption",
- "lazy_static",
- "log",
- "secure-storage",
- "serde",
- "tauri",
- "tokio",
- "ts-rs",
- "zeroize",
 ]
 
 [[package]]
@@ -4374,47 +4347,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "tor-client"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-channel 2.1.0",
- "async-rustls",
- "async-trait",
- "futures-util",
- "log",
- "misc",
- "payloads",
- "rustls",
- "serde",
- "serde_json",
- "smol",
- "tauri",
- "tokio",
- "tokio-socks",
- "tokio-tungstenite",
- "url",
- "webpki-roots",
-]
-
-[[package]]
 name = "tor-proxy"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-channel 2.1.0",
- "directories",
  "hex",
  "lazy_static",
  "log",
  "payloads",
  "port_check",
+ "rand 0.8.5",
  "sha2",
+ "shared",
  "smol",
  "sysinfo",
  "tauri",
  "tokio",
- "tor-client",
  "zip-extract",
 ]
 

@@ -1,5 +1,6 @@
 [package]
 name = "encryption"
+description = "Holds useful functions for encrypting and decrypting data. Contains serializable private / public keys as well."
 version = "0.1.0"
 edition = "2021"
 

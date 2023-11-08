@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use shared::config::CONFIG;
 use tokio::{fs::File, io::{BufReader, AsyncReadExt}};
 
-use crate::config::CONFIG;
 
 pub async fn get_service_hostname(_client: bool) -> Result<Option<String>> {
     let dir = &CONFIG.service_dir();

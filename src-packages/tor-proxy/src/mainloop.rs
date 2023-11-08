@@ -9,7 +9,7 @@ use std::{
 #[cfg(target_os="windows")]
 use std::os::windows::process::CommandExt;
 
-use directories::get_torrc;
+use shared::get_torrc;
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use anyhow::{anyhow, Result};

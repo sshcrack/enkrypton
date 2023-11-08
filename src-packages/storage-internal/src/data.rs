@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
+use encryption::{PublicKey, PrivateKey, generate_pair};
 use serde::{Deserialize, Serialize};
 
 use ts_rs::TS;
 use zeroize::{Zeroize, ZeroizeOnDrop};
-
-use crate::encryption::{PublicKey, PrivateKey, generate_pair};
 
 
 // Only one Storage instance is allowed.

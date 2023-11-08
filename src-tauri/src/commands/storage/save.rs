@@ -1,6 +1,6 @@
 use log::debug;
 
-use crate::storage::{STORAGE};
+use crate::storage::STORAGE;
 
 #[tauri::command]
 pub async fn storage_save() -> Result<(), String> {

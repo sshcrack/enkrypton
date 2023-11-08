@@ -1,3 +1,7 @@
+use std::{env::current_exe, path::{PathBuf, Path}, fs::{create_dir_all, self}, ffi::OsString};
+
+use anyhow::Result;
+
 
 pub fn get_root_dir() -> PathBuf {
     let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
@@ -11,7 +15,7 @@ pub fn get_root_dir() -> PathBuf {
 }
 
 
-fn get_service_dir() -> Result<OsString> {
+pub fn get_service_dir() -> Result<OsString> {
     let mut dir = get_root_dir();
     dir.push("service");
 
@@ -22,7 +26,7 @@ fn get_service_dir() -> Result<OsString> {
     return Ok(dir.into_os_string());
 }
 
-fn get_data_dir() -> Result<OsString> {
+pub fn get_data_dir() -> Result<OsString> {
     let mut dir = get_root_dir();
     dir.push("data");
 
@@ -43,7 +47,7 @@ pub fn get_torrc() -> PathBuf {
 }
 
 /// Path to the extracted tor binary, again this is platform specific
-fn get_tor_path() -> PathBuf {
+pub fn get_tor_path() -> PathBuf {
     let tor_write_path = get_root_dir();
     #[cfg(target_os="windows")]
     return tor_write_path.join("tor.exe");
@@ -58,3 +62,5 @@ pub fn get_storage_path() -> Box<Path> {
 
     return root.into_boxed_path();
 }
+
+pub mod util;

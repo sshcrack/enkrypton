@@ -50,7 +50,7 @@ async-trait = "0.1.73"
 regex = "1.9.5"
 port_check = "0.1.5"
 secure-storage = { path = "../src-packages/secure-storage"}
-tor-helper = { path = "../src-packages/tor-helper"}
+tor-proxy = { path = "../src-packages/tor-proxy"}
 payloads = { path = "../src-packages/payloads"}
 zeroize = { version = "1.6.0", features = ["derive"] }
 zip-extract = "0.1.2"

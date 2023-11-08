@@ -66,8 +66,3 @@ pub async fn on_exit() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-
-pub fn now_millis() -> u128 {
-    SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u128
-}

@@ -3616,6 +3616,7 @@ dependencies = [
  "anyhow",
  "lazy_static",
  "port_check",
+ "smol",
  "tauri",
  "tokio",
 ]
@@ -3764,6 +3765,7 @@ dependencies = [
  "secure-storage",
  "serde",
  "shared",
+ "smol",
  "tauri",
  "tokio",
  "ts-rs",
@@ -4413,7 +4415,6 @@ dependencies = [
  "rand 0.8.5",
  "sha2",
  "shared",
- "smol",
  "sysinfo",
  "tauri",
  "tokio",

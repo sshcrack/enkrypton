@@ -30,7 +30,7 @@ impl IdentityVerify for Identity {
         debug!("Reading to verify...");
         let local_pub_key = STORAGE.read().await.get_data(|e| {
             let key = e.chats.get(remote_host)
-                .and_then(|e| e.pub_key.clone());
+                .and_then(|e| e.rec_pub_key.clone());
 
             return Ok(key)
         }).await?;
@@ -57,7 +57,7 @@ impl IdentityVerify for Identity {
                 let res = e.chats.entry(remote_host.clone())
                     .or_insert_with(|| StorageChat::new(&remote_host));
 
-                res.pub_key = Some(pub_key.clone());
+                res.rec_pub_key = Some(pub_key.clone());
 
                 Ok(())
             }).await?;

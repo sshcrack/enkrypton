@@ -1,6 +1,6 @@
 use anyhow::Result;
 use encryption::PrivateKey;
-use log::debug;
+use log::{debug, info};
 
 use async_trait::async_trait;
 
@@ -29,6 +29,7 @@ impl GetPrivateKey for StorageManager {
             priv_key = STORAGE.read().await
                 .modify_storage_data(|e| {
                     if !e.chats.contains_key(receiver) {
+                        info!("No private key for receiver '{}' yet. Adding new receiver...", receiver);
                         e.chats
                             .insert(receiver.to_string(), StorageChat::new(receiver));
                     }

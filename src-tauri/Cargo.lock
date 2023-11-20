@@ -2408,6 +2408,7 @@ dependencies = [
  "async-trait",
  "encryption",
  "futures-util",
+ "hex",
  "lazy_static",
  "log",
  "openssl",

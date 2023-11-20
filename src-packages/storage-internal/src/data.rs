@@ -29,7 +29,7 @@ pub struct StorageChat {
     // Remote public key
     #[ts(skip)]
     #[zeroize(skip)]
-    pub pub_key: Option<PublicKey>,
+    pub rec_pub_key: Option<PublicKey>,
     #[zeroize(skip)]
     pub receiver_onion: String,
     // Private Key of this client (to decrypt messages)
@@ -45,7 +45,7 @@ impl StorageChat {
             messages: Vec::new(),
             nickname: None,
 
-            pub_key: None,
+            rec_pub_key: None,
             priv_key: generate_pair()
         }
     }

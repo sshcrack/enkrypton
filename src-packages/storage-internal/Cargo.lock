@@ -642,6 +642,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "encryption"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "openssl",
+ "serde",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1986,6 +1996,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "port_check"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6519412c9e0d4be579b9f0618364d19cb434b324fc6ddb1b27b1e682c7105ed"
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2485,6 +2501,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "port_check",
+ "tauri",
+ "tokio",
+]
+
+[[package]]
 name = "simd-adler32"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2560,10 +2587,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "encryption",
  "lazy_static",
  "log",
  "secure-storage",
  "serde",
+ "shared",
  "tauri",
  "tokio",
  "ts-rs",

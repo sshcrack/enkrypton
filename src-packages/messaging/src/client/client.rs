@@ -85,7 +85,9 @@ impl MessagingClient {
     pub async fn send_packet(&self, msg: C2SPacket) -> Result<()> {
         debug!("Locking write mutex...");
         let mut state = self.write.lock().await;
+        debug!("Sending packet...");
         state.send(msg.try_into()?).await?;
+        debug!("Done sending packet.");
 
         Ok(())
     }
@@ -100,10 +102,12 @@ impl MessagingClient {
         let handle = thread::spawn(move || loop {
             let before = Instant::now();
 
+            debug!("Locking heartbeat mutex...");
             let mut temp = block_on(sender.lock());
 
             let temp = temp.send(Message::Ping(vec![]));
             let res = block_on(temp);
+            debug!("Heartbeat sent!");
 
             if let Err(e) = res {
                 let err_msg = format!("{:?}", e);

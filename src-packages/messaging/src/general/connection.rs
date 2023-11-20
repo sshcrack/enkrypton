@@ -5,7 +5,7 @@ use std::{
 
 use crate::{client::MessagingClient, server::ws_manager::ServerChannels};
 #[cfg(feature = "dev")]
-use crate::tor::service::get_service_hostname;
+use tor_proxy::service::get_service_hostname;
 
 use actix_web::Either;
 use anyhow::{anyhow, Result};
@@ -200,6 +200,7 @@ impl Connection {
 
                 let tmp = receiver_host.clone();
                 let priv_key = storage.get_data(|e| {
+                    println!("{:?}", e);
                     e.chats
                         .get(&tmp)
                         .and_then(|e| Some(e.priv_key.clone()))
@@ -216,6 +217,8 @@ impl Connection {
                     continue;
                 }
 
+                #[cfg(feature="dev")]
+                debug!("Messasge received is: {:?}", hex::encode(&msg));
                 let priv_key = priv_key.unwrap();
                 let msg = rsa_decrypt(msg, priv_key);
                 if msg.is_err() {
@@ -261,20 +264,22 @@ impl Connection {
         let raw = msg.as_bytes().to_vec();
 
         let tmp = self.receiver_host.clone();
-        println!("Reading pubkey...");
+        println!("Reading pubkey for {}...", tmp);
         let pub_key = STORAGE
             .read()
             .await
             .get_data(|e| {
                 e.chats
                     .get(&tmp)
-                    .and_then(|e| e.pub_key.clone())
+                    .and_then(|e| e.rec_pub_key.clone())
                     .ok_or(anyhow!("The pub key was empty (should never happen)"))
             })
             .await?;
 
         println!("Sending");
         let bin = rsa_encrypt(raw, &pub_key)?;
+        #[cfg(feature="dev")]
+        debug!("Encrypted msg is: {:?}", hex::encode(&bin));
 
         // encrypt here
         match &*self.info.read().await {

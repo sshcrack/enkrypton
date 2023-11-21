@@ -48,6 +48,7 @@ pub fn startup(app: &mut App) {
             .await;
 
             if res.is_ok() {
+                #[cfg(debug_assertions)]
                 window.open_devtools();
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();

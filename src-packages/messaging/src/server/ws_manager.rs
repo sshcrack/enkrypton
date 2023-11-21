@@ -1,18 +1,20 @@
 use std::time::{Duration, Instant};
 
-use actix::{Actor, ActorContext, AsyncContext, StreamHandler};
+use actix::{
+    Actor, ActorContext, AsyncContext,
+    StreamHandler,
+};
 use actix_web::web::Bytes;
 use actix_web_actors::ws::{self, Message, ProtocolError};
 use anyhow::Result;
-use async_channel::{Receiver, Sender};
-use log::{debug, error, info};
-use payloads::packets::{S2CPacket, C2SPacket};
+use async_channel::{Receiver, Sender, TryRecvError};
+use log::{debug, info, error};
+use payloads::packets::{C2SPacket, S2CPacket};
 use smol::future::block_on;
 
-use crate::general::{HEARTBEAT_TIMEOUT, MESSAGING, IdentityVerify, IdentityProvider};
+use crate::general::{IdentityProvider, IdentityVerify, MESSAGING, HEARTBEAT_TIMEOUT};
 
 use super::manager_ext::ManagerExt;
-
 
 pub type ServerChannels = (Receiver<C2SPacket>, Sender<S2CPacket>);
 
@@ -25,7 +27,7 @@ pub struct WsActor {
     pub c_rx: Box<Receiver<C2SPacket>>,
     c_tx: Box<Sender<C2SPacket>>,
     receiver: Option<String>,
-    last_heartbeat: Instant,
+    last_heartbeat: Instant
 }
 
 impl Actor for WsActor {
@@ -34,22 +36,28 @@ impl Actor for WsActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         let rx = self.s_rx.clone();
 
-        ctx.add_stream(async_stream::stream! {
-            loop {
-                let res = rx.recv().await;
-                if res.is_err() {
-                    break;
+        // Constantly checking for new messages
+        ctx.run_interval(Duration::from_millis(100), move |_a, ctx| {
+            let p = rx.try_recv();
+            if let Err(e) = p {
+                if e == TryRecvError::Closed {
+                    debug!("Channel has been closed. Stopping...");
+                    ctx.stop();
                 }
 
-                let res = res.unwrap();
-                let res = res.try_into();
-                if res.is_err() {
-                    error!("Could not serialize msg: {:?}", res.unwrap_err());
-                    continue;
-                }
+                return;
+            }
+            let p = p.unwrap();
+            debug!("Sending packet to client {:?}", p);
 
-                yield Ok(res.unwrap());
-            };
+            let res = p.try_into();
+            if let Err(e) = res {
+                error!("Could not parse packet: {:?}", e);
+                return;
+            }
+
+            let packet: Bytes = res.unwrap();
+            ctx.binary(packet);
         });
 
         ctx.run_interval(Duration::from_secs(1), |a, ctx| {
@@ -95,7 +103,11 @@ impl WsActor {
         }
     }
 
-    pub async fn inner_handle(&mut self, packet: C2SPacket, ctx: &mut <Self as Actor>::Context) -> Result<()> {
+    pub async fn inner_handle(
+        &mut self,
+        packet: C2SPacket,
+        ctx: &mut <Self as Actor>::Context,
+    ) -> Result<()> {
         match packet {
             C2SPacket::IdentityVerified => {
                 if let Some(onion_host) = &self.receiver {
@@ -105,15 +117,16 @@ impl WsActor {
                 } else {
                     error!("Received IdentityVerified packet but no onion host was set");
                 }
-
-            },
+            }
             C2SPacket::SetIdentity(identity) => {
                 info!("[SERVER] Verifying identity for {:?}...", identity);
                 identity.verify().await?;
 
                 let messaging = MESSAGING.read().await;
                 self.receiver = Some(identity.hostname.clone());
-                messaging.set_remote_verified(&identity.hostname, &self).await;
+                messaging
+                    .set_remote_verified(&identity.hostname, &self)
+                    .await;
                 messaging.check_verify_status(&identity.hostname).await?;
 
                 let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
@@ -141,7 +154,7 @@ impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
                 ctx.pong(&msg);
                 self.last_heartbeat = Instant::now();
             }
-            Ok(ws::Message::Text(_)) => {},
+            Ok(ws::Message::Text(_)) => {}
             Ok(ws::Message::Binary(bin)) => {
                 let res = C2SPacket::try_from(&bin.to_vec());
                 if let Err(e) = res {

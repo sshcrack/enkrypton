@@ -4,8 +4,6 @@ use std::{
 };
 
 use crate::{client::MessagingClient, server::ws_manager::ServerChannels};
-#[cfg(feature = "dev")]
-use tor_proxy::service::get_service_hostname;
 
 use actix_web::Either;
 use anyhow::{anyhow, Result};
@@ -141,11 +139,11 @@ impl Connection {
         let verified = self.verified.clone();
         let self_verified = self.self_verified.clone();
 
-        #[cfg(not(feature = "dev"))]
+   //     #[cfg(not(feature = "dev"))]
         let receiver_host: String = self.receiver_host.clone();
 
-        #[cfg(feature = "dev")]
-        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
+ //       #[cfg(feature = "dev")]
+//        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
 
         let handle = thread::spawn(move || {
             loop {
@@ -200,7 +198,6 @@ impl Connection {
 
                 let tmp = receiver_host.clone();
                 let priv_key = storage.get_data(|e| {
-                    println!("{:?}", e);
                     e.chats
                         .get(&tmp)
                         .and_then(|e| Some(e.priv_key.clone()))
@@ -212,13 +209,11 @@ impl Connection {
                 let priv_key = block_on(priv_key);
                 debug!("Done");
                 drop(storage);
-                if priv_key.is_err() {
-                    error!("Could not get private key: {:?}", priv_key.unwrap_err());
+                if let Err(e) = priv_key {
+                    error!("Could not get private key: {:?}", e);
                     continue;
                 }
 
-                #[cfg(feature="dev")]
-                debug!("Messasge received is: {:?}", hex::encode(&msg));
                 let priv_key = priv_key.unwrap();
                 let msg = rsa_decrypt(msg, priv_key);
                 if msg.is_err() {
@@ -244,14 +239,14 @@ impl Connection {
                         .add_msg(&receiver_host, false, &msg), //..
                 );
 
-                if res.is_err() {
-                    error!("Could not modify storage data: {:?}", res.unwrap_err());
+                if let Err(e) = res {
+                    error!("Could not modify storage data: {:?}", e);
                 }
 
                 let handle = block_on(get_app());
                 let res = handle.emit_all(event_name, WsMessagePayload { message: msg });
-                if res.is_err() {
-                    error!("Could not emit message: {:?}", res.unwrap_err());
+                if let Err(e) = res {
+                    error!("Could not emit message: {:?}", e);
                     return;
                 }
             }
@@ -278,22 +273,21 @@ impl Connection {
 
         println!("Sending");
         let bin = rsa_encrypt(raw, &pub_key)?;
-        #[cfg(feature="dev")]
-        debug!("Encrypted msg is: {:?}", hex::encode(&bin));
 
         // encrypt here
         match &*self.info.read().await {
             ConnInfo::Client(c) => {
+                debug!("Client msg");
                 let packet = C2SPacket::Message(bin);
-                c.send_packet(packet).await
+                c.send_packet(packet).await?;
             }
             ConnInfo::Server((_, s)) => {
+                debug!("Server msg");
                 let packet = S2CPacket::Message(bin);
 
                 s.send(packet).await?;
-                Ok(())
             }
-        }?;
+        };
 
         // Adding if successful
         STORAGE

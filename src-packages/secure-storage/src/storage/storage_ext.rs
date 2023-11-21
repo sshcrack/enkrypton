@@ -53,17 +53,19 @@ where
             .expect("Why did this come through?");
 
         let decrypted = aes_decrypt(&self.encrypted_data, crypto_key, &self.iv)?;
+        //FIXME MUST REMOVE
+        std::fs::write("storage.txt", String::from_utf8(decrypted.clone()).unwrap());
+
         let parsed: T = serde_json::from_slice(&decrypted) //.
             .or_else(|e| bail!(Errors::JsonParse(e)))?;
 
-        println!("Decrypted data {:#?}", parsed);
         self.data = Some(parsed);
         Ok(())
     }
 
-    /***
-     * Overwrites raw_data by encrypting data
-     */
+    ///
+    /// Overwrites raw_data by encrypting data
+    ///
     pub(super) fn update_raw(&mut self) -> Result<()> {
         if self.data.is_none() {
             return Err(anyhow!("No data to encrypt"));

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use super::Identity;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum S2CPacket {
     DisconnectMultipleConnections,
     VerifyIdentity(Identity),

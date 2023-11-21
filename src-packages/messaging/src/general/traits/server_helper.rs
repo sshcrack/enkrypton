@@ -14,7 +14,7 @@ impl IdentityProvider<Self> for S2CPacket {
             .await?
             .ok_or(anyhow!("Could not get own hostname"))?;
 
-        let priv_key: PrivateKey = StorageManager::get_or_create_private_key(receiver).await?;
+        let priv_key = StorageManager::get_or_create_private_key(receiver).await?;
         let pub_key = priv_key.clone().try_into()?;
 
         let keypair = PKey::from_rsa(priv_key.0)?;

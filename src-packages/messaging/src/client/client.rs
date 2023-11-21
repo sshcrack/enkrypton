@@ -102,12 +102,10 @@ impl MessagingClient {
         let handle = thread::spawn(move || loop {
             let before = Instant::now();
 
-            debug!("Locking heartbeat mutex...");
             let mut temp = block_on(sender.lock());
 
             let temp = temp.send(Message::Ping(vec![]));
             let res = block_on(temp);
-            debug!("Heartbeat sent!");
 
             if let Err(e) = res {
                 let err_msg = format!("{:?}", e);

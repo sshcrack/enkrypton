@@ -1,4 +1,5 @@
-use storage_internal::{STORAGE, StorageData};
+use payloads::data::StorageData;
+use storage_internal::STORAGE;
 
 #[tauri::command]
 pub async fn storage_get() -> Result<StorageData, String> {

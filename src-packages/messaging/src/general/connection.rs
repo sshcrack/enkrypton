@@ -61,13 +61,13 @@ impl Connection {
             .ok_or(anyhow!(
                 "Could not send client update, app handle not there"
             ))
-            .and_then(|e| {
+            .and_then(|handle| {
                 block_on(block_on(STORAGE.read()).get_data(|e| {
                     println!("Current chats are: {:?}", e.chats);
                     Ok(())
                 }))
                 .unwrap();
-                e.emit_payload(WsClientUpdatePayload {
+                handle.emit_payload(WsClientUpdatePayload {
                     hostname: self.receiver_host.clone(),
                     status: WsClientStatus::Connected,
                 })?;

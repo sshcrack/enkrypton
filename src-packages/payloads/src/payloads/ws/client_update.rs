@@ -10,9 +10,8 @@ use ts_rs::TS;
 pub enum WsClientStatus {
     ConnectingProxy,
     ConnectingHost,
-    Connected,
     WaitingIdentity,
-    Done,
+    Connected,
     Disconnected
 }
 

@@ -29,6 +29,8 @@ impl MessagingManager {
     }
 
     async fn connect(&self, onion_hostname: &str) -> Result<()> {
+
+
         let client = MessagingClient::new(&onion_hostname).await?;
 
         info!("[CLIENT]: New Connection for {}", onion_hostname);

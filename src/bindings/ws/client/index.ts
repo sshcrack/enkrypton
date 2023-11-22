@@ -7,12 +7,13 @@ import { WsClientStatus } from '../../rs/WsClientStatus';
 
 
 export type MessagingClientEvents = {
-    on_receive: (message: string) => unknown
+    on_receive: (message: string) => unknown,
+    on_status_change: (status: WsClientStatus) => unknown
 }
 
 export default class MessagingClient extends (EventEmitter as unknown as new () => TypedEmitter<MessagingClientEvents>) {
     private readonly onionHostname: string;
-    public status: WsClientStatus | null = null;
+    private _status: WsClientStatus | null = null;
     private unlisten: UnlistenFn = () => { };
 
     constructor(onionHostname: string) {
@@ -38,5 +39,15 @@ export default class MessagingClient extends (EventEmitter as unknown as new () 
 
     public async send(msg: string) {
         return invoke("ws_send", { onionHostname: this.onionHostname, msg });
+    }
+
+    public set status(status: WsClientStatus) {
+        this._status = status;
+        console.log("Received update status", status, "for", this.onionHostname)
+        this.emit("on_status_change", status)
+    }
+
+    public get status(): WsClientStatus | null {
+        return this._status
     }
 }

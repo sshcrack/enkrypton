@@ -1,5 +1,6 @@
 use log::debug;
-use storage_internal::{StorageData, STORAGE};
+use payloads::data::StorageData;
+use storage_internal::STORAGE;
 #[tauri::command]
 pub async fn storage_set(data_raw: String) -> Result<(), String> {
     if !(STORAGE.read().await).is_unlocked() {

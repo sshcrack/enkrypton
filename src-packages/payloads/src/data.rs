@@ -61,6 +61,7 @@ pub struct ChatMessage {
     pub self_sent: bool,
     //NOTE This message should not be lying around in memory unencrypted I guess
     pub msg: String,
+    #[cfg_attr(feature="export_ts", ts(type="number"))]
     pub date: u128,
 }
 

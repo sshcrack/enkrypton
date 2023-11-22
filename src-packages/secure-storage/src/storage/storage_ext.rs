@@ -54,7 +54,7 @@ where
 
         let decrypted = aes_decrypt(&self.encrypted_data, crypto_key, &self.iv)?;
         //FIXME MUST REMOVE
-        std::fs::write("storage.txt", String::from_utf8(decrypted.clone()).unwrap());
+        std::fs::write("storage.txt", String::from_utf8(decrypted.clone()).unwrap())?;
 
         let parsed: T = serde_json::from_slice(&decrypted) //.
             .or_else(|e| bail!(Errors::JsonParse(e)))?;

@@ -7,7 +7,7 @@ use std::{
 };
 
 use log::{debug, error, warn};
-use payloads::payloads::TorStartupErrorPayload;
+use payloads::{payloads::{TorStartupErrorPayload, splashscreen::SplashscreenClosedPayload}, event::AppHandleExt};
 use shared::APP_HANDLE;
 use tauri::{
     async_runtime::{self, block_on},
@@ -38,7 +38,7 @@ pub fn startup(app: &mut App) {
         async_runtime::spawn(async move {
             let temp = splashscreen_window.clone();
             let res = manager::start_tor(move |start_payload| {
-                let res = temp.app_handle().emit_all("tor_start", start_payload);
+                let res = temp.app_handle().emit_payload(start_payload);
                 if res.is_ok() {
                     return;
                 }
@@ -52,7 +52,7 @@ pub fn startup(app: &mut App) {
                 window.open_devtools();
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();
-                splashscreen_window.app_handle().emit_all("splashscreen_closed", ()).unwrap();
+                splashscreen_window.app_handle().emit_payload(SplashscreenClosedPayload { }).unwrap();
             }
 
             if res.is_err() {
@@ -76,7 +76,7 @@ pub fn startup(app: &mut App) {
                 error!("Could not start tor: {}", payload.message);
                 splashscreen_window
                     .app_handle()
-                    .emit_all("tor_start_error", payload)
+                    .emit_payload(payload)
                     .unwrap();
             }
         });

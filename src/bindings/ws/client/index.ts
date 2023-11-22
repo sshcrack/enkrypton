@@ -3,6 +3,7 @@ import { listen, Event, UnlistenFn } from "@tauri-apps/api/event"
 import EventEmitter from "events"
 import TypedEmitter from "typed-emitter"
 import { WsMessagePayload } from '../../rs/WsMessagePayload';
+import { WsClientStatus } from '../../rs/WsClientStatus';
 
 
 export type MessagingClientEvents = {
@@ -11,6 +12,7 @@ export type MessagingClientEvents = {
 
 export default class MessagingClient extends (EventEmitter as unknown as new () => TypedEmitter<MessagingClientEvents>) {
     private readonly onionHostname: string;
+    public status: WsClientStatus | null = null;
     private unlisten: UnlistenFn = () => { };
 
     constructor(onionHostname: string) {

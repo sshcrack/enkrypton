@@ -40,7 +40,7 @@ export default function ChatProvider({ children, user }: React.PropsWithChildren
                 if (!cloned.chats[addr])
                     cloned.chats[addr] = {
                         messages: [],
-                        id: addr,
+                        receiver_onion: addr,
                         nickname: null
                     }
 

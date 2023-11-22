@@ -3,8 +3,9 @@ use encryption::PrivateKey;
 use log::{debug, info};
 
 use async_trait::async_trait;
+use payloads::data::StorageChat;
 
-use crate::{StorageManager, STORAGE, StorageChat};
+use crate::{StorageManager, STORAGE};
 
 #[async_trait]
 pub trait GetPrivateKey {

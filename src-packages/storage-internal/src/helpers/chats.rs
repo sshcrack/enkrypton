@@ -1,8 +1,9 @@
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
+use payloads::data::ChatMessage;
 use shared::util::now_millis;
 
-use crate::{StorageManager, ChatMessage};
+use crate::StorageManager;
 
 #[async_trait]
 pub trait ChatStorageHelper {

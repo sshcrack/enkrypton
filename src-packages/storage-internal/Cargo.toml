@@ -13,6 +13,7 @@ log = "0.4.20"
 secure-storage = { path = "../secure-storage" }
 shared = { path = "../shared" }
 encryption = { path = "../encryption" }
+payloads = { path = "../payloads" }
 serde = { version = "1.0.192", features = ["derive"] }
 tauri = "1.5.2"
 tokio = "1.33.0"

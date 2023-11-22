@@ -10,11 +10,14 @@ use anyhow::{anyhow, Result};
 use async_channel::{Receiver, Sender};
 use encryption::{rsa_decrypt, rsa_encrypt};
 use log::{debug, error, info, warn};
-use payloads::{payloads::{WsClientUpdate, WsClientStatus, WsMessagePayload}, packets::{S2CPacket, C2SPacket}};
-use shared::{APP_HANDLE, get_app};
+use payloads::{
+    event::AppHandleExt,
+    packets::{C2SPacket, S2CPacket},
+    payloads::{WsClientStatus, WsMessagePayload, WsClientUpdatePayload},
+};
+use shared::{get_app, APP_HANDLE};
 use smol::block_on;
-use storage_internal::{STORAGE, helpers::ChatStorageHelper};
-use tauri::Manager;
+use storage_internal::{helpers::ChatStorageHelper, STORAGE};
 use tokio::sync::RwLock;
 
 #[derive(Debug)]
@@ -62,14 +65,12 @@ impl Connection {
                 block_on(block_on(STORAGE.read()).get_data(|e| {
                     println!("Current chats are: {:?}", e.chats);
                     Ok(())
-                })).unwrap();
-                e.emit_all(
-                    "ws_client_update",
-                    WsClientUpdate {
-                        hostname: self.receiver_host.clone(),
-                        status: WsClientStatus::CONNECTED,
-                    },
-                )?;
+                }))
+                .unwrap();
+                e.emit_payload(WsClientUpdatePayload {
+                    hostname: self.receiver_host.clone(),
+                    status: WsClientStatus::Connected,
+                })?;
                 Ok(())
             });
 
@@ -91,6 +92,7 @@ impl Connection {
     }
 
     pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
+        println!("New client connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
 
         let mut s = Self {
@@ -111,6 +113,7 @@ impl Connection {
 
     /// This function assumes the identity has already been verified
     pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
+        println!("New server connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
 
         let mut s = Self {
@@ -139,11 +142,11 @@ impl Connection {
         let verified = self.verified.clone();
         let self_verified = self.self_verified.clone();
 
-   //     #[cfg(not(feature = "dev"))]
+        //     #[cfg(not(feature = "dev"))]
         let receiver_host: String = self.receiver_host.clone();
 
- //       #[cfg(feature = "dev")]
-//        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
+        //       #[cfg(feature = "dev")]
+        //        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
 
         let handle = thread::spawn(move || {
             loop {
@@ -228,10 +231,9 @@ impl Connection {
                 }
 
                 let msg = msg.unwrap();
-                let event_name = &format!("msg-{}", receiver_host);
                 println!(
-                    "Received message: {}, Sending payload to {}",
-                    msg, event_name
+                    "Received message: {}, Sending payload with receiver {}",
+                    msg, receiver_host
                 );
 
                 let res = block_on(
@@ -244,7 +246,10 @@ impl Connection {
                 }
 
                 let handle = block_on(get_app());
-                let res = handle.emit_all(event_name, WsMessagePayload { message: msg });
+                let res = handle.emit_payload(WsMessagePayload {
+                    receiver: receiver_host.clone(),
+                    message: msg,
+                });
                 if let Err(e) = res {
                     error!("Could not emit message: {:?}", e);
                     return;

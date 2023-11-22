@@ -1,5 +1,7 @@
-mod start_tor;
 mod ws;
+mod tor;
+pub mod storage_changed;
+pub mod splashscreen;
 
-pub use start_tor::*;
+pub use tor::*;
 pub use ws::*;

@@ -1,6 +1,6 @@
 use super::IdentityProvider;
 use anyhow::{Result, anyhow};
-use encryption::{consts::DIGEST, PrivateKey};
+use encryption::consts::DIGEST;
 use openssl::{pkey::PKey, sign::Signer};
 use payloads::packets::{Identity, S2CPacket};
 use storage_internal::{StorageManager, helpers::GetPrivateKey};

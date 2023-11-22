@@ -1,0 +1,12 @@
+use serde::{Serialize, Deserialize};
+
+use crate::event::Sendable;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StorageChangedPayload {}
+
+impl Sendable for StorageChangedPayload {
+    fn get_name(&self) -> String {
+        return "storage_changed".to_string()
+    }
+}

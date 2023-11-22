@@ -8,11 +8,11 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
+use payloads::{event::AppHandleExt, payloads::storage_changed::StorageChangedPayload, data::StorageData};
 use shared::get_storage_path;
 use log::{debug, error, warn};
-use secure_storage::{Generate, Parsable, SecureStorage};
+use secure_storage::{SecureStorage, Generate, Parsable};
 use shared::APP_HANDLE;
-use tauri::Manager;
 
 #[cfg(target_family="unix")]
 use std::fs::{Permissions, self};
@@ -25,8 +25,6 @@ use tokio::{
     sync::RwLock,
     task::{spawn, JoinHandle},
 };
-
-use crate::StorageData;
 
 pub type Storage = SecureStorage<StorageData>;
 
@@ -219,7 +217,7 @@ impl StorageManager {
         self.dirty.store(true, Ordering::Relaxed);
         let res = APP_HANDLE.read().await.as_ref()
         .ok_or(anyhow!("app handle not there"))
-        .map(|e| e.emit_all("storage_changed", ()));
+        .map(|e| e.emit_payload(StorageChangedPayload {}));
 
         if res.is_err() {
             warn!("Could not emit dirty event: {:?}", res.unwrap_err());

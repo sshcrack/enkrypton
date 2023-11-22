@@ -1,17 +1,32 @@
 use serde::{Serialize, Deserialize};
+
+use crate::event::Sendable;
+#[cfg(feature="export_ts")]
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[cfg_attr(feature="export_ts", derive(TS))]
+#[cfg_attr(feature="export_ts", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsClientStatus {
-    CONNECTED,
-    DISCONNECTED,
+    ConnectingProxy,
+    ConnectingHost,
+    Connected,
+    WaitingIdentity,
+    Done,
+    Disconnected
 }
 
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct WsClientUpdate {
+#[cfg_attr(feature="export_ts", derive(TS))]
+#[cfg_attr(feature="export_ts", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WsClientUpdatePayload {
     pub hostname: String,
     pub status: WsClientStatus
+}
+
+impl Sendable for WsClientUpdatePayload {
+    fn get_name(&self) -> String {
+        "ws_client_update".to_string()
+    }
 }

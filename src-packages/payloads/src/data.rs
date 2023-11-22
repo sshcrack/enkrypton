@@ -3,13 +3,15 @@ use std::collections::HashMap;
 use encryption::{PublicKey, PrivateKey, generate_pair};
 use serde::{Deserialize, Serialize};
 
-use ts_rs::TS;
 use zeroize::{Zeroize, ZeroizeOnDrop};
+#[cfg(feature="export_ts")]
+use ts_rs::TS;
 
 
 // Only one Storage instance is allowed.
-#[derive(TS, Clone, Debug, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]
-#[ts(export)]
+#[cfg_attr(feature="export_ts", derive(TS))]
+#[cfg_attr(feature="export_ts", ts(export))]
+#[derive(Clone, Debug, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]
 pub struct StorageData {
     // don't just skip this
     #[zeroize(skip)]
@@ -19,22 +21,23 @@ pub struct StorageData {
     pub chats: HashMap<String, StorageChat>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Zeroize, ZeroizeOnDrop, TS)]
-#[ts(export)]
+#[cfg_attr(feature="export_ts", derive(TS))]
+#[cfg_attr(feature="export_ts", ts(export))]
+#[derive(Clone, Debug, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 pub struct StorageChat {
     #[zeroize(skip)]
     pub messages: Vec<ChatMessage>,
     pub nickname: Option<String>,
 
     // Remote public key
-    #[ts(skip)]
+    #[cfg_attr(feature="export_ts", ts(skip))]
     #[zeroize(skip)]
     pub rec_pub_key: Option<PublicKey>,
     #[zeroize(skip)]
     pub receiver_onion: String,
     // Private Key of this client (to decrypt messages)
     #[zeroize(skip)]
-    #[ts(skip)]
+    #[cfg_attr(feature="export_ts", ts(skip))]
     pub priv_key: PrivateKey,
 }
 
@@ -51,8 +54,9 @@ impl StorageChat {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, Zeroize, ZeroizeOnDrop, TS)]
-#[ts(export)]
+#[cfg_attr(feature="export_ts", derive(TS))]
+#[cfg_attr(feature="export_ts", ts(export))]
+#[derive(Clone, Serialize, Deserialize, Debug, Zeroize, ZeroizeOnDrop)]
 pub struct ChatMessage {
     pub self_sent: bool,
     //NOTE This message should not be lying around in memory unencrypted I guess

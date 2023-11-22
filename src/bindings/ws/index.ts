@@ -1,18 +1,18 @@
 import { listen, Event } from "@tauri-apps/api/event"
 import { ClientMap } from './client/map';
-import { WsClientUpdate } from '../rs/WsClientUpdate';
+import { WsClientUpdatePayload } from '../rs/WsClientUpdatePayload';
 
 if (!window.clients)
     window.clients = new ClientMap();
 
 
 
-type Func = (payload: WsClientUpdate) => unknown;
+type Func = (payload: WsClientUpdatePayload) => unknown;
 const listeners: Func[] = [];
 
 const ws = {
     get: (onionHost: string) => window.clients.get(onionHost),
-    addClientUpdateListener: (callback: (payload: WsClientUpdate) => unknown) => {
+    addClientUpdateListener: (callback: (payload: WsClientUpdatePayload) => unknown) => {
         listeners.push(callback)
 
         return () => {
@@ -26,11 +26,11 @@ const ws = {
 }
 
 
-listen("ws_client_update", ({ payload }: Event<WsClientUpdate>) => {
+listen("ws_client_update", ({ payload }: Event<WsClientUpdatePayload>) => {
     listeners.map(l => l(payload))
     console.log("Received update", payload)
     const { hostname, status } = payload;
-    if (status === 'DISCONNECTED' && window.clients.has(hostname)) {
+    if (status === 'Disconnected' && window.clients.has(hostname)) {
         const client = ws.get(hostname);
         client.destroy()
 
@@ -41,7 +41,8 @@ listen("ws_client_update", ({ payload }: Event<WsClientUpdate>) => {
 
     console.log("Received update listen ->", hostname)
     // Constructing the client
-    ws.get(hostname)
+    const c = ws.get(hostname)
+    c.status = status
 })
 
 export default ws;

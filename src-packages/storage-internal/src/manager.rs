@@ -4,20 +4,23 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread, time::Duration,
+    thread,
+    time::Duration,
 };
 
 use anyhow::{anyhow, Result};
-use payloads::{event::AppHandleExt, payloads::storage_changed::StorageChangedPayload, data::StorageData};
-use shared::get_storage_path;
 use log::{debug, error, warn};
-use secure_storage::{SecureStorage, Generate, Parsable};
+use payloads::{
+    data::StorageData, event::AppHandleExt, payloads::storage_changed::StorageChangedPayload,
+};
+use secure_storage::{Generate, Parsable, SecureStorage};
+use shared::get_storage_path;
 use shared::APP_HANDLE;
 
-#[cfg(target_family="unix")]
-use std::fs::{Permissions, self};
-#[cfg(target_family="unix")]
+#[cfg(target_family = "unix")]
 use smol::fs::unix::PermissionsExt;
+#[cfg(target_family = "unix")]
+use std::fs::{self, Permissions};
 
 use tokio::{
     fs::{remove_file, File},
@@ -56,9 +59,10 @@ impl StorageManager {
 
         // We have to set the permission to 700 for unix to restrict access to other users / groups
         // Just the owner should be able to read this file.
-        #[cfg(target_family="unix")]
-        fs::set_permissions(&f_path, Permissions::from_mode(0o700)).unwrap();
-
+        #[cfg(target_family = "unix")]
+        if f_path.is_file() {
+            fs::set_permissions(&f_path, Permissions::from_mode(0o700)).unwrap();
+        }
 
         let mut e = Self {
             is_unlocked: false,
@@ -138,6 +142,12 @@ impl StorageManager {
                     continue;
                 }
 
+
+                #[cfg(target_family = "unix")]
+                if path.is_file() {
+                    fs::set_permissions(&path, Permissions::from_mode(0o700)).unwrap();
+                }
+
                 dirty.store(false, Ordering::Relaxed);
                 debug!("Done.");
             }
@@ -196,6 +206,10 @@ impl StorageManager {
         debug!("Writing total of {} bytes...", raw.len());
         f.write_all(&raw).await?;
 
+        #[cfg(target_family = "unix")]
+        if self.path.is_file() {
+            fs::set_permissions(&self.path, Permissions::from_mode(0o700)).unwrap();
+        }
         Ok(())
     }
 
@@ -215,9 +229,12 @@ impl StorageManager {
     /// Marks the storage as dirty (so it is saved later)
     pub async fn mark_dirty(&self) {
         self.dirty.store(true, Ordering::Relaxed);
-        let res = APP_HANDLE.read().await.as_ref()
-        .ok_or(anyhow!("app handle not there"))
-        .map(|e| e.emit_payload(StorageChangedPayload {}));
+        let res = APP_HANDLE
+            .read()
+            .await
+            .as_ref()
+            .ok_or(anyhow!("app handle not there"))
+            .map(|e| e.emit_payload(StorageChangedPayload {}));
 
         if res.is_err() {
             warn!("Could not emit dirty event: {:?}", res.unwrap_err());
@@ -237,7 +254,7 @@ impl StorageManager {
 
     pub async fn get_data<T, Func>(&self, f: Func) -> Result<T>
     where
-        Func: FnOnce(&StorageData) -> Result<T>
+        Func: FnOnce(&StorageData) -> Result<T>,
     {
         let storage = self.storage.read().await;
         if let Some(s) = storage.as_ref() {
@@ -247,12 +264,11 @@ impl StorageManager {
             }
 
             let d = d.unwrap();
-            return f(&d)
+            return f(&d);
         }
 
-        return Err(anyhow!("Storage not initialized yet."))
+        return Err(anyhow!("Storage not initialized yet."));
     }
-
 
     pub async fn modify_storage<Func, T>(&self, f: Func) -> Result<T>
     where
@@ -277,11 +293,12 @@ impl StorageManager {
     {
         self.modify_storage(|e| {
             if let Some(data) = e.data.as_mut() {
-                return f(data)
+                return f(data);
             }
 
-            return Err(anyhow!("Storage not initialized"))
-        }).await
+            return Err(anyhow!("Storage not initialized"));
+        })
+        .await
     }
 
     pub fn is_unlocked(&self) -> bool {

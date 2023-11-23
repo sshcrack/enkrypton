@@ -1,18 +1,20 @@
 use std::time::{Duration, Instant};
 
-use actix::{
-    Actor, ActorContext, AsyncContext,
-    StreamHandler,
-};
+use actix::{Actor, ActorContext, AsyncContext, StreamHandler};
 use actix_web::web::Bytes;
 use actix_web_actors::ws::{self, Message, ProtocolError};
 use anyhow::Result;
 use async_channel::{Receiver, Sender, TryRecvError};
-use log::{debug, info, error};
-use payloads::packets::{C2SPacket, S2CPacket};
+use log::{debug, error, info, warn};
+use payloads::{
+    event::AppHandleExt,
+    packets::{C2SPacket, S2CPacket},
+    payloads::{WsClientStatus, WsClientUpdatePayload},
+};
+use shared::get_app;
 use smol::future::block_on;
 
-use crate::general::{IdentityProvider, IdentityVerify, MESSAGING, HEARTBEAT_TIMEOUT};
+use crate::general::{IdentityProvider, IdentityVerify, HEARTBEAT_TIMEOUT, MESSAGING};
 
 use super::manager_ext::ManagerExt;
 
@@ -27,7 +29,7 @@ pub struct WsActor {
     pub c_rx: Box<Receiver<C2SPacket>>,
     c_tx: Box<Sender<C2SPacket>>,
     receiver: Option<String>,
-    last_heartbeat: Instant
+    last_heartbeat: Instant,
 }
 
 impl Actor for WsActor {
@@ -82,6 +84,13 @@ impl Actor for WsActor {
         if let Some(onion_host) = &self.receiver {
             debug!("Removing connection for {}", onion_host);
 
+            let _ = block_on(get_app())
+                .emit_payload(WsClientUpdatePayload {
+                    hostname: onion_host.to_string(),
+                    status: WsClientStatus::Disconnected,
+                })
+                .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+
             block_on(block_on(MESSAGING.read()).remove_connection(onion_host));
         }
     }
@@ -124,6 +133,14 @@ impl WsActor {
 
                 let messaging = MESSAGING.read().await;
                 self.receiver = Some(identity.hostname.clone());
+
+                let _ = get_app()
+                    .await
+                    .emit_payload(WsClientUpdatePayload {
+                        hostname: identity.hostname.to_string(),
+                        status: WsClientStatus::Connected,
+                    })
+                    .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
                 messaging
                     .set_remote_verified(&identity.hostname, &self)
                     .await;

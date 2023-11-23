@@ -97,7 +97,7 @@ impl ConnectionReadThread {
                 ConnInfo::Client(c) => {
                     debug!("Client msg");
                     let packet = C2SPacket::MessageReceived(date);
-                    c.send_packet(packet).await?;
+                    c.feed_packet(packet).await?;
                 }
                 ConnInfo::Server((_, s)) => {
                     debug!("Server msg");
@@ -126,7 +126,7 @@ impl ConnectionReadThread {
                 ConnInfo::Client(c) => {
                     debug!("Client msg");
                     let packet = C2SPacket::MessageFailed(date);
-                    c.send_packet(packet).await?;
+                    c.feed_packet(packet).await?;
                 }
                 ConnInfo::Server((_, s)) => {
                     debug!("Server msg");

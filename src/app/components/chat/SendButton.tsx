@@ -1,6 +1,5 @@
 import { Button, Input, InputGroup, InputRightElement } from '@chakra-ui/react';
-import { useContext, useState } from 'react';
-import { ChatContext } from './ChatProvider';
+import { useState } from 'react';
 import MessagingClient from '../../../bindings/ws/client';
 import { ReactSetState } from '../../../tools/react';
 

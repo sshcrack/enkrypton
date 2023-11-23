@@ -12,9 +12,8 @@ use payloads::{
 };
 use shared::get_app;
 use std::{
-    sync::Arc,
-    thread::{self, JoinHandle},
-    time::{Duration, Instant},
+    sync::{Arc, atomic::{AtomicBool, Ordering}},
+    thread::{self, JoinHandle}
 };
 use tauri::async_runtime::block_on;
 use tokio::{net::TcpStream, sync::Mutex};
@@ -22,22 +21,23 @@ use tokio_socks::tcp::Socks5Stream;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use url::Url;
 
-use crate::general::{IdentityProvider, IdentityVerify, HEARTBEAT, MESSAGING};
+use crate::{general::{IdentityProvider, IdentityVerify, MESSAGING}, client::{SocksProxy, manager_ext::ManagerExt, client::heartbeat::HeartbeatClient}};
 
-use super::{manager_ext::ManagerExt, SocksProxy};
+use super::flush::FlushChecker;
 
-type WriteStream = SplitSink<WebSocketStream<Socks5Stream<TcpStream>>, Message>;
-type ReadStream = SplitStream<WebSocketStream<Socks5Stream<TcpStream>>>;
+pub(super) type WriteStream = SplitSink<WebSocketStream<Socks5Stream<TcpStream>>, Message>;
+pub(super) type ReadStream = SplitStream<WebSocketStream<Socks5Stream<TcpStream>>>;
 
 #[derive(Debug)]
 pub struct MessagingClient {
     pub write: Arc<Mutex<WriteStream>>,
 
     receiver: String,
-    heartbeat_thread: Arc<Option<JoinHandle<()>>>,
+    pub(super) heartbeat_thread: Arc<Option<JoinHandle<()>>>,
     read_thread: Arc<Option<JoinHandle<()>>>,
 
     pub rx: Receiver<S2CPacket>,
+    flush_checker: FlushChecker
 }
 
 impl MessagingClient {
@@ -99,6 +99,9 @@ impl MessagingClient {
         let (tx, rx) = async_channel::unbounded();
 
         let arc_write = Arc::new(Mutex::new(write));
+
+        let checker = FlushChecker::new(arc_write.clone()).await?;
+        let flusher_exit = checker.should_exit.clone();
         let mut c = Self {
             write: arc_write.clone(),
             heartbeat_thread: Arc::new(None),
@@ -106,62 +109,25 @@ impl MessagingClient {
 
             rx,
             read_thread: Arc::new(None),
+            flush_checker: checker
         };
 
         debug!("[CLIENT] Spawning heartbeat thread");
         c.spawn_heartbeat_thread();
-        c.spawn_read_thread(tx, read, arc_write);
+        c.spawn_read_thread(tx, read, arc_write, flusher_exit);
 
         return Ok(c);
     }
 
-    pub async fn send_packet(&self, msg: C2SPacket) -> Result<()> {
+    pub async fn feed_packet(&self, msg: C2SPacket) -> Result<()> {
         debug!("[CLIENT] Locking write mutex...");
         let mut state = self.write.lock().await;
-        debug!("[CLIENT] Sending packet {:?}...", msg);
-        state.send(msg.try_into()?).await?;
+        debug!("[CLIENT] Feeding packet {:?}...", msg);
+        state.feed(msg.try_into()?).await?;
+        self.flush_checker.mark_dirty().await;
         debug!("[CLIENT] Done sending packet.");
 
         Ok(())
-    }
-
-    fn spawn_heartbeat_thread(&mut self) {
-        if self.heartbeat_thread.is_some() {
-            warn!(
-                "[CLIENT] Could not spawn heartbeat thread, already exists ({:?})",
-                self
-            );
-            return;
-        }
-
-        let sender = self.write.clone();
-        let handle = thread::spawn(move || loop {
-            let before = Instant::now();
-
-            let mut temp = block_on(sender.lock());
-
-            let temp = temp.send(Message::Ping(vec![]));
-            let res = block_on(temp);
-
-            if let Err(e) = res {
-                let err_msg = format!("{:?}", e);
-                if err_msg.contains("AlreadyClosed") {
-                    debug!("[CLIENT] Closing heartbeat thread...");
-                    break;
-                }
-
-                warn!("[CLIENT] Could not send heartbeat: {:?}", e);
-            }
-
-            let duration = before.elapsed();
-
-            let diff = HEARTBEAT.checked_sub(duration);
-            let diff = diff.unwrap_or(Duration::new(0, 0));
-
-            thread::sleep(diff)
-        });
-
-        self.heartbeat_thread = Arc::new(Some(handle));
     }
 
     fn spawn_read_thread(
@@ -169,6 +135,7 @@ impl MessagingClient {
         tx: Sender<S2CPacket>,
         receiver: ReadStream,
         write: Arc<Mutex<WriteStream>>,
+        flush_exit: Arc<AtomicBool>
     ) {
         if self.read_thread.is_some() {
             warn!("[CLIENT] Could not thread read thread, already exists ({:?})", self);
@@ -215,6 +182,7 @@ impl MessagingClient {
             });
 
             block_on(future);
+            flush_exit.store(true, Ordering::Relaxed);
             info!("[CLIENT] Client disconnected for {}", tmp);
             let f = block_on(MESSAGING.read());
             block_on(f.remove_connection(&tmp));

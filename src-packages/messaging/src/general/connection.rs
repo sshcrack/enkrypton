@@ -195,7 +195,7 @@ impl Connection {
             ConnInfo::Client(c) => {
                 debug!("Client msg");
                 let packet = C2SPacket::Message((date, bin));
-                c.send_packet(packet).await?;
+                c.feed_packet(packet).await?;
             }
             ConnInfo::Server((_, s)) => {
                 debug!("Server msg");

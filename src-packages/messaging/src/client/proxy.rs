@@ -44,7 +44,7 @@ impl SocksProxy {
         let dest_server = get_servername(destination_url)?;
 
         println!(
-            "Connecting to {} with server_name {}",
+            "[PROXY] Connecting to {} with server_name {}",
             proxy_url, dest_server
         );
         if let Some((username, password)) = self.auth.as_ref() {

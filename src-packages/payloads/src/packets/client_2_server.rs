@@ -6,7 +6,7 @@ use super::Identity;
 pub enum C2SPacket {
     SetIdentity(Identity),
     IdentityVerified,
-    Message(Vec<u8>),
+    Message((u128, Vec<u8>)),
     MessageReceived(u128),
     MessageFailed(u128)
 }

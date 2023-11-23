@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
-use log::info;
+use log::{info, debug};
 use payloads::{
     event::AppHandleExt,
     payloads::{WsMessageStatus, WsMessageStatusPayload},
@@ -124,15 +124,17 @@ impl MessagingManager {
                     .messages
                     .iter_mut()
                     .find(|e| e.date == date)
-                    .ok_or(anyhow!("Could not find message"))?;
+                    .ok_or(anyhow!(format!("Could not set status: Message with date {} not found with receiver {}", date, onion_host)))?;
 
                 msg.status = status.clone();
                 Ok(())
             })
             .await?;
 
+        debug!("Sending message status update to client Hostname: {}, Date: {}, Status: {:?}", onion_host, date, status);
         get_app().await.emit_payload(WsMessageStatusPayload {
             hostname: onion_host.to_string(),
+            date,
             status,
         })?;
         Ok(())

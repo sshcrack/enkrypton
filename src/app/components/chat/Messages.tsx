@@ -2,15 +2,18 @@ import { useContext } from 'react'
 import RenderIfVisible from 'react-render-if-visible'
 import { ChatContext } from './ChatProvider'
 import { MessageBox } from 'react-chat-elements'
+import { Spinner } from '@chakra-ui/react'
 
 export type MessagesProps = {}
 
 const ESTIMATED_ITEM_HEIGHT = 100
 export default function Messages({ }: MessagesProps) {
-    const { messages } = useContext(ChatContext)
+    const { client } = useContext(ChatContext)
+    if(!client)
+        return <Spinner />
 
     return <>
-        {messages.map(({ msg, self_sent, date, status }, i) => {
+        {client.messages().map(({ msg, self_sent, date, status }, i) => {
             let statusMsg: 'waiting' | 'sent' | 'received' | 'read' = "waiting";
             switch (status) {
                 case "Failed":

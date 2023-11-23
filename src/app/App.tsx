@@ -53,7 +53,6 @@ function InnerApp() {
   }, [retryHostname])
 
   useEffect(() => {
-    console.log("Refreshing user list", !!data, !!hostname)
     if (!data || !hostname)
       return;
 

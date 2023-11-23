@@ -43,18 +43,18 @@ impl Actor for WsActor {
             let p = rx.try_recv();
             if let Err(e) = p {
                 if e == TryRecvError::Closed {
-                    debug!("Channel has been closed. Stopping...");
+                    debug!("[SERVER] Channel has been closed. Stopping...");
                     ctx.stop();
                 }
 
                 return;
             }
             let p = p.unwrap();
-            debug!("Sending packet to client {:?}", p);
+            debug!("[SERVER] Sending packet to client {:?}", p);
 
             let res = p.try_into();
             if let Err(e) = res {
-                error!("Could not parse packet: {:?}", e);
+                error!("[SERVER] Could not parse packet: {:?}", e);
                 return;
             }
 
@@ -70,7 +70,7 @@ impl Actor for WsActor {
             }
 
             debug!(
-                "Websocket timed out, stopping (onionHost: {:?})",
+                "[SERVER] Websocket timed out, stopping (onionHost: {:?})",
                 a.receiver
             );
             ctx.stop();
@@ -82,14 +82,14 @@ impl Actor for WsActor {
         self.c_tx.close();
         self.s_tx.close();
         if let Some(onion_host) = &self.receiver {
-            debug!("Removing connection for {}", onion_host);
+            debug!("[SERVER] Removing connection for {}", onion_host);
 
             let _ = block_on(get_app())
                 .emit_payload(WsClientUpdatePayload {
                     hostname: onion_host.to_string(),
                     status: WsClientStatus::Disconnected,
                 })
-                .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+                .map_err(|e| warn!("[SERVER] Could not emit ws client update: {:?}", e));
 
             block_on(block_on(MESSAGING.read()).remove_connection(onion_host));
         }
@@ -125,7 +125,7 @@ impl WsActor {
                     messaging.set_self_verified(&onion_host, &self).await;
                     messaging.assert_verified(&onion_host).await?;
                 } else {
-                    error!("Received IdentityVerified packet but no onion host was set");
+                    error!("[SERVER] Received IdentityVerified packet but no onion host was set");
                 }
             }
             C2SPacket::SetIdentity(identity) => {
@@ -141,7 +141,7 @@ impl WsActor {
                         hostname: identity.hostname.to_string(),
                         status: WsClientStatus::Connected,
                     })
-                    .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+                    .map_err(|e| warn!("[SERVER] Could not emit ws client update: {:?}", e));
                 messaging
                     .set_remote_verified(&identity.hostname, &self)
                     .await;
@@ -164,7 +164,7 @@ impl WsActor {
 
         let packet_auth = packet_auth.unwrap();
         if self.receiver.is_none() {
-            warn!("Ignoring packet {:?}. No Receiver yet.", packet_auth);
+            warn!("[SERVER] Ignoring packet {:?}. No Receiver yet.", packet_auth);
             return Ok(());
         }
 
@@ -178,12 +178,13 @@ impl WsActor {
                 self.c_tx.send(C2SPacket::Message(msg)).await?;
             }
             C2SPacket::MessageFailed(date) => {
+                debug!("[SERVER] Received Client Packet, setting failed");
                 MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Failed).await?;
             },
             C2SPacket::MessageReceived(date) => {
-                MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Sent).await?;
+                MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Success).await?;
             }
-            _ => warn!("Could not process packet {:?}", packet_auth)
+            _ => warn!("[SERVER] Could not process packet {:?}", packet_auth)
         }
         Ok(())
     }
@@ -201,12 +202,12 @@ impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
             Ok(ws::Message::Binary(bin)) => {
                 let res = C2SPacket::try_from(&bin.to_vec());
                 if let Err(e) = res {
-                    error!("Could not parse packet: {:?}", e);
+                    error!("[SERVER] Could not parse packet: {:?}", e);
                     return;
                 }
 
                 if self.c_tx.is_closed() {
-                    error!("Client receive channel close, stopping actor");
+                    error!("[SERVER] Client receive channel close, stopping actor");
                     ctx.stop();
                     return;
                 }
@@ -216,7 +217,7 @@ impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
                 let res = block_on(res);
 
                 if res.is_err() {
-                    error!("Could not handle packet: {:?}", res.unwrap_err());
+                    error!("[SERVER] Could not handle packet: {:?}", res.unwrap_err());
                     return;
                 }
             }

@@ -48,9 +48,9 @@ impl MessagingClient {
                 hostname: onion_hostname.to_string(),
                 status: WsClientStatus::ConnectingProxy,
             })
-            .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+            .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
 
-        debug!("Creating verify packet...");
+        debug!("[CLIENT] Creating verify packet...");
         let verify_packet = C2SPacket::identity(onion_hostname).await?;
 
         #[cfg(not(feature = "dev"))]
@@ -61,26 +61,27 @@ impl MessagingClient {
             .replace("-dev-client", "");
         let onion_addr = format!("ws://{}.onion/ws/", connect_host);
 
-        debug!("Creating proxy...");
+        debug!("[CLIENT] Creating proxy...");
         let proxy = SocksProxy::new()?;
-        debug!("Connecting Proxy...");
+        debug!("[CLIENT] Connecting Proxy...");
         let mut onion_addr = Url::parse(&onion_addr)?;
         onion_addr
             .set_scheme("ws")
-            .or(Err(anyhow!("Could not set scheme")))?;
+            .or(Err(anyhow!("[CLIENT] Could not set scheme")))?;
 
         let sock = proxy.connect(&onion_addr).await?;
 
-        debug!("Connecting Tungstenite...");
-        let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
-
+        debug!("[CLIENT] Connecting Tungstenite...");
         let _ = get_app()
             .await
             .emit_payload(WsClientUpdatePayload {
                 hostname: onion_hostname.to_string(),
                 status: WsClientStatus::ConnectingHost,
             })
-            .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+            .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
+
+
+        let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
         let (mut write, read) = ws_stream.split();
 
@@ -90,9 +91,9 @@ impl MessagingClient {
                 hostname: onion_hostname.to_string(),
                 status: WsClientStatus::WaitingIdentity,
             })
-            .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+            .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
 
-        debug!("Sending verify packet");
+        debug!("[CLIENT] Sending verify packet");
         write.send(verify_packet.try_into()?).await?;
 
         let (tx, rx) = async_channel::unbounded();
@@ -107,7 +108,7 @@ impl MessagingClient {
             read_thread: Arc::new(None),
         };
 
-        debug!("Spawning heartbeat thread");
+        debug!("[CLIENT] Spawning heartbeat thread");
         c.spawn_heartbeat_thread();
         c.spawn_read_thread(tx, read, arc_write);
 
@@ -115,11 +116,11 @@ impl MessagingClient {
     }
 
     pub async fn send_packet(&self, msg: C2SPacket) -> Result<()> {
-        debug!("Locking write mutex...");
+        debug!("[CLIENT] Locking write mutex...");
         let mut state = self.write.lock().await;
-        debug!("Sending packet...");
+        debug!("[CLIENT] Sending packet {:?}...", msg);
         state.send(msg.try_into()?).await?;
-        debug!("Done sending packet.");
+        debug!("[CLIENT] Done sending packet.");
 
         Ok(())
     }
@@ -127,7 +128,7 @@ impl MessagingClient {
     fn spawn_heartbeat_thread(&mut self) {
         if self.heartbeat_thread.is_some() {
             warn!(
-                "Could not spawn heartbeat thread, already exists ({:?})",
+                "[CLIENT] Could not spawn heartbeat thread, already exists ({:?})",
                 self
             );
             return;
@@ -145,11 +146,11 @@ impl MessagingClient {
             if let Err(e) = res {
                 let err_msg = format!("{:?}", e);
                 if err_msg.contains("AlreadyClosed") {
-                    debug!("Closing heartbeat thread...");
+                    debug!("[CLIENT] Closing heartbeat thread...");
                     break;
                 }
 
-                warn!("Could not send heartbeat: {:?}", e);
+                warn!("[CLIENT] Could not send heartbeat: {:?}", e);
             }
 
             let duration = before.elapsed();
@@ -170,7 +171,7 @@ impl MessagingClient {
         write: Arc<Mutex<WriteStream>>,
     ) {
         if self.read_thread.is_some() {
-            warn!("Could not thread read thread, already exists ({:?})", self);
+            warn!("[CLIENT] Could not thread read thread, already exists ({:?})", self);
             return;
         }
 
@@ -183,7 +184,7 @@ impl MessagingClient {
                 let tx = tx.clone();
                 async move {
                     if msg.is_err() {
-                        warn!("Could not parse client {:?}", msg.unwrap_err());
+                        warn!("[CLIENT] Could not parse client {:?}", msg.unwrap_err());
                         return;
                     }
 
@@ -193,28 +194,28 @@ impl MessagingClient {
                     }
 
                     if !msg.is_binary() {
-                        debug!("Received non binary message, returning");
+                        debug!("[CLIENT] Received non binary message, returning");
                         return;
                     }
 
                     let bin = msg.into_data();
                     let packet = S2CPacket::try_from(&bin);
                     if let Err(e) = packet {
-                        warn!("Could not parse packet {:?}", e);
+                        warn!("[CLIENT] Could not parse packet {:?}", e);
                         return;
                     }
 
                     let packet = packet.unwrap();
                     let res = Self::handle_packet(packet, &receiver, write, tx).await;
                     if let Err(e) = res {
-                        warn!("Could not handle packet: {:?}", e);
+                        warn!("[CLIENT] Could not handle packet: {:?}", e);
                         return;
                     }
                 }
             });
 
             block_on(future);
-            info!("Client disconnected for {}", tmp);
+            info!("[CLIENT] Client disconnected for {}", tmp);
             let f = block_on(MESSAGING.read());
             block_on(f.remove_connection(&tmp));
         });
@@ -234,17 +235,21 @@ impl MessagingClient {
             S2CPacket::VerifyIdentity(identity) => {
                 info!("[CLIENT] Verifying identity for {:?}...", identity);
                 identity.verify().await?;
+                debug!("[CLIENT] Identity verified! Locking messaging...");
                 let mgr = MESSAGING.read().await;
                 mgr.set_remote_verified(receiver).await?;
                 mgr.assert_verified(receiver).await?;
+                debug!("[CLIENT] Sending IdentityVerified packet...");
                 write
                     .lock()
                     .await
                     .send(C2SPacket::IdentityVerified.try_into()?)
                     .await?;
+
+                debug!("[CLIENT] Done sending IdentityVerified packet.")
             }
             S2CPacket::IdentityVerified => {
-                info!("Got myself verified!");
+                info!("[CLIENT] Got myself verified!");
 
                 let mgr = MESSAGING.read().await;
                 mgr.set_self_verified(receiver).await?;
@@ -273,13 +278,14 @@ impl MessagingClient {
                     .await?;
             }
             S2CPacket::MessageFailed(date) => {
+                debug!("[CLIENT] Received Server Packet, setting failed");
                 MESSAGING
                     .read()
                     .await
                     .set_msg_status(receiver, date, WsMessageStatus::Failed)
                     .await?;
             },
-            _ => error!("Could not process packet {:?}", process_further)
+            _ => error!("[CLIENT] Could not process packet {:?}", process_further)
         }
 
         Ok(())

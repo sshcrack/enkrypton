@@ -1,29 +1,26 @@
-use std::{
-    sync::Arc,
-    thread::{self, JoinHandle},
-};
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
 use crate::{client::MessagingClient, server::ws_manager::ServerChannels};
 
 use actix_web::Either;
 use anyhow::{anyhow, Result};
 use async_channel::{Receiver, Sender};
-use encryption::{rsa_decrypt, rsa_encrypt};
-use log::{debug, error, info, warn};
+use encryption::rsa_encrypt;
+use log::{debug, error, info};
 use payloads::{
     event::AppHandleExt,
     packets::{C2SPacket, S2CPacket},
-    payloads::{WsClientStatus, WsClientUpdatePayload, WsMessagePayload, WsMessageStatus},
+    payloads::{WsClientStatus, WsClientUpdatePayload, WsMessageStatus},
 };
-use shared::{get_app, APP_HANDLE};
+use shared::{APP_HANDLE, util::now_millis};
 use smol::block_on;
 use storage_internal::{helpers::ChatStorageHelper, STORAGE};
 use tokio::sync::RwLock;
 
-use super::MESSAGING;
+use super::{MESSAGING, ConnectionReadThread};
 
 #[derive(Debug)]
-enum ConnInfo {
+pub(super) enum ConnInfo {
     Client(MessagingClient),
     Server(ServerChannels),
 }
@@ -39,11 +36,13 @@ impl ConnInfo {
 
 #[derive(Debug, Clone)]
 pub struct Connection {
-    info: Arc<RwLock<ConnInfo>>,
-    read_thread: Arc<Option<JoinHandle<()>>>,
+    pub(super) info: Arc<RwLock<ConnInfo>>,
+    read_thread: Arc<Option<ConnectionReadThread>>,
     pub(crate) self_verified: Arc<RwLock<bool>>,
     pub(crate) verified: Arc<RwLock<bool>>,
-    receiver_host: String,
+    pub(super) receiver_host: String,
+
+    already_notified: Arc<AtomicBool>,
 
     notifier_ready_tx: Sender<()>,
     notifier_ready_rx: Receiver<()>,
@@ -51,6 +50,12 @@ pub struct Connection {
 
 impl Connection {
     pub(super) async fn notify_verified(&self) -> Result<()> {
+        if self.already_notified.load(Ordering::Relaxed) {
+            debug!("[CONNECTION] Not notifying again.");
+            return Ok(())
+        }
+
+        self.already_notified.store(true, Ordering::Relaxed);
         info!(
             "Verified ourselves for connection {:?}!",
             self.receiver_host
@@ -103,13 +108,14 @@ impl Connection {
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
             receiver_host: receiver_host.to_string(),
+            already_notified: Arc::new(AtomicBool::new(false)),
 
             notifier_ready_tx: tx,
             notifier_ready_rx: rx,
         };
 
-        s.spawn_read_thread().await;
-
+        let read_thread = ConnectionReadThread::new(&s).await;
+        s.read_thread = Arc::new(Some(read_thread));
         s
     }
 
@@ -124,142 +130,15 @@ impl Connection {
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
             receiver_host: receiver_host.to_string(),
+            already_notified: Arc::new(AtomicBool::new(false)),
 
             notifier_ready_tx: tx,
             notifier_ready_rx: rx,
         };
 
-        s.spawn_read_thread().await;
-
+        let read_thread = ConnectionReadThread::new(&s).await;
+        s.read_thread = Arc::new(Some(read_thread));
         s
-    }
-
-    pub async fn spawn_read_thread(&mut self) {
-        if self.read_thread.is_some() {
-            warn!("Could not spawn read thread, already exists ({:?})", self);
-            return;
-        }
-
-        let receiver = self.info.read().await.get_receiver();
-        let verified = self.verified.clone();
-        let self_verified = self.self_verified.clone();
-
-        //     #[cfg(not(feature = "dev"))]
-        let receiver_host: String = self.receiver_host.clone();
-
-        //       #[cfg(feature = "dev")]
-        //        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
-
-        let handle = thread::spawn(move || {
-            loop {
-                let msg = match &receiver {
-                    Either::Left(r) => {
-                        let msg = block_on(r.recv());
-                        if let Err(e) = msg {
-                            error!("Could not read packet: {:?}", e);
-                            break;
-                        }
-
-                        match msg.unwrap() {
-                            S2CPacket::Message(msg) => Some(msg),
-                            _ => {
-                                warn!("Main Manager received message it could not handle");
-                                None
-                            }
-                        }
-                    }
-
-                    Either::Right(r) => {
-                        let msg = block_on(r.recv());
-                        if let Err(e) = msg {
-                            error!("Could not read packet: {:?}", e);
-                            break;
-                        }
-
-                        match msg.unwrap() {
-                            C2SPacket::Message(msg) => Some(msg),
-                            _ => {
-                                warn!("Main Manager received message it could not handle");
-                                None
-                            }
-                        }
-                    }
-                };
-
-                if msg.is_none() {
-                    debug!("Skipping...");
-                    continue;
-                }
-
-                let is_valid = *block_on(verified.read()) && *block_on(self_verified.read());
-                if !is_valid {
-                    error!("Connection is not verified yet, skipping message");
-                    continue;
-                }
-
-                let msg = msg.unwrap();
-                debug!("Reading conn for {}...", receiver_host);
-                let storage = block_on(STORAGE.read());
-
-                let tmp = receiver_host.clone();
-                let priv_key = storage.get_data(|e| {
-                    e.chats
-                        .get(&tmp)
-                        .and_then(|e| Some(e.priv_key.clone()))
-                        .ok_or(anyhow!("The private key was empty (should never happen)"))
-                });
-
-                debug!("Getting res future");
-
-                let priv_key = block_on(priv_key);
-                debug!("Done");
-                drop(storage);
-                if let Err(e) = priv_key {
-                    error!("Could not get private key: {:?}", e);
-                    continue;
-                }
-
-                let priv_key = priv_key.unwrap();
-                let msg = rsa_decrypt(msg, priv_key);
-                if msg.is_err() {
-                    error!("Could not decrypt message: {:?}", msg.unwrap_err());
-                    continue;
-                }
-
-                let msg = String::from_utf8(msg.unwrap());
-                if let Err(e) = msg {
-                    error!("Could not parse message: {:?}", e);
-                    continue;
-                }
-
-                let msg = msg.unwrap();
-                println!(
-                    "Received message: {}, Sending payload with receiver {}",
-                    msg, receiver_host
-                );
-
-                let res = block_on(
-                    block_on(STORAGE.read()) // ..
-                        .add_msg(&receiver_host, false, &msg), //..
-                );
-
-                if let Err(e) = res {
-                    error!("Could not modify storage data: {:?}", e);
-                }
-
-                let handle = block_on(get_app());
-                let res = handle.emit_payload(WsMessagePayload {
-                    receiver: receiver_host.clone(),
-                    message: msg,
-                });
-                if let Err(e) = res {
-                    error!("Could not emit message: {:?}", e);
-                    return;
-                }
-            }
-        });
-
-        self.read_thread = Arc::new(Some(handle));
     }
 
     pub async fn send_msg(&self, msg: &str) -> Result<()> {
@@ -267,21 +146,32 @@ impl Connection {
         let date = STORAGE
             .read()
             .await
-            .add_msg(&self.receiver_host, true, msg)
+            .add_msg(&self.receiver_host, true, msg, now_millis())
             .await?;
 
-        let res = self.inner_send(msg).await;
+            debug!("Info of msg is {}", date);
+        let res = self.inner_send(msg, date).await;
         if res.is_err() {
-            MESSAGING.read().await.set_msg_status(&self.receiver_host, date, WsMessageStatus::Failed).await?;
+            debug!("Inner Send failed, setting status to failed");
+            MESSAGING
+                .read()
+                .await
+                .set_msg_status(&self.receiver_host, date, WsMessageStatus::Failed)
+                .await?;
         } else {
-            MESSAGING.read().await.set_msg_status(&self.receiver_host, date, WsMessageStatus::Sent).await?;
+            debug!("Sending status sent for msg {}", date);
+            MESSAGING
+                .read()
+                .await
+                .set_msg_status(&self.receiver_host, date, WsMessageStatus::Sent)
+                .await?;
         }
 
         res?;
         Ok(())
     }
 
-    async fn inner_send(&self, msg: &str) -> Result<()> {
+    async fn inner_send(&self, msg: &str, date: u128) -> Result<()> {
         let raw = msg.as_bytes().to_vec();
 
         let tmp = self.receiver_host.clone();
@@ -304,12 +194,12 @@ impl Connection {
         match &*self.info.read().await {
             ConnInfo::Client(c) => {
                 debug!("Client msg");
-                let packet = C2SPacket::Message(bin);
+                let packet = C2SPacket::Message((date, bin));
                 c.send_packet(packet).await?;
             }
             ConnInfo::Server((_, s)) => {
                 debug!("Server msg");
-                let packet = S2CPacket::Message(bin);
+                let packet = S2CPacket::Message((date, bin));
 
                 s.send(packet).await?;
             }

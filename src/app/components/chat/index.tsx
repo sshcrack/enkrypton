@@ -30,8 +30,6 @@ export function ChatInner(props: FlexProps) {
     const { active } = useContext(MainContext)
     const [client, setClient] = useState(null as null | MessagingClient)
 
-    const { addMessage } = useContext(ChatContext)
-
     const [update, setUpdate] = useState(0)
     const [focus, setFocus] = useState(0)
 
@@ -60,24 +58,6 @@ export function ChatInner(props: FlexProps) {
             setUpdate(update + 1)
         }, 10 * 1000)
     }, [update])
-
-
-    useEffect(() => {
-        if (!active || client === null)
-            return;
-
-
-        const rec = (msg: string) => {
-            console.log("received", msg)
-            addMessage({ msg, self_sent: false, date: Date.now(), status: 'Success' })
-            setFocus(Math.random())
-        }
-
-        client.on("on_receive", rec)
-        return () => {
-            client.removeListener("on_receive", rec)
-        }
-    }, [active, client, addMessage])
 
     // Just waiting for it to load
     if (!active || !client)

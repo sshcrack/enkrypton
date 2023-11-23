@@ -20,7 +20,9 @@ pub enum WsMessageStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WsMessageStatusPayload {
     pub hostname: String,
-    pub status: WsMessageStatus
+    pub status: WsMessageStatus,
+    #[cfg_attr(feature="export_ts", ts(type="number"))]
+    pub date: u128
 }
 
 impl Sendable for WsMessageStatusPayload {

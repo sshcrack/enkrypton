@@ -6,7 +6,7 @@ pub enum S2CPacket {
     DisconnectMultipleConnections,
     VerifyIdentity(Identity),
     IdentityVerified,
-    Message(Vec<u8>),
+    Message((u128, Vec<u8>)),
     MessageReceived(u128),
     MessageFailed(u128)
 }

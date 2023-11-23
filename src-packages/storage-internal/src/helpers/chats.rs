@@ -1,23 +1,21 @@
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-use payloads::{data::ChatMessage, payloads::WsMessageStatus};
-use shared::util::now_millis;
+use payloads::{data::ChatMessage, payloads::{WsMessageStatus, WsMessageStatusPayload}, event::AppHandleExt};
+use shared::APP_HANDLE;
 
 use crate::StorageManager;
 
 #[async_trait]
 pub trait ChatStorageHelper {
-    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str) -> Result<u128>;
+    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str, date: u128) -> Result<u128>;
 }
 
 #[async_trait]
 impl ChatStorageHelper for StorageManager {
-    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str) -> Result<u128> {
-        let date = now_millis();
-
+    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str, date: u128) -> Result<u128> {
         let status = if sent_self { WsMessageStatus::Sending } else { WsMessageStatus::Success };
 
-        self.modify_storage_data(|e| {
+        let date = self.modify_storage_data(|e| {
             let c = e
                 .chats
                 .get_mut(receiver)
@@ -27,13 +25,18 @@ impl ChatStorageHelper for StorageManager {
                 self_sent: sent_self,
                 msg: msg.to_string(),
                 date,
-                status
+                status: status.clone()
             });
 
-            Ok(())
+            Ok(date)
         })
         .await?;
 
-        return Ok(date);
+        APP_HANDLE.read().await.as_ref().map(|e| e.emit_payload(WsMessageStatusPayload {
+            hostname: receiver.to_string(),
+            date,
+            status
+        }));
+        Ok(date)
     }
 }

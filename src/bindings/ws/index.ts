@@ -1,6 +1,7 @@
 import { listen, Event } from "@tauri-apps/api/event"
 import { ClientMap } from './client/map';
 import { WsClientUpdatePayload } from '../rs/WsClientUpdatePayload';
+import { WsMessageStatusPayload } from '../rs/WsMessageStatusPayload';
 
 if (!window.clients)
     window.clients = new ClientMap();
@@ -43,6 +44,13 @@ listen("ws_client_update", ({ payload }: Event<WsClientUpdatePayload>) => {
     // Constructing the client
     const c = ws.get(hostname)
     c.status = status
+})
+
+listen("ws_msg_update", ({ payload: { hostname, date, status } }: Event<WsMessageStatusPayload>) => {
+    const c = ws.get(hostname)
+
+    console.log("Updating messages...")
+    c.updateMsg(date, status)
 })
 
 export default ws;

@@ -4,8 +4,12 @@ use futures_util::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use log::{debug, info, warn};
-use payloads::{event::AppHandleExt, packets::{C2SPacket, S2CPacket}, payloads::{WsClientStatus, WsClientUpdatePayload}};
+use log::{debug, info, warn, error};
+use payloads::{
+    event::AppHandleExt,
+    packets::{C2SPacket, S2CPacket},
+    payloads::{WsClientStatus, WsClientUpdatePayload, WsMessageStatus},
+};
 use shared::get_app;
 use std::{
     sync::Arc,
@@ -38,10 +42,13 @@ pub struct MessagingClient {
 
 impl MessagingClient {
     pub async fn new(onion_hostname: &str) -> Result<Self> {
-        let _ = get_app().await.emit_payload(WsClientUpdatePayload {
-            hostname: onion_hostname.to_string(),
-            status: WsClientStatus::ConnectingProxy,
-        }).map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+        let _ = get_app()
+            .await
+            .emit_payload(WsClientUpdatePayload {
+                hostname: onion_hostname.to_string(),
+                status: WsClientStatus::ConnectingProxy,
+            })
+            .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
 
         debug!("Creating verify packet...");
         let verify_packet = C2SPacket::identity(onion_hostname).await?;
@@ -67,19 +74,23 @@ impl MessagingClient {
         debug!("Connecting Tungstenite...");
         let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
-
-        let _ = get_app().await.emit_payload(WsClientUpdatePayload {
-            hostname: onion_hostname.to_string(),
-            status: WsClientStatus::ConnectingHost,
-        }).map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+        let _ = get_app()
+            .await
+            .emit_payload(WsClientUpdatePayload {
+                hostname: onion_hostname.to_string(),
+                status: WsClientStatus::ConnectingHost,
+            })
+            .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
 
         let (mut write, read) = ws_stream.split();
 
-
-        let _ = get_app().await.emit_payload(WsClientUpdatePayload {
-            hostname: onion_hostname.to_string(),
-            status: WsClientStatus::WaitingIdentity,
-        }).map_err(|e| warn!("Could not emit ws client update: {:?}", e));
+        let _ = get_app()
+            .await
+            .emit_payload(WsClientUpdatePayload {
+                hostname: onion_hostname.to_string(),
+                status: WsClientStatus::WaitingIdentity,
+            })
+            .map_err(|e| warn!("Could not emit ws client update: {:?}", e));
 
         debug!("Sending verify packet");
         write.send(verify_packet.try_into()?).await?;
@@ -203,6 +214,9 @@ impl MessagingClient {
             });
 
             block_on(future);
+            info!("Client disconnected for {}", tmp);
+            let f = block_on(MESSAGING.read());
+            block_on(f.remove_connection(&tmp));
         });
 
         self.read_thread = Arc::new(Some(handle));
@@ -214,6 +228,7 @@ impl MessagingClient {
         write: Arc<Mutex<WriteStream>>,
         tx: Sender<S2CPacket>,
     ) -> Result<()> {
+        let mut process_further = None;
         match packet {
             S2CPacket::DisconnectMultipleConnections => todo!(),
             S2CPacket::VerifyIdentity(identity) => {
@@ -221,7 +236,7 @@ impl MessagingClient {
                 identity.verify().await?;
                 let mgr = MESSAGING.read().await;
                 mgr.set_remote_verified(receiver).await?;
-                mgr.check_verify_status(receiver).await?;
+                mgr.assert_verified(receiver).await?;
                 write
                     .lock()
                     .await
@@ -233,12 +248,38 @@ impl MessagingClient {
 
                 let mgr = MESSAGING.read().await;
                 mgr.set_self_verified(receiver).await?;
-                mgr.check_verify_status(receiver).await?;
+                mgr.assert_verified(receiver).await?;
             }
+            p => process_further = Some(p),
+        }
+
+        if process_further.is_none() {
+            return Ok(());
+        }
+
+        let process_further = process_further.unwrap();
+        MESSAGING.read().await.assert_verified(receiver).await?;
+
+        match process_further {
             S2CPacket::Message(msg) => {
                 // Redirecting msg to main handler
                 tx.send(S2CPacket::Message(msg)).await?;
             }
+            S2CPacket::MessageReceived(date) => {
+                MESSAGING
+                    .read()
+                    .await
+                    .set_msg_status(receiver, date, WsMessageStatus::Success)
+                    .await?;
+            }
+            S2CPacket::MessageFailed(date) => {
+                MESSAGING
+                    .read()
+                    .await
+                    .set_msg_status(receiver, date, WsMessageStatus::Failed)
+                    .await?;
+            },
+            _ => error!("Could not process packet {:?}", process_further)
         }
 
         Ok(())

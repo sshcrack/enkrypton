@@ -7,4 +7,6 @@ pub enum C2SPacket {
     SetIdentity(Identity),
     IdentityVerified,
     Message(Vec<u8>),
+    MessageReceived(u128),
+    MessageFailed(u128)
 }

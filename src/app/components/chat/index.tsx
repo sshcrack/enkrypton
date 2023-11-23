@@ -69,7 +69,7 @@ export function ChatInner(props: FlexProps) {
 
         const rec = (msg: string) => {
             console.log("received", msg)
-            addMessage({ msg, self_sent: false, date: Date.now() })
+            addMessage({ msg, self_sent: false, date: Date.now(), status: 'Success' })
             setFocus(Math.random())
         }
 
@@ -83,8 +83,14 @@ export function ChatInner(props: FlexProps) {
     if (!active || !client)
         return <Text>Loading...</Text>
 
-    if(client.status !== 'Connected')
-        return <StatusScreen client={client}/>
+    if (client.status !== 'Connected')
+        return <Flex w="100%" h="100%" flexDir="column">
+            <InputGroup>
+                <InputLeftAddon children='Hostname' />
+                <Input value={active?.onionHostname} isReadOnly />
+            </InputGroup>
+            <StatusScreen client={client} />
+        </Flex>
 
 
     return <Flex w='100%' h='100%' flexDir='column' p='5'

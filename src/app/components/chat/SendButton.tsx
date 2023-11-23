@@ -13,7 +13,7 @@ export default function SendButton({ client, setFocus }: SendButtonProps) {
     const [msg, setMsg] = useState("")
     const [sending, setSending] = useState(false)
 
-    const { addMessage, setAdditional } = useContext(ChatContext)
+    const { addMessage } = useContext(ChatContext)
     const onSend = () => {
         if (msg.length === 0 || client === null)
             return;
@@ -23,18 +23,10 @@ export default function SendButton({ client, setFocus }: SendButtonProps) {
 
         const id = Date.now()
         console.log("Add msg on send")
-        addMessage({ msg, self_sent: true, date: id })
-        setAdditional(id, { failed: false, sending: true })
+        addMessage({ msg, self_sent: true, date: id, status: 'Sending' })
         setFocus(Math.random())
 
         client.send(msg)
-            .then(() => {
-                setAdditional(id, { failed: false, sending: false })
-            })
-            .catch(e => {
-                setAdditional(id, { failed: true, sending: false })
-                console.error("Failed to send message", e)
-            })
             .finally(() => setSending(false))
     }
 

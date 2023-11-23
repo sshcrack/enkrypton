@@ -7,6 +7,8 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 #[cfg(feature="export_ts")]
 use ts_rs::TS;
 
+use crate::payloads::WsMessageStatus;
+
 
 // Only one Storage instance is allowed.
 #[cfg_attr(feature="export_ts", derive(TS))]
@@ -59,6 +61,8 @@ impl StorageChat {
 #[derive(Clone, Serialize, Deserialize, Debug, Zeroize, ZeroizeOnDrop)]
 pub struct ChatMessage {
     pub self_sent: bool,
+    #[zeroize(skip)]
+    pub status: WsMessageStatus,
     //NOTE This message should not be lying around in memory unencrypted I guess
     pub msg: String,
     #[cfg_attr(feature="export_ts", ts(type="number"))]

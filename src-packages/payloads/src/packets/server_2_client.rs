@@ -7,4 +7,6 @@ pub enum S2CPacket {
     VerifyIdentity(Identity),
     IdentityVerified,
     Message(Vec<u8>),
+    MessageReceived(u128),
+    MessageFailed(u128)
 }

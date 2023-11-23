@@ -13,12 +13,14 @@ use log::{debug, error, info, warn};
 use payloads::{
     event::AppHandleExt,
     packets::{C2SPacket, S2CPacket},
-    payloads::{WsClientStatus, WsMessagePayload, WsClientUpdatePayload},
+    payloads::{WsClientStatus, WsClientUpdatePayload, WsMessagePayload, WsMessageStatus},
 };
 use shared::{get_app, APP_HANDLE};
 use smol::block_on;
 use storage_internal::{helpers::ChatStorageHelper, STORAGE};
 use tokio::sync::RwLock;
+
+use super::MESSAGING;
 
 #[derive(Debug)]
 enum ConnInfo {
@@ -261,6 +263,25 @@ impl Connection {
     }
 
     pub async fn send_msg(&self, msg: &str) -> Result<()> {
+        // Adding if successful
+        let date = STORAGE
+            .read()
+            .await
+            .add_msg(&self.receiver_host, true, msg)
+            .await?;
+
+        let res = self.inner_send(msg).await;
+        if res.is_err() {
+            MESSAGING.read().await.set_msg_status(&self.receiver_host, date, WsMessageStatus::Failed).await?;
+        } else {
+            MESSAGING.read().await.set_msg_status(&self.receiver_host, date, WsMessageStatus::Sent).await?;
+        }
+
+        res?;
+        Ok(())
+    }
+
+    async fn inner_send(&self, msg: &str) -> Result<()> {
         let raw = msg.as_bytes().to_vec();
 
         let tmp = self.receiver_host.clone();
@@ -293,13 +314,6 @@ impl Connection {
                 s.send(packet).await?;
             }
         };
-
-        // Adding if successful
-        STORAGE
-            .read()
-            .await
-            .add_msg(&self.receiver_host, true, msg)
-            .await?;
 
         Ok(())
     }

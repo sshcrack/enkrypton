@@ -1,18 +1,22 @@
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-use payloads::data::ChatMessage;
+use payloads::{data::ChatMessage, payloads::WsMessageStatus};
 use shared::util::now_millis;
 
 use crate::StorageManager;
 
 #[async_trait]
 pub trait ChatStorageHelper {
-    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str) -> Result<()>;
+    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str) -> Result<u128>;
 }
 
 #[async_trait]
 impl ChatStorageHelper for StorageManager {
-    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str) -> Result<()> {
+    async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str) -> Result<u128> {
+        let date = now_millis();
+
+        let status = if sent_self { WsMessageStatus::Sending } else { WsMessageStatus::Success };
+
         self.modify_storage_data(|e| {
             let c = e
                 .chats
@@ -22,11 +26,14 @@ impl ChatStorageHelper for StorageManager {
             c.messages.push(ChatMessage {
                 self_sent: sent_self,
                 msg: msg.to_string(),
-                date: now_millis(),
+                date,
+                status
             });
 
             Ok(())
         })
-        .await
+        .await?;
+
+        return Ok(date);
     }
 }

@@ -9,7 +9,7 @@ use log::{debug, error, info, warn};
 use payloads::{
     event::AppHandleExt,
     packets::{C2SPacket, S2CPacket},
-    payloads::{WsClientStatus, WsClientUpdatePayload},
+    payloads::{WsClientStatus, WsClientUpdatePayload, WsMessageStatus},
 };
 use shared::get_app;
 use smol::future::block_on;
@@ -117,12 +117,13 @@ impl WsActor {
         packet: C2SPacket,
         ctx: &mut <Self as Actor>::Context,
     ) -> Result<()> {
+        let mut packet_auth = None;
         match packet {
             C2SPacket::IdentityVerified => {
                 if let Some(onion_host) = &self.receiver {
                     let messaging = MESSAGING.read().await;
                     messaging.set_self_verified(&onion_host, &self).await;
-                    messaging.check_verify_status(&onion_host).await?;
+                    messaging.assert_verified(&onion_host).await?;
                 } else {
                     error!("Received IdentityVerified packet but no onion host was set");
                 }
@@ -144,7 +145,7 @@ impl WsActor {
                 messaging
                     .set_remote_verified(&identity.hostname, &self)
                     .await;
-                messaging.check_verify_status(&identity.hostname).await?;
+                messaging.assert_verified(&identity.hostname).await?;
 
                 let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
 
@@ -154,10 +155,35 @@ impl WsActor {
                 ctx.binary(verify_p);
                 ctx.binary(b);
             }
+            other => packet_auth = Some(other),
+        }
+
+        if packet_auth.is_none() {
+            return Ok(());
+        }
+
+        let packet_auth = packet_auth.unwrap();
+        if self.receiver.is_none() {
+            warn!("Ignoring packet {:?}. No Receiver yet.", packet_auth);
+            return Ok(());
+        }
+
+        let rec = self.receiver.as_ref().unwrap();
+
+        // Check if verified
+        MESSAGING.read().await.assert_verified(rec).await?;
+        match packet_auth {
             C2SPacket::Message(msg) => {
                 // Sending the message to main handler
                 self.c_tx.send(C2SPacket::Message(msg)).await?;
             }
+            C2SPacket::MessageFailed(date) => {
+                MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Failed).await?;
+            },
+            C2SPacket::MessageReceived(date) => {
+                MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Sent).await?;
+            }
+            _ => warn!("Could not process packet {:?}", packet_auth)
         }
         Ok(())
     }

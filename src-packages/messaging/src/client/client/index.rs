@@ -10,7 +10,7 @@ use payloads::{
     packets::{C2SPacket, S2CPacket},
     payloads::{WsClientStatus, WsClientUpdatePayload, WsMessageStatus},
 };
-use shared::get_app;
+use shared::{get_app, name_struct, util::_get_name};
 use std::{
     sync::{Arc, atomic::{AtomicBool, Ordering}},
     thread::{self, JoinHandle}
@@ -122,7 +122,7 @@ impl MessagingClient {
     pub async fn feed_packet(&self, msg: C2SPacket) -> Result<()> {
         debug!("[CLIENT] Locking write mutex...");
         let mut state = self.write.lock().await;
-        debug!("[CLIENT] Feeding packet {:?}...", msg);
+        debug!("[CLIENT] Feeding packet {:?}...", name_struct!(msg));
         state.feed(msg.try_into()?).await?;
         self.flush_checker.mark_dirty().await;
         debug!("[CLIENT] Done sending packet.");

@@ -134,14 +134,15 @@ impl WsActor {
 
                 let messaging = MESSAGING.read().await;
                 self.receiver = Some(identity.hostname.clone());
-
-                let _ = get_app()
-                    .await
-                    .emit_payload(WsClientUpdatePayload {
-                        hostname: identity.hostname.to_string(),
-                        status: WsClientStatus::Connected,
-                    })
-                    .map_err(|e| warn!("[SERVER] Could not emit ws client update: {:?}", e));
+                /*
+                                let _ = get_app()
+                                    .await
+                                    .emit_payload(WsClientUpdatePayload {
+                                        hostname: identity.hostname.to_string(),
+                                        status: WsClientStatus::Connected,
+                                    })
+                                    .map_err(|e| warn!("[SERVER] Could not emit ws client update: {:?}", e));
+                */
                 messaging
                     .set_remote_verified(&identity.hostname, &self)
                     .await;
@@ -164,7 +165,10 @@ impl WsActor {
 
         let packet_auth = packet_auth.unwrap();
         if self.receiver.is_none() {
-            warn!("[SERVER] Ignoring packet {:?}. No Receiver yet.", packet_auth);
+            warn!(
+                "[SERVER] Ignoring packet {:?}. No Receiver yet.",
+                packet_auth
+            );
             return Ok(());
         }
 
@@ -179,12 +183,20 @@ impl WsActor {
             }
             C2SPacket::MessageFailed(date) => {
                 debug!("[SERVER] Received Client Packet, setting failed");
-                MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Failed).await?;
-            },
-            C2SPacket::MessageReceived(date) => {
-                MESSAGING.read().await.set_msg_status(rec, date, WsMessageStatus::Success).await?;
+                MESSAGING
+                    .read()
+                    .await
+                    .set_msg_status(rec, date, WsMessageStatus::Failed)
+                    .await?;
             }
-            _ => warn!("[SERVER] Could not process packet {:?}", packet_auth)
+            C2SPacket::MessageReceived(date) => {
+                MESSAGING
+                    .read()
+                    .await
+                    .set_msg_status(rec, date, WsMessageStatus::Success)
+                    .await?;
+            }
+            _ => warn!("[SERVER] Could not process packet {:?}", packet_auth),
         }
         Ok(())
     }

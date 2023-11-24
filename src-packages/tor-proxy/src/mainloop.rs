@@ -6,10 +6,14 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self}, env,
+    thread::{self},
 };
 
-use shared::{get_torrc, get_root_dir};
+use shared::get_torrc;
+#[cfg(target_family="unix")]
+use shared::get_root_dir;
+#[cfg(target_family="unix")]
+use std::env;
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use anyhow::{anyhow, Result};

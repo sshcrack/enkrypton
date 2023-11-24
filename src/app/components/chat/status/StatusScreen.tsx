@@ -1,12 +1,11 @@
-import { Button, Flex, Heading } from '@chakra-ui/react'
-import { useEffect, useState } from "react"
-import { BsPersonFillGear } from "react-icons/bs"
-import { RiPassValidFill } from "react-icons/ri";
-import { RiComputerLine } from 'react-icons/ri'
-import { WsClientStatus } from '../../../../bindings/rs/WsClientStatus'
-import MessagingClient from '../../../../bindings/ws/client'
-import StatusLineBetween from './StatusLineBetween'
-import StatusPoint from './StatusPoint'
+import { Flex, Heading } from '@chakra-ui/react';
+import { useEffect, useState } from "react";
+import { BsPersonFillGear } from "react-icons/bs";
+import { RiComputerLine, RiPassValidFill } from "react-icons/ri";
+import { WsClientStatus } from '../../../../bindings/rs/WsClientStatus';
+import MessagingClient from '../../../../bindings/ws/client';
+import StatusLineBetween from './StatusLineBetween';
+import StatusPoint from './StatusPoint';
 
 export type StatusScreenProps = {
     client: MessagingClient
@@ -14,7 +13,6 @@ export type StatusScreenProps = {
 
 export default function StatusScreen({ client }: StatusScreenProps) {
     const [status, setStatus] = useState<WsClientStatus | null>(client.status)
-    const [conn, setConn] = useState(false)
 
     useEffect(() => {
         const l = (s: WsClientStatus) => {
@@ -29,12 +27,6 @@ export default function StatusScreen({ client }: StatusScreenProps) {
     }, [client])
 
 
-    const onConnect = () => {
-        setConn(true)
-        client.connect()
-            .finally(() => setConn(false))
-    }
-
     const failed = status == "Disconnected"
     const proxyDone = (status && status != "ConnectingProxy") as boolean
     const hostDone = (proxyDone && status != "ConnectingHost") as boolean
@@ -43,10 +35,6 @@ export default function StatusScreen({ client }: StatusScreenProps) {
     const icoStyle = { width: "2.5em", height: "2.5em" };
     return <Flex w='100%' h='100%' justifyContent='center' flexDir='column' alignItems='center' p='6' style={{ "--text-height": "1.5em" } as any}>
         <Flex h='20%' transform='translateY(-20%)' flexDir='column' gap='5'>
-            {status == null && <>
-                <Heading>Not connected yet.</Heading>
-                <Button colorScheme='green' isLoading={conn} onClick={() => onConnect()}>Connect</Button>
-            </>}
             {failed && <Heading>Failed to connect.</Heading>}
             {status && !failed && <Heading>Connecting...</Heading>}
         </Flex>

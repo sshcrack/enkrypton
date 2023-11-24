@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import RenderIfVisible from 'react-render-if-visible'
 import { ChatContext } from './ChatProvider'
 import { MessageBox } from 'react-chat-elements'
-import { Spinner } from '@chakra-ui/react'
+import { Flex, Spinner, Text } from '@chakra-ui/react'
 
 export type MessagesProps = {}
 
@@ -12,8 +12,9 @@ export default function Messages({ }: MessagesProps) {
     if(!client)
         return <Spinner />
 
+    const msg = client.messages()
     return <>
-        {client.messages().map(({ msg, self_sent, date, status }, i) => {
+        {msg.map(({ msg, self_sent, date, status }, i) => {
             let statusMsg: 'waiting' | 'sent' | 'received' | 'read' = "waiting";
             switch (status) {
                 case "Failed":
@@ -57,5 +58,6 @@ export default function Messages({ }: MessagesProps) {
                 {msgComp}
             </RenderIfVisible>
         })}
+        {msg.length === 0 && <Flex w='100%' h='100%' pt='10' justifyContent='center'><Text>No Messages sent yet.</Text></Flex>}
         </>
 }

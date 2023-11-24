@@ -7,6 +7,7 @@ import Messages from './Messages';
 import SendButton from './SendButton';
 import './index.scss';
 import StatusScreen from './status/StatusScreen';
+import ConnectButton from './ConnectButton';
 
 
 
@@ -29,7 +30,7 @@ export function ChatInner(props: FlexProps) {
     const { client, msgUpdate } = useContext(ChatContext)
 
     const [update, setUpdate] = useState(0)
-
+    const [pressedConnected, setPressedConnect] = useState(false)
 
     const chatFieldRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
@@ -52,14 +53,6 @@ export function ChatInner(props: FlexProps) {
     if (!client)
         return <Text>Loading...</Text>
 
-    if (client.status !== 'Connected')
-        return <Flex w="100%" h="100%" flexDir="column">
-            <InputGroup>
-                <InputLeftAddon children='Hostname' />
-                <Input value={active?.onionHostname} isReadOnly />
-            </InputGroup>
-            <StatusScreen client={client} />
-        </Flex>
 
 
     return <Flex w='100%' h='100%' flexDir='column' p='5'
@@ -70,10 +63,10 @@ export function ChatInner(props: FlexProps) {
                 <InputLeftAddon children='Hostname' />
                 <Input value={active?.onionHostname} isReadOnly />
             </InputGroup>
-            <Messages />
+            {(!client?.status || client?.status !== "Connected") && pressedConnected ? <StatusScreen client={client} /> : <Messages />}
         </Flex>
-        <Flex w='100%'>
-            <SendButton client={client} />
+        <Flex w='100%' >
+            { !client.status || client.status !== "Connected" ? <ConnectButton pressedConnect={pressedConnected} setPressedConnect={setPressedConnect} client={client} /> : <SendButton client={client} /> }
         </Flex>
     </Flex>
 }

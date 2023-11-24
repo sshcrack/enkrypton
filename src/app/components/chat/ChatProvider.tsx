@@ -6,7 +6,8 @@ import { StorageContext } from '../storage/StorageProvider'
 
 
 export type ChatContextState = {
-    client: MessagingClient | null
+    client: MessagingClient | null,
+    msgUpdate: number
 }
 
 export const ChatContext = React.createContext<ChatContextState>({} as ChatContextState)
@@ -14,7 +15,7 @@ export const ChatContext = React.createContext<ChatContextState>({} as ChatConte
 export default function ChatProvider({ children, user }: React.PropsWithChildren<{ user: GeneralUser }>) {
     const { data } = useContext(StorageContext)
     const [client, setClient] = useState<MessagingClient | null>(null)
-    const [_, setUpdate] = useState(0)
+    const [msgUpdate, setUpdate] = useState(0)
 
     const { clients } = window
     useEffect(() => {
@@ -40,7 +41,8 @@ export default function ChatProvider({ children, user }: React.PropsWithChildren
     }
 
     return <ChatContext.Provider value={{
-        client
+        client,
+        msgUpdate
     }}>
         {children}
     </ChatContext.Provider>

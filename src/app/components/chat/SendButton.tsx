@@ -1,14 +1,12 @@
 import { Button, Input, InputGroup, InputRightElement } from '@chakra-ui/react';
 import { useState } from 'react';
 import MessagingClient from '../../../bindings/ws/client';
-import { ReactSetState } from '../../../tools/react';
 
 export type SendButtonProps = {
-    client: MessagingClient | null,
-    setFocus: ReactSetState<number>
+    client: MessagingClient | null
 }
 
-export default function SendButton({ client, setFocus }: SendButtonProps) {
+export default function SendButton({ client }: SendButtonProps) {
     const [msg, setMsg] = useState("")
     const [sending, setSending] = useState(false)
 
@@ -18,9 +16,6 @@ export default function SendButton({ client, setFocus }: SendButtonProps) {
 
         setSending(true)
         setMsg("")
-
-        console.log("Add msg on send")
-        setFocus(Math.random())
 
         client.send(msg)
             .finally(() => setSending(false))

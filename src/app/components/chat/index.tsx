@@ -4,7 +4,7 @@ import 'react-chat-elements/dist/main.css';
 import ws from '../../../bindings/ws';
 import MessagingClient from '../../../bindings/ws/client';
 import { MainContext } from '../MainProvider';
-import ChatProvider from './ChatProvider';
+import ChatProvider, { ChatContext } from './ChatProvider';
 import Messages from './Messages';
 import SendButton from './SendButton';
 import './index.scss';
@@ -28,10 +28,9 @@ export default function Chat({ children, ...props }: FlexProps) {
 
 export function ChatInner(props: FlexProps) {
     const { active } = useContext(MainContext)
-    const [client, setClient] = useState(null as null | MessagingClient)
+    const { client, msgUpdate } = useContext(ChatContext)
 
     const [update, setUpdate] = useState(0)
-    const [focus, setFocus] = useState(0)
 
 
     const chatFieldRef = useRef<HTMLDivElement>(null)
@@ -41,15 +40,7 @@ export function ChatInner(props: FlexProps) {
 
         const curr = chatFieldRef.current;
         curr.scrollTop = curr.scrollHeight;
-    }, [chatFieldRef, focus])
-
-    useEffect(() => {
-        if (!active)
-            return;
-
-        console.log("Getting client", active)
-        setClient(ws.get(active.onionHostname))
-    }, [active])
+    }, [chatFieldRef, msgUpdate])
 
 
     // Just here to update the seconds
@@ -60,7 +51,7 @@ export function ChatInner(props: FlexProps) {
     }, [update])
 
     // Just waiting for it to load
-    if (!active || !client)
+    if (!client)
         return <Text>Loading...</Text>
 
     if (client.status !== 'Connected')
@@ -84,7 +75,7 @@ export function ChatInner(props: FlexProps) {
             <Messages />
         </Flex>
         <Flex w='100%'>
-            <SendButton client={client} setFocus={setFocus} />
+            <SendButton client={client} />
         </Flex>
     </Flex>
 }

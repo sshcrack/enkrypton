@@ -28,9 +28,9 @@ export default function StatusScreen({ client }: StatusScreenProps) {
 
 
     const failed = status == "Disconnected"
-    const proxyDone = (status && status != "ConnectingProxy") as boolean
-    const hostDone = (proxyDone && status != "ConnectingHost") as boolean
-    const identityDone = (hostDone && status != "WaitingIdentity") as boolean
+    const proxyDone = (status && status !== "ConnectingProxy") as boolean
+    const hostDone = (proxyDone && status !== "ConnectingHost") as boolean
+    const identityDone = (hostDone && status !== "WaitingIdentity") as boolean
 
     const icoStyle = { width: "2.5em", height: "2.5em" };
     return <Flex w='100%' h='100%' justifyContent='center' flexDir='column' alignItems='center' p='6' style={{ "--text-height": "1.5em" } as any}>

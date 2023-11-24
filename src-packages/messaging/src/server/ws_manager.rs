@@ -123,7 +123,7 @@ impl WsActor {
                 if let Some(onion_host) = &self.receiver {
                     let messaging = MESSAGING.read().await;
                     messaging.set_self_verified(&onion_host, &self).await;
-                    messaging.assert_verified(&onion_host).await?;
+                    messaging.check_verified(&onion_host).await?;
                 } else {
                     error!("[SERVER] Received IdentityVerified packet but no onion host was set");
                 }
@@ -146,7 +146,7 @@ impl WsActor {
                 messaging
                     .set_remote_verified(&identity.hostname, &self)
                     .await;
-                messaging.assert_verified(&identity.hostname).await?;
+                messaging.check_verified(&identity.hostname).await?;
 
                 let b: Bytes = S2CPacket::IdentityVerified.try_into()?;
 
@@ -175,7 +175,7 @@ impl WsActor {
         let rec = self.receiver.as_ref().unwrap();
 
         // Check if verified
-        MESSAGING.read().await.assert_verified(rec).await?;
+        MESSAGING.read().await.check_verified(rec).await?;
         match packet_auth {
             C2SPacket::Message(msg) => {
                 // Sending the message to main handler

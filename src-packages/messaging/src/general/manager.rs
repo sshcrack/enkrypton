@@ -76,7 +76,8 @@ impl MessagingManager {
         Ok(())
     }
 
-    pub(crate) async fn assert_verified(&self, onion_host: &str) -> Result<()> {
+    pub(crate) async fn check_verified(&self, onion_host: &str) -> Result<()> {
+        debug!("Checking verified for {}", onion_host);
         let res = self
             .connections
             .read()
@@ -84,7 +85,7 @@ impl MessagingManager {
             .get(onion_host)
             .cloned()
             .ok_or(anyhow!(
-                "assert_verified should only be callable after a connection is established"
+                "check_verified should only be callable after a connection is established"
             ))?;
 
         let remote_verified = *res.verified.read().await;

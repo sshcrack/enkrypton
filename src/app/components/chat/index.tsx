@@ -11,12 +11,15 @@ import ConnectButton from './ConnectButton';
 
 
 
-export default function Chat({ children, ...props }: FlexProps) {
+export type ChatProps= FlexProps & {
+    allowConnect?: boolean
+}
+
+export default function Chat({ allowConnect, children, ...props }: ChatProps) {
     const { active } = useContext(MainContext)
 
     if (!active)
         return;
-
 
     return <ChatProvider user={active}>
         <ChatInner {...props}>
@@ -55,6 +58,7 @@ export function ChatInner(props: FlexProps) {
 
 
 
+        console.log("Current status is", client.status)
     return <Flex w='100%' h='100%' flexDir='column' p='5'
         {...props}
     >
@@ -63,10 +67,10 @@ export function ChatInner(props: FlexProps) {
                 <InputLeftAddon children='Hostname' />
                 <Input value={active?.onionHostname} isReadOnly />
             </InputGroup>
-            {(!client?.status || client?.status !== "Connected") && pressedConnected ? <StatusScreen client={client} /> : <Messages />}
+            {(!client?.status || client.status !== "Connected") ? <StatusScreen client={client} /> : <Messages />}
         </Flex>
         <Flex w='100%' >
-            { !client.status || client.status !== "Connected" ? <ConnectButton pressedConnect={pressedConnected} setPressedConnect={setPressedConnect} client={client} /> : <SendButton client={client} /> }
+            { !client?.status || client.status !== "Connected" ? <ConnectButton pressedConnect={pressedConnected} setPressedConnect={setPressedConnect} client={client} /> : <SendButton client={client} /> }
         </Flex>
     </Flex>
 }

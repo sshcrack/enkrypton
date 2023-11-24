@@ -206,7 +206,7 @@ impl MessagingClient {
                 debug!("[CLIENT] Identity verified! Locking messaging...");
                 let mgr = MESSAGING.read().await;
                 mgr.set_remote_verified(receiver).await?;
-                mgr.assert_verified(receiver).await?;
+                mgr.check_verified(receiver).await?;
                 debug!("[CLIENT] Sending IdentityVerified packet...");
                 write
                     .lock()
@@ -221,7 +221,7 @@ impl MessagingClient {
 
                 let mgr = MESSAGING.read().await;
                 mgr.set_self_verified(receiver).await?;
-                mgr.assert_verified(receiver).await?;
+                mgr.check_verified(receiver).await?;
             }
             p => process_further = Some(p),
         }
@@ -231,7 +231,7 @@ impl MessagingClient {
         }
 
         let process_further = process_further.unwrap();
-        MESSAGING.read().await.assert_verified(receiver).await?;
+        MESSAGING.read().await.check_verified(receiver).await?;
 
         match process_further {
             S2CPacket::Message(msg) => {

@@ -1,8 +1,6 @@
 import { Flex, FlexProps, Input, InputGroup, InputLeftAddon, Text } from '@chakra-ui/react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import 'react-chat-elements/dist/main.css';
-import ws from '../../../bindings/ws';
-import MessagingClient from '../../../bindings/ws/client';
 import { MainContext } from '../MainProvider';
 import ChatProvider, { ChatContext } from './ChatProvider';
 import Messages from './Messages';

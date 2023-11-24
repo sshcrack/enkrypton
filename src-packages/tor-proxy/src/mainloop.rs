@@ -1,24 +1,28 @@
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 use std::{
     process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self},
+    thread::{self}, env,
 };
-#[cfg(target_os="windows")]
-use std::os::windows::process::CommandExt;
 
-use shared::get_torrc;
+use shared::{get_torrc, get_root_dir};
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use anyhow::{anyhow, Result};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
-use crate::{consts::TOR_BINARY_PATH, parser::stdout::handle_tor_stdout, misc::{tools::get_to_tor_rx, messages::Client2TorMsg}};
+use crate::{
+    consts::TOR_BINARY_PATH,
+    misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
+    parser::stdout::handle_tor_stdout,
+};
 
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 /**
@@ -32,8 +36,14 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     child.args(["-f", &get_torrc().to_string_lossy()]);
     child.stdout(Stdio::piped());
 
+    #[cfg(target_family = "unix")]
+    {
+        let ld = env::var("LD_LIBRARY_PATH").unwrap_or_default();
+        let ld = format!("{}:{}", ld, get_root_dir().to_string_lossy());
+        child.env("LD_LIBRARY_PATH", ld);
+    }
 
-    #[cfg(target_os="windows")]
+    #[cfg(target_os = "windows")]
     child.creation_flags(CREATE_NO_WINDOW);
 
     let child = child.spawn()?;

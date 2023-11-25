@@ -7,7 +7,11 @@ use crate::util::is_onion_hostname;
 #[tauri::command]
 pub async fn ws_connect(onion_hostname: String) -> Result<(), String> {
     if !is_onion_hostname(&onion_hostname) {
-        return Err("Invalid onion hostname".to_string());
+        let should_skip = cfg!(feature="dev") && (onion_hostname.ends_with("-dev-client") || onion_hostname.ends_with("-dev-server"));
+
+        if !should_skip {
+            return Err("Invalid onion hostname".to_string());
+        }
     }
 
     debug!("Getting or creating client...");

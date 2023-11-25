@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use log::debug;
 use url::Url;
 
+/// Returns the servername for the given url
 pub fn get_servername(url: &Url) -> Result<String> {
     let host = url
         .host_str()

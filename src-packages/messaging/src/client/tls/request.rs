@@ -6,17 +6,17 @@ use url::Url;
 
 
 
-use super::{response::Response, Client};
+use super::{response::Response, WebClient};
 
 pub struct Request<'a> {
-    client: &'a Client,
+    client: &'a WebClient,
     url: String,
     method: String,
     headers: HashMap<String, String>,
 }
 
 impl<'a> Request<'a> {
-    pub(super) fn from_client(client: &'a Client, method: &str, url: &str) -> Self {
+    pub(super) fn from_client(client: &'a WebClient, method: &str, url: &str) -> Self {
         Self {
             client,
             headers: HashMap::new(),

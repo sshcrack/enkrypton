@@ -98,6 +98,31 @@ impl MessagingManager {
         Ok(())
     }
 
+    pub(crate) async fn assert_verified(&self, onion_host: &str) -> Result<()> {
+        debug!("Checking verified for {}", onion_host);
+        let res = self
+            .connections
+            .read()
+            .await
+            .get(onion_host)
+            .cloned()
+            .ok_or(anyhow!(
+                "check_verified should only be callable after a connection is established"
+            ))?;
+
+        let remote_verified = *res.verified.read().await;
+        let self_verified = *res.self_verified.read().await;
+        if !remote_verified {
+            return Err(anyhow!("Remote is not verified yet"))
+        }
+
+        if !self_verified {
+            return Err(anyhow!("Remote is not verified yet"))
+        }
+
+        Ok(())
+    }
+
     pub async fn is_connected(&self, onion_host: &str) -> bool {
         self.connections.read().await.contains_key(onion_host)
     }

@@ -5,7 +5,9 @@ use crate::general::MessagingManager;
 
 #[async_trait]
 pub trait ManagerExt {
+    /// Sets the remote verified flag to true and stores it to the manager
     async fn set_remote_verified(&self, onion_host: &str) -> Result<()>;
+    /// Sets the self verified flag to true and stores it to the manager
     async fn set_self_verified(&self, onion_host: &str) -> Result<()>;
 }
 

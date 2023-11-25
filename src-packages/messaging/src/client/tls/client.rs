@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use async_rustls::{client::TlsStream, TlsConnector};
 use rustls::{ClientConfig, OwnedTrustAnchor, RootCertStore, ServerName};
 use smol::net::TcpStream;
@@ -17,32 +17,36 @@ use super::request::Request;
 const USER_AGENT: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0";
 
+/// A web client which is used to send requests to the server over the tor network
 #[derive(Debug)]
-pub struct Client {
+pub struct WebClient {
+    /// The proxy used to connect to the tor network
     proxy: SocksProxy,
 }
 
-impl Client {
+impl WebClient {
+    /// Returns the proxy used to connect to the tor network
     pub(super) fn proxy(&self) -> &SocksProxy {
         &self.proxy
     }
 
+    /// Creates a new web client from the config with the default tor proxy port
     pub fn from_config() -> Result<Self> {
         let tor_proxy = SocksProxy::new()?;
 
-        Ok(Client { proxy: tor_proxy })
+        Ok(WebClient { proxy: tor_proxy })
     }
 
-    /** Just just opens a connection to the proxy, uses it and closes it after that.
-     * Coooouuld be optimized but not doing that for literally one connection
-     * Oh also: blocking so use in threads thanks
-     */
+    /// Just just opens a connection to the proxy, uses it and closes it after that.
+    /// Could be optimized but not doing that for literally one connection.
+    /// Oh also: blocking so use in threads thanks
     pub fn get(&self, addr: &str) -> Request {
         Request::from_client(self, "GET", addr)
             .header("User-Agent", USER_AGENT)
             .header("Accept", "*/*")
     }
 
+    /// The root store to use for the tls connection
     fn get_root_store(&self) -> RootCertStore {
         let mut root_store = RootCertStore::empty();
         root_store.add_trust_anchors(TLS_SERVER_ROOTS.iter().map(|ta| {
@@ -56,6 +60,7 @@ impl Client {
         return root_store;
     }
 
+    /// The tls config to use for the client
     fn get_tls_config(&self) -> ClientConfig {
         let root_store = self.get_root_store();
 
@@ -65,6 +70,7 @@ impl Client {
             .with_no_client_auth()
     }
 
+    /// Creates a connection to the given url using the proxy
     pub(super) async fn create_connection(
         &self,
         proxy: Socks5Stream<TokioTcpStream>,
@@ -76,10 +82,11 @@ impl Client {
         let server_name: ServerName = server_name_raw.try_into()?;
         let connector = TlsConnector::try_from(Arc::new(config))?;
 
-        // converting the streams
+        // Converting the streams
         let std = proxy.into_inner().into_std()?;
         let smol_proxy = TcpStream::try_from(std)?;
 
+        // and connecting it to the proxy
         let stream = connector.connect(server_name, smol_proxy).await?;
 
         return Ok(stream);

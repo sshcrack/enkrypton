@@ -12,6 +12,7 @@ use encryption::consts::DIGEST;
 
 #[async_trait::async_trait]
 pub trait IdentityProvider<T> {
+    /// Returns the identity with the given receiver, look at the implementations for more detail
     async fn identity(receiver: &str) -> Result<T>;
 }
 
@@ -19,6 +20,7 @@ pub trait IdentityProvider<T> {
 
 #[async_trait::async_trait]
 pub trait IdentityVerify {
+    /// Verifies the identity and stores public keys in storage if needed
     async fn verify(&self) -> Result<()>;
 }
 
@@ -28,6 +30,7 @@ impl IdentityVerify for Identity {
         let Identity {  hostname: remote_host, pub_key, signature} = self;
 
         debug!("Reading to verify...");
+        // Check if there is a public key for the given receiver
         let local_pub_key = STORAGE.read().await.get_data(|e| {
             let key = e.chats.get(remote_host)
                 .and_then(|e| e.rec_pub_key.clone());
@@ -37,11 +40,13 @@ impl IdentityVerify for Identity {
 
         debug!("Done");
 
+        // If there is a public key, verify the signature
         if let Some(local_pub_key) = local_pub_key {
             info!("Verifying for hostname: {:?}", remote_host);
             let keypair = PKey::from_rsa(local_pub_key.0)?;
             let mut verifier = Verifier::new(*DIGEST, &keypair)?;
 
+            // Verify the signature with the public key
             verifier.update(remote_host.as_bytes())?;
             let is_valid = verifier.verify(&signature)?;
 
@@ -52,6 +57,7 @@ impl IdentityVerify for Identity {
 
             Ok(())
         } else {
+            // Adding public key to storage because it does  not exist
             info!("No chat with hostname '{}' yet. Adding new receiver...", remote_host);
             STORAGE.read().await.modify_storage_data(|e| {
                 let res = e.chats.entry(remote_host.clone())

@@ -16,20 +16,28 @@ use tokio::sync::{Mutex, RwLock};
 
 use super::WriteStream;
 lazy_static! {
+    // The delay to check if we should flush (so send all the messages in the queue)
     pub static ref FLUSH_DELAY: Duration = Duration::from_millis(100);
 }
 
+/// This struct is used to check if we should flush the websocket (so send all messages in the queue)
 #[derive(Debug)]
 pub(super) struct FlushChecker {
+    /// The last time we flushed the websocket
     pub(super) last_update: Arc<RwLock<Instant>>,
+    /// Wether the current thread should exit
     pub(super) should_exit: Arc<AtomicBool>,
     #[allow(dead_code)]
+    /// Not used for now
     write: Arc<Mutex<WriteStream>>,
     #[allow(dead_code)]
+    /// Same here
     handle: JoinHandle<()>,
 }
 
 impl FlushChecker {
+    /// Spawns the new thread which will check if the websocket should be flushed
+    /// and returns its handle
     pub async fn spawn_handle(
         last_update: Arc<RwLock<Instant>>,
         should_exit: Arc<AtomicBool>,
@@ -50,9 +58,12 @@ impl FlushChecker {
                     continue;
                 }
 
+                // Actually flushing the websocket
+                let res = block_on(block_on(write.lock()).flush());
+
+                // Setting the last time the websocket was flushed to now
                 *block_on(last_update.write()) = Instant::now();
 
-                let res = block_on(block_on(write.lock()).flush());
                 if let Err(e) = res {
                     error!("[CLIENT] Could not flush: {:?}", e);
                 }
@@ -60,11 +71,13 @@ impl FlushChecker {
         })
     }
 
+    /// Constructs this struct and spawns the thread of this struct
     pub async fn new(write: Arc<Mutex<WriteStream>>) -> Result<Self> {
         let last_update = Instant::now() - *FLUSH_DELAY - Duration::from_secs(1);
         let last_update = Arc::new(RwLock::new(last_update));
         let should_exit = Arc::new(AtomicBool::new(false));
 
+        // Spawns the handle of this struct
         let handle =
             Self::spawn_handle(last_update.clone(), should_exit.clone(), write.clone()).await;
         let s = Self {
@@ -78,6 +91,8 @@ impl FlushChecker {
         Ok(s)
     }
 
+    /// Marks the queue as dirty, so we are waiting if there are any other messages coming in
+    /// for FLUSH_DELAY time
     pub async fn mark_dirty(&self) {
         *self.last_update.write().await = Instant::now();
     }

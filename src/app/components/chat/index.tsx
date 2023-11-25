@@ -28,7 +28,7 @@ export default function Chat({ allowConnect, children, ...props }: ChatProps) {
     </ChatProvider>
 }
 
-export function ChatInner(props: FlexProps) {
+export function ChatInner(props: ChatProps) {
     const { active } = useContext(MainContext)
     const { client, msgUpdate } = useContext(ChatContext)
 
@@ -58,7 +58,6 @@ export function ChatInner(props: FlexProps) {
 
 
 
-        console.log("Current status is", client.status)
     return <Flex w='100%' h='100%' flexDir='column' p='5'
         {...props}
     >

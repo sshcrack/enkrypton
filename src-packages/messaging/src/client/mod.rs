@@ -11,5 +11,5 @@ pub use client::MessagingClient;
 pub use tls::*;
 
 lazy_static! {
-    pub static ref TOR_CLIENT: Client = Client::from_config().unwrap();
+    pub static ref TOR_CLIENT: WebClient = WebClient::from_config().unwrap();
 }

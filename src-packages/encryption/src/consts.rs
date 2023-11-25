@@ -6,4 +6,6 @@ lazy_static! {
     pub static ref DIGEST: MessageDigest = MessageDigest::md5();
     /// Default Padding for RSA encryption
     pub static ref RSA_PADDING: Padding = Padding::PKCS1;
+    /// Default RSA key size
+    pub static ref RSA_KEY_SIZE: u32 = 4096;
 }

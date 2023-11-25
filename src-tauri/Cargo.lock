@@ -3771,7 +3771,6 @@ dependencies = [
  "smol",
  "tauri",
  "tokio",
- "ts-rs",
  "zeroize",
 ]
 

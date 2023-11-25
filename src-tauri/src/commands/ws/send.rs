@@ -2,6 +2,7 @@ use log::debug;
 use messaging::general::MESSAGING;
 
 
+/// Sends a message to the receiver with the message
 #[tauri::command]
 pub async fn ws_send(onion_hostname: String, msg: String) -> Result<(), String> {
     debug!("Sending {} to {}", msg, onion_hostname);

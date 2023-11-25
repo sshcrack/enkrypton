@@ -1,19 +1,24 @@
 use std::{fmt, process::ExitStatus};
 
+/// General messages that are being sent from the tor mainloop to other backend code
 #[derive(Debug, Clone)]
 pub enum Tor2ClientMsg {
+    /// Sent when the tor client is booting up or successfully booted up
     BootstrapProgress(f32, String),
+    /// Used to redirect warn messages from the tor client to other listeners
     WarnMsg(String),
+    /// Used to send notice messages from tor to other listeners
     NoticeMsg(String),
+    /// Sent if there are any errors with the tor client
     ErrorMsg(String),
-    /* Sent when the tor client unexpectedly closed arguments are: exitStatus and last {MAX_LOG_SIZE} logs (default 20 logs being kept)*/
+    /// Sent when the tor client unexpectedly closed arguments are: exitStatus and last {MAX_LOG_SIZE} logs (default 20 logs being kept)
     ExitMsg(ExitStatus, Vec<String>),
 }
 
+/// Messages that are being sent from other backend code to our tor mainloop
 #[derive(Debug, Clone)]
 pub enum Client2TorMsg {
-    /* make sure just to send this one when we REALLY want the program to exit, bit difficult to start tor all over again
-     */
+    /// make sure just to send this one when we REALLY want the program to exit, bit difficult to start tor all over again
     Exit(),
 }
 
@@ -22,7 +27,9 @@ pub enum Client2TorMsg {
 // implementation, or do something in between.
 #[derive(Debug, Clone)]
 pub struct TorStartError {
+    /// The last logs of the tor client
     pub logs: Vec<String>,
+    /// The exit status of the tor client
     pub status: ExitStatus,
 }
 

@@ -1,8 +1,15 @@
 use log::debug;
 use messaging::general::MESSAGING;
 
+use crate::util::is_onion_hostname;
+
+/// Connects to the given onion_hostname and returns if there is already a connection
 #[tauri::command]
 pub async fn ws_connect(onion_hostname: String) -> Result<(), String> {
+    if !is_onion_hostname(&onion_hostname) {
+        return Err("Invalid onion hostname".to_string());
+    }
+
     debug!("Getting or creating client...");
     if MESSAGING.read().await.is_connected(&onion_hostname).await {
         return Ok(());

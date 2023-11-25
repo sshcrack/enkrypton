@@ -5,6 +5,7 @@ use crate::event::Sendable;
 use ts_rs::TS;
 
 
+/// Payload is used to send newly arrived messages to the frontend
 #[cfg_attr(feature="export_ts", derive(TS))]
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]

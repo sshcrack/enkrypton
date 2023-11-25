@@ -4,6 +4,7 @@ use crate::event::Sendable;
 #[cfg(feature="export_ts")]
 use ts_rs::TS;
 
+/// Different states of the message status (failed, success, sending, sent)
 #[cfg_attr(feature="export_ts", derive(TS))]
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,6 +16,7 @@ pub enum WsMessageStatus {
 }
 
 
+/// A payload to tell the frontend of the status of a message
 #[cfg_attr(feature="export_ts", derive(TS))]
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -4,6 +4,7 @@ use crate::event::Sendable;
 #[cfg(feature="export_ts")]
 use ts_rs::TS;
 
+/// This enum includes the status of the websocket connection. Can be used from the server side or client side.
 #[cfg_attr(feature="export_ts", derive(TS))]
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,6 +17,7 @@ pub enum WsClientStatus {
 }
 
 
+/// The payload that is sent to the frontend when the status of the websocket connection has changed
 #[cfg_attr(feature="export_ts", derive(TS))]
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]

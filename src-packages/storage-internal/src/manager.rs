@@ -29,6 +29,7 @@ use tokio::{
     task::{spawn, JoinHandle},
 };
 
+/// The general type of storage that is used in this application
 pub type Storage = SecureStorage<StorageData>;
 
 /// Manages the storage file, the encryption / decryption process and saving the storage file again
@@ -49,6 +50,7 @@ pub struct StorageManager {
     /// This is true if the storage has been modified since the last save
     dirty: Arc<AtomicBool>,
 
+    /// The thread that is used to save to the storage
     save_thread: Option<JoinHandle<()>>,
 }
 
@@ -252,6 +254,7 @@ impl StorageManager {
         return inner.data.clone();
     }
 
+    /// Gets the data of the storage and passes it to the given function, fails if the storage is not initialized
     pub async fn get_data<T, Func>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&StorageData) -> Result<T>,
@@ -270,6 +273,7 @@ impl StorageManager {
         return Err(anyhow!("Storage not initialized yet."));
     }
 
+    /// Modifies the storage by running the given function
     pub async fn modify_storage<Func, T>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut Storage) -> Result<T>,
@@ -287,6 +291,7 @@ impl StorageManager {
         Ok(res?)
     }
 
+    /// Helper function to `modify_storage` that gets the data and passes it to the given function
     pub async fn modify_storage_data<Func, T>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut StorageData) -> Result<T>,
@@ -301,14 +306,17 @@ impl StorageManager {
         .await
     }
 
+    /// Returns wether the storage is unlocked
     pub fn is_unlocked(&self) -> bool {
         return self.exists() && self.is_unlocked;
     }
 
+    /// Returns wether the storage file exists
     pub fn exists(&self) -> bool {
         return self.path.is_file();
     }
 
+    /// Returns wether the storage has been parsed
     pub fn has_parsed(&self) -> bool {
         return self.has_parsed;
     }

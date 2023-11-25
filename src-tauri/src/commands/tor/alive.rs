@@ -1,6 +1,7 @@
 use messaging::client::TOR_CLIENT;
 use shared::DEFAULT_HTTP_RETURN;
 
+/// Check if the current tor connection is working
 #[tauri::command]
 pub async fn tor_is_alive(_addr: String) -> Result<bool, String> {
     let res = TOR_CLIENT

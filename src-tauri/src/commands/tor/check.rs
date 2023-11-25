@@ -12,7 +12,7 @@ pub struct TorCheckResponse {
     ip: String,
 }
 
-/* checks if the client is in the tor network */
+/// checks if the client is in the tor network
 #[tauri::command()]
 pub async fn tor_check() -> Result<bool, String> {
     let mut res = TOR_CLIENT

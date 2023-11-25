@@ -2,6 +2,7 @@ use log::debug;
 
 use storage_internal::STORAGE;
 
+/// Saves the storage if the storage is unlocked
 #[tauri::command]
 pub async fn storage_save() -> Result<(), String> {
     if !(STORAGE.read().await).is_unlocked() {

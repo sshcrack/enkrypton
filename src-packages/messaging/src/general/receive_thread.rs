@@ -19,8 +19,10 @@ use tokio::sync::RwLock;
 
 use super::{ConnInfo, Connection, MESSAGING};
 
+/// A thread which reads messages incoming from the specific handlers such as `ws_manager` and `MessagingClient`
 #[derive(Debug)]
 pub struct ConnectionReadThread {
+    /// The thread handle that was spawned
     pub read_thread: JoinHandle<()>,
 }
 
@@ -66,11 +68,10 @@ impl ConnectionReadThread {
         Ok(msg)
     }
 
+    /// Handle an incoming message, decrypt and store it
     async fn handle(
         msg: Option<(u128, Vec<u8>)>,
         info: Arc<RwLock<ConnInfo>>,
-        verified: Arc<RwLock<bool>>,
-        self_verified: Arc<RwLock<bool>>,
         receiver_host: &str,
     ) -> Result<()> {
         if msg.is_none() {
@@ -78,15 +79,14 @@ impl ConnectionReadThread {
             return Ok(());
         }
 
-        let is_valid = *verified.read().await && *self_verified.read().await;
-        if !is_valid {
-            error!("Connection is not verified yet, skipping message");
-            return Ok(());
-        }
+        // We have to be verified
+        MESSAGING.read().await.assert_verified(&receiver_host).await?;
 
         let (date, msg) = msg.unwrap();
+        // Just a wrapper around handling the message to catch errors
         let res = Self::handle_inner(date, msg, receiver_host).await;
         if let Ok(msg) = res.as_ref() {
+            // Setting the status to success and sending a received status to the other side
             MESSAGING
                 .read()
                 .await
@@ -115,6 +115,8 @@ impl ConnectionReadThread {
         }
 
         if let Err(e) = res {
+            // Setting the status to failed and sending a failed status to the other side
+
             error!("Could not handle message: {:?}", e);
             MESSAGING
                 .read()
@@ -140,28 +142,24 @@ impl ConnectionReadThread {
         Ok(())
     }
 
+    /// Spawn the read thread with JoinHandle
     pub async fn spawn(conn: &Connection) -> JoinHandle<()> {
         let info_read = conn.info.clone();
         let receiver = info_read.read().await.get_receiver();
 
-        let verified = conn.verified.clone();
-        let self_verified = conn.self_verified.clone();
-
-        //     #[cfg(not(feature = "dev"))]
-        let receiver_host: String = conn.receiver_host.clone();
-
-        //       #[cfg(feature = "dev")]
-        //        let receiver_host = get_service_hostname(false).await.unwrap().unwrap();
-
+        let receiver_host = conn.receiver_host.clone();
+        // Spawns the new read thrad
         thread::spawn(move || loop {
             let msg = match &receiver {
                 Either::Left(r) => {
+                    // Reads the message from the receiver
                     let msg = block_on(r.recv());
                     if let Err(e) = msg {
                         error!("Could not read packet: {:?}", e);
                         break;
                     }
 
+                    // Handle the message and store it
                     match msg.unwrap() {
                         S2CPacket::Message(msg) => Some(msg),
                         _ => {
@@ -172,12 +170,14 @@ impl ConnectionReadThread {
                 }
 
                 Either::Right(r) => {
+                    // Reads the message from the receiver
                     let msg = block_on(r.recv());
                     if let Err(e) = msg {
                         error!("Could not read packet: {:?}", e);
                         break;
                     }
 
+                    // Handle the message and store it
                     match msg.unwrap() {
                         C2SPacket::Message(msg) => Some(msg),
                         _ => {
@@ -188,13 +188,14 @@ impl ConnectionReadThread {
                 }
             };
 
+            // Handles the message
             let h = Self::handle(
                 msg,
                 info_read.clone(),
-                verified.clone(),
-                self_verified.clone(),
                 &receiver_host,
             );
+            // And wait for it to be handled
+            //TODO do not block here
             let h = block_on(h);
 
             if let Err(e) = h {

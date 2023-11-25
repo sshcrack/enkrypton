@@ -20,7 +20,7 @@ pub fn check_integrity() -> Result<()> {
 }
 
 
-
+/// Extracts the tor binary from the assets into the `TOR_BINARY_PATH`
 fn extract_tor() -> Result<()> {
 
     #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
@@ -41,7 +41,7 @@ fn extract_tor() -> Result<()> {
     Ok(())
 }
 
-
+/// Checks if the tor binary is valid by comparing the hash of the binary to the hash in `TOR_BINARY_HASH`
 fn is_tor_binary_valid() -> Result<bool> {
     let mut file = File::open(TOR_BINARY_PATH.clone())?;
 

@@ -1,14 +1,13 @@
 use anyhow::Result;
-use log::{error, debug};
+use log::error;
 
 use storage_internal::STORAGE;
 
+/// Unlocks the storage if it is locked, or creates a new one if it does not exist.
+/// Fails if the password is wrong
 #[tauri::command]
 pub async fn storage_unlock_or_create(pass: &str) -> Result<(), String> {
-    
-    debug!("Unlock");
     let res = inner_func(pass).await;
-    debug!("Done");
 
     if res.is_err() {
         let e = res.unwrap_err();
@@ -19,7 +18,7 @@ pub async fn storage_unlock_or_create(pass: &str) -> Result<(), String> {
 
     Ok(())
 }
-
+/// Inner function to catch the erorr if the wrong password was used
 pub async fn inner_func(pass: &str) -> Result<()> {
     let mut state = STORAGE.write().await;
     if !state.has_parsed() {

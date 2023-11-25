@@ -1,5 +1,6 @@
 use storage_internal::STORAGE;
 
+/// Deletes the current storage if the user does not remember the password
 #[tauri::command]
 pub async fn storage_delete() -> Result<(), String> {
     if !(STORAGE.read().await).is_unlocked() {

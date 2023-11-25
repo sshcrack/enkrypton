@@ -2,6 +2,7 @@ use std::{env::current_exe, path::{PathBuf, Path}, fs::{create_dir_all, self}, f
 
 use anyhow::Result;
 
+/// The main directory of enkrypton, creating it if it does not exist
 pub fn get_root_dir() -> PathBuf {
     let mut buf = current_exe().unwrap().parent().unwrap().to_path_buf();
     buf.push("enkrypton_root/");
@@ -14,6 +15,8 @@ pub fn get_root_dir() -> PathBuf {
 }
 
 
+/// The service directory tor should use. This is `enkrypton_root/service` for now.
+/// Again creates if it does not exist
 pub fn get_service_dir() -> Result<OsString> {
     let mut dir = get_root_dir();
     dir.push("service");
@@ -25,6 +28,8 @@ pub fn get_service_dir() -> Result<OsString> {
     return Ok(dir.into_os_string());
 }
 
+/// The data directory tor should use. This is `enkrypton_root/data` for now.
+/// Again creates if it does not exist
 pub fn get_data_dir() -> Result<OsString> {
     let mut dir = get_root_dir();
     dir.push("data");
@@ -55,6 +60,7 @@ pub fn get_tor_path() -> PathBuf {
     return tor_write_path.join("tor");
 }
 
+/// Path to the encrypted storage file
 pub fn get_storage_path() -> Box<Path> {
     let mut root = get_root_dir();
     root.push("storage.bin");

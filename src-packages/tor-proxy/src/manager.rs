@@ -12,6 +12,7 @@ use tauri::async_runtime::block_on;
 
 use crate::{misc::{integrity_check::check_integrity, tools::{get_to_tor_tx, get_from_tor_rx}, messages::{Client2TorMsg, Tor2ClientMsg, TorStartError}}, consts::{TOR_START_LOCK, TOR_THREAD}, mainloop::tor_main_loop, service::get_service_hostname};
 
+// Starts tor and accepts a function that will be used to report about the progress
 pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     let already_started = TOR_THREAD.read().await;
     if already_started.is_some() {
@@ -38,6 +39,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     debug!("Creating unbounded channels...");
     debug!("Writing to rwlock...");
 
+    // Starts the tor thread
     let handle = thread::spawn(move || {
         let res = block_on(tor_main_loop());
         if res.is_ok() {
@@ -53,6 +55,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     TOR_THREAD.write().await.replace(handle);
 
     debug!("Waiting for tor to start...");
+    // Handle tor startup messages
     let rx = get_from_tor_rx().await;
     loop {
         if rx.len() > 0 {
@@ -76,6 +79,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
         }
     }
 
+    // And gets the hostname to log it
     let hostname = get_service_hostname(true).await?;
     info!("Onion Service Hostname is {:?}", hostname);
     *lock = true;

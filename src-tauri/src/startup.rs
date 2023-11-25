@@ -17,12 +17,14 @@ use tor_proxy::{manager, misc::messages::TorStartError};
 
 use crate::util::on_exit;
 
+/// The whole startup process of this app
 pub fn startup(app: &mut App) {
     let mut state = APP_HANDLE.blocking_write();
     *state = Some(app.handle());
 
     drop(state);
 
+    // Window is the main window
     let window = app.get_window("main").unwrap();
 
     #[cfg(debug_assertions)] // only include this code on debug builds
@@ -30,11 +32,13 @@ pub fn startup(app: &mut App) {
         window.open_devtools();
     }
 
+    // The splashscreen to close later
     let splashscreen_window = app.get_window("splashscreen").unwrap();
     let temp = splashscreen_window.clone();
 
     let _env = app.env();
     temp.once_global("splashscreen_ready", move |_event| {
+        // Starting tor if the splashscreen is ready
         async_runtime::spawn(async move {
             let temp = splashscreen_window.clone();
             let res = manager::start_tor(move |start_payload| {
@@ -48,6 +52,7 @@ pub fn startup(app: &mut App) {
             .await;
 
             if res.is_ok() {
+                // After starting tor, close the splashscreen and show the main window
                 #[cfg(debug_assertions)]
                 window.open_devtools();
                 window.show().unwrap();
@@ -55,6 +60,7 @@ pub fn startup(app: &mut App) {
                 splashscreen_window.app_handle().emit_payload(SplashscreenClosedPayload { }).unwrap();
             }
 
+            // If there is any error, report it
             if res.is_err() {
                 let err: anyhow::Error = res.unwrap_err();
                 window.close().unwrap();
@@ -73,6 +79,7 @@ pub fn startup(app: &mut App) {
                     payload.logs = Some(start_err.logs);
                 }
 
+                // Tell the splashscreen about the errors
                 error!("Could not start tor: {}", payload.message);
                 splashscreen_window
                     .app_handle()
@@ -84,6 +91,7 @@ pub fn startup(app: &mut App) {
 
     let term = Arc::new(AtomicBool::new(false));
 
+    // Handle the SIGINT signal and stop tor first
     let handle = app.handle();
     thread::spawn(move || {
         signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&term)).unwrap();

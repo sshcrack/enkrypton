@@ -242,8 +242,6 @@ impl MessagingClient {
         // If is Some, we have a packet to which verification is needed
         let mut process_further = None;
         match packet {
-            // Don't need that packet for now, it's a placeholder
-            S2CPacket::DisconnectMultipleConnections => todo!(),
             // The server sent us a message to verify its identity, so we check and send the IdentityVerified packet back
             S2CPacket::VerifyIdentity(identity) => {
                 info!("[CLIENT] Verifying identity for {:?}...", identity);

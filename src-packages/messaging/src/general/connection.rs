@@ -1,4 +1,4 @@
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::Arc;
 
 use crate::{client::MessagingClient, server::ws_manager::ServerChannels};
 
@@ -19,6 +19,7 @@ use tokio::sync::RwLock;
 
 use super::{MESSAGING, ConnectionReadThread};
 
+/// This enum is used to store the connection info either from the client or the server
 #[derive(Debug)]
 pub(super) enum ConnInfo {
     Client(MessagingClient),
@@ -26,6 +27,7 @@ pub(super) enum ConnInfo {
 }
 
 impl ConnInfo {
+    /// Gets the general receiver for the connection (mostly used for messages)
     pub fn get_receiver(&self) -> Either<Receiver<S2CPacket>, Receiver<C2SPacket>> {
         match self {
             ConnInfo::Client(c) => Either::Left(c.rx.clone()),
@@ -34,6 +36,7 @@ impl ConnInfo {
     }
 }
 
+/// A generalized connection struct that can be used for both the client and the server
 #[derive(Debug, Clone)]
 pub struct Connection {
     pub(super) info: Arc<RwLock<ConnInfo>>,
@@ -42,25 +45,19 @@ pub struct Connection {
     pub(crate) verified: Arc<RwLock<bool>>,
     pub(super) receiver_host: String,
 
-    already_notified: Arc<AtomicBool>,
-
     notifier_ready_tx: Sender<()>,
     notifier_ready_rx: Receiver<()>,
 }
 
 impl Connection {
+    /// Notifies the frontend about the verified connection
     pub(super) async fn notify_verified(&self) -> Result<()> {
-        if self.already_notified.load(Ordering::Relaxed) {
-            debug!("[CONNECTION] Not notifying again.");
-            return Ok(())
-        }
-
-        self.already_notified.store(true, Ordering::Relaxed);
         info!(
             "Verified ourselves for connection {:?}!",
             self.receiver_host
         );
 
+        // Sending the client update
         let res = APP_HANDLE
             .read()
             .await
@@ -85,19 +82,24 @@ impl Connection {
             error!("Could not send client update: {:?}", e);
         }
 
+        // Notifying other backend listeners (used for wait_until_verified)
         self.notifier_ready_tx.send(()).await?;
         Ok(())
     }
 
+    /// Waits until the connection is verified
     pub async fn wait_until_verified(&self) -> Result<()> {
+        // If we are already verified, we can just return
         if *self.self_verified.read().await && *self.verified.read().await {
             return Ok(());
         }
 
+        // Waiting for the notifier to be ready
         self.notifier_ready_rx.recv().await?;
         Ok(())
     }
 
+    /// Creates a new generic connection from a client
     pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
         println!("New client connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
@@ -108,7 +110,6 @@ impl Connection {
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
             receiver_host: receiver_host.to_string(),
-            already_notified: Arc::new(AtomicBool::new(false)),
 
             notifier_ready_tx: tx,
             notifier_ready_rx: rx,
@@ -119,6 +120,7 @@ impl Connection {
         s
     }
 
+    /// Creates a new generic connection from a server channels
     /// This function assumes the identity has already been verified
     pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
         println!("New server connection: {:?}", receiver_host);
@@ -130,7 +132,6 @@ impl Connection {
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
             receiver_host: receiver_host.to_string(),
-            already_notified: Arc::new(AtomicBool::new(false)),
 
             notifier_ready_tx: tx,
             notifier_ready_rx: rx,
@@ -141,8 +142,9 @@ impl Connection {
         s
     }
 
+    /// Sends a message to the receiver
     pub async fn send_msg(&self, msg: &str) -> Result<()> {
-        // Adding if successful
+        // Adding message to storage
         let date = STORAGE
             .read()
             .await
@@ -150,6 +152,7 @@ impl Connection {
             .await?;
 
             debug!("Info of msg is {}", date);
+        // Sending message and setting status later
         let res = self.inner_send(msg, date).await;
         if res.is_err() {
             debug!("Inner Send failed, setting status to failed");
@@ -171,11 +174,14 @@ impl Connection {
         Ok(())
     }
 
+    /// Sends a message to the receiver with the given date and msg
     async fn inner_send(&self, msg: &str, date: u128) -> Result<()> {
         let raw = msg.as_bytes().to_vec();
 
         let tmp = self.receiver_host.clone();
         println!("Reading pubkey for {}...", tmp);
+
+        // Firstly we need to get the public key of the receiver
         let pub_key = STORAGE
             .read()
             .await
@@ -188,9 +194,10 @@ impl Connection {
             .await?;
 
         println!("Sending");
+        // And encrypt the message
         let bin = rsa_encrypt(raw, &pub_key)?;
 
-        // encrypt here
+        // And send it to the receiver
         match &*self.info.read().await {
             ConnInfo::Client(c) => {
                 debug!("Client msg");

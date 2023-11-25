@@ -13,6 +13,7 @@ pub use client_2_server::*;
 pub use server_2_client::*;
 
 
+/// A trait that allows for easy conversion between the packets and bytes
 #[duplicate_item(name; [C2SPacket]; [S2CPacket])]
 impl TryInto<Vec<u8>> for name {
     type Error = Box<ErrorKind>;
@@ -23,6 +24,7 @@ impl TryInto<Vec<u8>> for name {
 }
 
 
+/// A trait that allows for easy conversion between the packets and bytes
 #[duplicate_item(name; [C2SPacket]; [S2CPacket])]
 impl TryInto<Bytes> for name {
     type Error = Box<ErrorKind>;
@@ -33,6 +35,7 @@ impl TryInto<Bytes> for name {
     }
 }
 
+/// A trait that allows for easy conversion between the packets and bytes
 #[duplicate_item(name; [C2SPacket]; [S2CPacket])]
 impl TryFrom<&Vec<u8>> for name {
     type Error = Box<ErrorKind>;
@@ -42,6 +45,7 @@ impl TryFrom<&Vec<u8>> for name {
     }
 }
 
+/// A trait that allows for easy conversion between the packets and bytes
 impl TryInto<TungsteniteMessage> for C2SPacket {
     type Error = Box<ErrorKind>;
 
@@ -51,6 +55,7 @@ impl TryInto<TungsteniteMessage> for C2SPacket {
     }
 }
 
+/// A trait that allows for easy conversion between the packets and `ActixMessages`
 impl TryInto<ActixMessage> for S2CPacket {
     type Error = Box<ErrorKind>;
 

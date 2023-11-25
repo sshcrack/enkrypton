@@ -5,8 +5,10 @@ use shared::APP_HANDLE;
 
 use crate::StorageManager;
 
+/// Just an extension trait for the storage manager to add messages to chats
 #[async_trait]
 pub trait ChatStorageHelper {
+    /// The function that adds messages to the storage. It returns the date of the message
     async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str, date: u128) -> Result<u128>;
 }
 
@@ -15,6 +17,7 @@ impl ChatStorageHelper for StorageManager {
     async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str, date: u128) -> Result<u128> {
         let status = if sent_self { WsMessageStatus::Sending } else { WsMessageStatus::Success };
 
+        // Modifies the storage data and returns the date of the message
         let date = self.modify_storage_data(|e| {
             let c = e
                 .chats
@@ -32,6 +35,7 @@ impl ChatStorageHelper for StorageManager {
         })
         .await?;
 
+        // Notifies the frontend about the newly created message
         APP_HANDLE.read().await.as_ref().map(|e| e.emit_payload(WsMessageStatusPayload {
             hostname: receiver.to_string(),
             date,

@@ -15,13 +15,17 @@ use crate::client::MessagingClient;
 
 use super::Connection;
 
+/// A Manager which holds the connections by receiver name
 pub struct MessagingManager {
+    /// The connections by receiver name
     pub(crate) connections: Arc<RwLock<HashMap<String, Connection>>>,
 }
 
 lazy_static! {
+    /// The global messaging manager
     pub static ref MESSAGING: Arc<RwLock<MessagingManager>> =
         Arc::new(RwLock::new(MessagingManager::new()));
+    // The interval for the heartbeat
     pub static ref HEARTBEAT_TIMEOUT: Duration = Duration::from_secs(25);
     pub static ref HEARTBEAT: Duration = HEARTBEAT_TIMEOUT.div_f32(2.0);
 }
@@ -33,6 +37,7 @@ impl MessagingManager {
         }
     }
 
+    /// Connects to a receiver and adds it to the connections
     async fn connect(&self, onion_hostname: &str) -> Result<()> {
         let client = MessagingClient::new(&onion_hostname).await?;
 
@@ -47,6 +52,7 @@ impl MessagingManager {
         Ok(())
     }
 
+    /// Gets a connection by receiver name or connects if it doesn't exist yet
     pub async fn get_or_connect(&self, onion_host: &str) -> Result<Connection> {
         if !self.connections.read().await.contains_key(onion_host) {
             self.connect(&onion_host).await?;
@@ -60,11 +66,13 @@ impl MessagingManager {
         return Err(anyhow!("Could not establish connection"));
     }
 
+    /// Waits until a connection with the given name is verified
     pub async fn wait_until_verified(&self, onion_host: &str) -> Result<()> {
         if !self.connections.read().await.contains_key(onion_host) {
             return Err(anyhow!("Connection does not exist"));
         }
 
+        // Gets the connection by onion_host
         let conn = self
             .connections
             .read()
@@ -72,10 +80,12 @@ impl MessagingManager {
             .get(onion_host)
             .cloned()
             .unwrap();
+
         conn.wait_until_verified().await?;
         Ok(())
     }
 
+    /// Checks if the connection with the given host name is verified and sends a notification if newly verified
     pub(crate) async fn check_verified(&self, onion_host: &str) -> Result<()> {
         debug!("Checking verified for {}", onion_host);
         let res = self
@@ -98,6 +108,7 @@ impl MessagingManager {
         Ok(())
     }
 
+    /// Asserts that the connection with the given host name is verified
     pub(crate) async fn assert_verified(&self, onion_host: &str) -> Result<()> {
         debug!("Checking verified for {}", onion_host);
         let res = self
@@ -123,14 +134,17 @@ impl MessagingManager {
         Ok(())
     }
 
+    /// Checks if we are connected to the given host
     pub async fn is_connected(&self, onion_host: &str) -> bool {
         self.connections.read().await.contains_key(onion_host)
     }
 
+    /// Removes the connection with the given host name
     pub async fn remove_connection(&self, onion_host: &str) {
         self.connections.write().await.remove(onion_host);
     }
 
+    /// Setting the new msg status and updates the storage/frontend
     pub async fn set_msg_status(
         &self,
         onion_host: &str,

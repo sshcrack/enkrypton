@@ -1,12 +1,13 @@
 use anyhow::Result;
 use encryption::PrivateKey;
-use log::{debug, info};
+use log::info;
 
 use async_trait::async_trait;
 use payloads::data::StorageChat;
 
 use crate::{StorageManager, STORAGE};
 
+/// Trait to either get a private key or if it does not exist, generate a new keypair and store it
 #[async_trait]
 pub trait GetPrivateKey {
     async fn get_or_create_private_key(receiver: &str) -> Result<PrivateKey>;
@@ -15,7 +16,7 @@ pub trait GetPrivateKey {
 #[async_trait]
 impl GetPrivateKey for StorageManager {
     async fn get_or_create_private_key(receiver: &str) -> Result<PrivateKey> {
-        debug!("Get or create");
+        // Gets the private key from the storage
         let mut priv_key = STORAGE.read().await
             .get_data(|e| {
                 let k = e.chats.get(receiver).and_then(|e| Some(e.priv_key.clone()));
@@ -23,10 +24,8 @@ impl GetPrivateKey for StorageManager {
                 Ok(k)
             })
             .await?;
-
-            debug!("Done 1");
         if priv_key.is_none() {
-            debug!("None, write");
+            // If it does not exist, generate a new chat and store it
             priv_key = STORAGE.read().await
                 .modify_storage_data(|e| {
                     if !e.chats.contains_key(receiver) {
@@ -40,7 +39,6 @@ impl GetPrivateKey for StorageManager {
                     Ok(priv_key)
                 })
                 .await?;
-            debug!("Done");
         }
 
         Ok(priv_key.expect("Should always be true"))

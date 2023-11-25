@@ -1,3 +1,4 @@
+/// Includes all possible errors that can occur in the secure storage module
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
     PasswordError(argon2::password_hash::Error),

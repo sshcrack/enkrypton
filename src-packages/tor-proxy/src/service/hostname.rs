@@ -5,6 +5,7 @@ use shared::config::CONFIG;
 use tokio::{fs::File, io::{BufReader, AsyncReadExt}};
 
 
+/// Gets the hostname of the service that is being run by tor
 pub async fn get_service_hostname(_client: bool) -> Result<Option<String>> {
     let dir = &CONFIG.service_dir();
     let mut hostname_path = PathBuf::from(dir);
@@ -14,12 +15,14 @@ pub async fn get_service_hostname(_client: bool) -> Result<Option<String>> {
         return Ok(None);
     }
 
+    // Reads the hostname file
     let file = File::open(hostname_path).await?;
     let mut reader = BufReader::new(file);
 
     let mut buffer = String::new();
     reader.read_to_string(&mut buffer).await?;
 
+    // Trimming excess
     buffer = buffer
         .trim_matches(|c: char| {
             return !c.is_ascii_alphanumeric() && !c.is_ascii_punctuation();
@@ -27,6 +30,7 @@ pub async fn get_service_hostname(_client: bool) -> Result<Option<String>> {
         .replace(".onion", "")
         .to_string();
 
+    // Used to message self on development
     #[cfg(feature="dev")]
     {
         buffer = format!("{}-dev-{}", buffer, if _client { "client"} else { "server" });

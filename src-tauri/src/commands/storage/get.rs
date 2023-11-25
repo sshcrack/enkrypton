@@ -1,6 +1,7 @@
 use payloads::data::StorageData;
 use storage_internal::STORAGE;
 
+/// Gets the storage data if the storage is unlocked
 #[tauri::command]
 pub async fn storage_get() -> Result<StorageData, String> {
     if !(STORAGE.read().await).is_unlocked() {

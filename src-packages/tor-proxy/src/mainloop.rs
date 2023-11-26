@@ -9,6 +9,7 @@ use std::{
     thread::{self},
 };
 
+use async_channel::RecvError;
 use shared::get_torrc;
 #[cfg(target_family="unix")]
 use shared::get_root_dir;
@@ -74,14 +75,19 @@ pub(super) async fn tor_main_loop() -> Result<()> {
 
     let rx = get_to_tor_rx().await;
     // If we should exit, break and tell the tor process to exit as well
-    while !rx.is_closed() && !should_exit.load(Ordering::Relaxed) {
-        if rx.len() > 0 {
-            let msg = rx.recv().await?;
-            match msg {
-                Client2TorMsg::Exit() => {
-                    debug!("Got exit signal");
-                    break;
-                }
+    // Oh and don't listen for should_exit here because well the tor process is not changing it
+    while !rx.is_closed() {
+        let msg = rx.recv().await;
+        if msg.is_err() {
+            // channel is empty and closed, so the process exited
+            break;
+        }
+
+        let msg = msg.unwrap();
+        match msg {
+            Client2TorMsg::Exit() => {
+                debug!("Got exit signal");
+                break;
             }
         }
     }

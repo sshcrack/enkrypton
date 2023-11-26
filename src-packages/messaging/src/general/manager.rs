@@ -88,28 +88,17 @@ impl MessagingManager {
     /// Checks if the connection with the given host name is verified and sends a notification if newly verified
     pub(crate) async fn check_verified(&self, onion_host: &str) -> Result<()> {
         debug!("Checking verified for {}", onion_host);
-        let res = self
-            .connections
-            .read()
-            .await
-            .get(onion_host)
-            .cloned()
-            .ok_or(anyhow!(
-                "check_verified should only be callable after a connection is established"
-            ))?;
+        let verified = self.assert_verified(onion_host).await;
 
-        let remote_verified = *res.verified.read().await;
-        let self_verified = *res.self_verified.read().await;
-
-        if remote_verified && self_verified {
-            res.notify_verified().await?;
+        if let Ok(c) = verified {
+            c.notify_verified().await?;
         }
 
         Ok(())
     }
 
     /// Asserts that the connection with the given host name is verified
-    pub(crate) async fn assert_verified(&self, onion_host: &str) -> Result<()> {
+    pub(crate) async fn assert_verified(&self, onion_host: &str) -> Result<Connection> {
         debug!("Checking verified for {}", onion_host);
         let res = self
             .connections
@@ -118,7 +107,7 @@ impl MessagingManager {
             .get(onion_host)
             .cloned()
             .ok_or(anyhow!(
-                "check_verified should only be callable after a connection is established"
+                "assert_verified should only be callable after a connection is established"
             ))?;
 
         let remote_verified = *res.verified.read().await;
@@ -131,7 +120,7 @@ impl MessagingManager {
             return Err(anyhow!("Remote is not verified yet"))
         }
 
-        Ok(())
+        Ok(res)
     }
 
     /// Checks if we are connected to the given host

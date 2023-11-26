@@ -99,13 +99,12 @@ impl Connection {
         Ok(())
     }
 
-    /// Creates a new generic connection from a client
-    pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
+    async fn new_general(receiver_host: &str, info: ConnInfo) -> Self {
         println!("New client connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
 
         let mut s = Self {
-            info: Arc::new(RwLock::new(ConnInfo::Client(c))),
+            info: Arc::new(RwLock::new(info)),
             read_thread: Arc::new(None),
             verified: Arc::new(RwLock::new(false)),
             self_verified: Arc::new(RwLock::new(false)),
@@ -120,26 +119,17 @@ impl Connection {
         s
     }
 
+    /// Creates a new generic connection from a client
+    pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
+        println!("New client connection: {:?}", receiver_host);
+        Self::new_general(receiver_host, ConnInfo::Client(c)).await
+    }
+
     /// Creates a new generic connection from a server channels
     /// This function assumes the identity has already been verified
     pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
         println!("New server connection: {:?}", receiver_host);
-        let (tx, rx) = async_channel::unbounded();
-
-        let mut s = Self {
-            info: Arc::new(RwLock::new(ConnInfo::Server(c))),
-            read_thread: Arc::new(None),
-            verified: Arc::new(RwLock::new(false)),
-            self_verified: Arc::new(RwLock::new(false)),
-            receiver_host: receiver_host.to_string(),
-
-            notifier_ready_tx: tx,
-            notifier_ready_rx: rx,
-        };
-
-        let read_thread = ConnectionReadThread::new(&s).await;
-        s.read_thread = Arc::new(Some(read_thread));
-        s
+        Self::new_general(receiver_host, ConnInfo::Server(c)).await
     }
 
     /// Sends a message to the receiver

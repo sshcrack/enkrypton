@@ -9,7 +9,6 @@ use std::{
     thread::{self},
 };
 
-use async_channel::RecvError;
 use shared::get_torrc;
 #[cfg(target_family="unix")]
 use shared::get_root_dir;

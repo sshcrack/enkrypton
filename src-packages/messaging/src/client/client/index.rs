@@ -141,7 +141,7 @@ impl MessagingClient {
         c.spawn_heartbeat_thread();
 
         // Spawning the read thread
-        c.spawn_read_thread(tx, read, arc_write, flusher_exit);
+        c.spawn_read_thread(tx, (read, arc_write), flusher_exit);
 
         return Ok(c);
     }
@@ -163,8 +163,7 @@ impl MessagingClient {
     fn spawn_read_thread(
         &mut self,
         tx: Sender<S2CPacket>,
-        receiver: ReadStream,
-        write: Arc<Mutex<WriteStream>>,
+        (receiver, write): (ReadStream, Arc<Mutex<WriteStream>>),
         flush_exit: Arc<AtomicBool>
     ) {
         // Don't spawn a new thread if one already exists

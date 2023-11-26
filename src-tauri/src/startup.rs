@@ -1,8 +1,19 @@
-use std::thread;
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
 
-use log::{ error, warn};
-use payloads::{payloads::{TorStartupErrorPayload, splashscreen::SplashscreenClosedPayload}, event::AppHandleExt};
+use log::{error, warn};
+use payloads::{
+    event::AppHandleExt,
+    payloads::{splashscreen::SplashscreenClosedPayload, TorStartupErrorPayload},
+};
 use shared::APP_HANDLE;
+use signal_hook::consts::TERM_SIGNALS;
 use tauri::{
     async_runtime::{self, block_on},
     App, Manager,
@@ -51,7 +62,10 @@ pub fn startup(app: &mut App) {
                 window.open_devtools();
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();
-                splashscreen_window.app_handle().emit_payload(SplashscreenClosedPayload { }).unwrap();
+                splashscreen_window
+                    .app_handle()
+                    .emit_payload(SplashscreenClosedPayload {})
+                    .unwrap();
             }
 
             // If there is any error, report it
@@ -85,9 +99,40 @@ pub fn startup(app: &mut App) {
 
     // Handle the SIGINT signal and stop tor first
     let handle = app.handle();
-    if let Ok(mut s) = signal_hook::iterator::Signals::new(signal_hook::consts::TERM_SIGNALS) {
-        thread::Builder::new().name("exit_listener".to_string()).spawn(move || {
-            for _ in s.forever() {
+    #[cfg(target_family = "unix")]
+    if let Ok(mut s) = signal_hook::iterator::Signals::new(TERM_SIGNALS) {
+        thread::Builder::new()
+            .name("exit_listener".to_string())
+            .spawn(move || {
+                for _ in s.forever() {
+                    let r = block_on(on_exit());
+
+                    handle.exit(0);
+
+                    if let Err(e) = r {
+                        error!("Could not exit: {}", e);
+                    }
+                }
+            })
+            .unwrap();
+    } else {
+        error!("Could not listen for exit signals");
+    }
+
+    #[cfg(target_family = "windows")]
+    {
+        let t = Arc::new(AtomicBool::new(false));
+        for sig in TERM_SIGNALS {
+            signal_hook::flag::register(*sig, Arc::clone(&t)).unwrap();
+        }
+
+        thread::Builder::new()
+            .name("exit_listener".to_string())
+            .spawn(move || {
+                while !t.load(Ordering::Relaxed) {
+                    thread::sleep(Duration::from_millis(100));
+                }
+
                 let r = block_on(on_exit());
 
                 handle.exit(0);
@@ -95,9 +140,6 @@ pub fn startup(app: &mut App) {
                 if let Err(e) = r {
                     error!("Could not exit: {}", e);
                 }
-            }
-        }).unwrap();
-    } else {
-        error!("Could not listen for exit signals");
+            }).unwrap();
     }
 }

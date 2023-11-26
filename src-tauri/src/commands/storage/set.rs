@@ -1,13 +1,12 @@
 use log::debug;
 use payloads::data::StorageData;
 use storage_internal::STORAGE;
+use crate::util::assert_unlocked_str;
 
 /// Sets the data of the storage if the storage is unlocked
 #[tauri::command]
 pub async fn storage_set(data_raw: String) -> Result<(), String> {
-    if !(STORAGE.read().await).is_unlocked() {
-        return Err("Storage is not unlocked".to_string());
-    }
+    assert_unlocked_str().await?;
 
     // Parsing the data
     let data = serde_json::from_str::<StorageData>(&data_raw)

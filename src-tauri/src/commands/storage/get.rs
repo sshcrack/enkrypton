@@ -1,12 +1,11 @@
 use payloads::data::StorageData;
 use storage_internal::STORAGE;
+use crate::util::assert_unlocked_str;
 
 /// Gets the storage data if the storage is unlocked
 #[tauri::command]
 pub async fn storage_get() -> Result<StorageData, String> {
-    if !(STORAGE.read().await).is_unlocked() {
-        return Err("Storage is not unlocked".to_string());
-    }
+    assert_unlocked_str().await?;
 
     let data = STORAGE.read().await.data().await;
     if let Some(data) = data {

@@ -28,7 +28,7 @@ impl HeartbeatClient for MessagingClient {
 
         // The mutex which will be used to send the ping
         let sender = self.write.clone();
-        let handle = thread::spawn(move || loop {
+        let handle = thread::Builder::new().name(format!("heartbeat-{}", self.receiver)).spawn(move || loop {
             // Measuring the time it took to send the ping, marking the beginning here
             let before = Instant::now();
 
@@ -58,7 +58,7 @@ impl HeartbeatClient for MessagingClient {
 
             // Sleeping the remaining time
             thread::sleep(diff)
-        });
+        }).unwrap();
 
         // Setting the heartbeat thread the current thread
         self.heartbeat_thread = Arc::new(Some(handle));

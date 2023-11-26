@@ -149,7 +149,7 @@ impl ConnectionReadThread {
 
         let receiver_host = conn.receiver_host.clone();
         // Spawns the new read thrad
-        thread::spawn(move || loop {
+        thread::Builder::new().name(format!("conn-reader-{}", receiver_host)).spawn(move || loop {
             let msg = match &receiver {
                 Either::Left(r) => {
                     // Reads the message from the receiver
@@ -201,6 +201,6 @@ impl ConnectionReadThread {
             if let Err(e) = h {
                 error!("{:?}", e);
             }
-        })
+        }).unwrap()
     }
 }

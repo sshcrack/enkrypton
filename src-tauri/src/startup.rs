@@ -93,7 +93,7 @@ pub fn startup(app: &mut App) {
 
     // Handle the SIGINT signal and stop tor first
     let handle = app.handle();
-    thread::spawn(move || {
+    thread::Builder::new().name("exit_listener".to_string()).spawn(move || {
         signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&term)).unwrap();
         while !term.load(Ordering::Relaxed) {}
 
@@ -105,5 +105,5 @@ pub fn startup(app: &mut App) {
         if let Err(e) = r {
             error!("Could not exit: {}", e);
         }
-    });
+    }).unwrap();
 }

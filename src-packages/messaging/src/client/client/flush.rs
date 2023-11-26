@@ -39,11 +39,12 @@ impl FlushChecker {
     /// Spawns the new thread which will check if the websocket should be flushed
     /// and returns its handle
     pub async fn spawn_handle(
+        receiver: &str,
         last_update: Arc<RwLock<Instant>>,
         should_exit: Arc<AtomicBool>,
         write: Arc<Mutex<WriteStream>>,
     ) -> JoinHandle<()> {
-        thread::spawn(move || {
+        thread::Builder::new().name(format!("flush-checker-{}", receiver)).spawn(move || {
             while !should_exit.load(Ordering::Relaxed) {
                 // Checking if we should flush and adding 5ms to make sure we don't miss the flush
                 let to_wait = FLUSH_DELAY
@@ -68,18 +69,18 @@ impl FlushChecker {
                     error!("[CLIENT] Could not flush: {:?}", e);
                 }
             }
-        })
+        }).unwrap()
     }
 
     /// Constructs this struct and spawns the thread of this struct
-    pub async fn new(write: Arc<Mutex<WriteStream>>) -> Result<Self> {
+    pub async fn new(receiver: &str, write: Arc<Mutex<WriteStream>>) -> Result<Self> {
         let last_update = Instant::now() - *FLUSH_DELAY - Duration::from_secs(1);
         let last_update = Arc::new(RwLock::new(last_update));
         let should_exit = Arc::new(AtomicBool::new(false));
 
         // Spawns the handle of this struct
         let handle =
-            Self::spawn_handle(last_update.clone(), should_exit.clone(), write.clone()).await;
+            Self::spawn_handle(receiver, last_update.clone(), should_exit.clone(), write.clone()).await;
         let s = Self {
             // Just to make sure we flush on the first message
             last_update,

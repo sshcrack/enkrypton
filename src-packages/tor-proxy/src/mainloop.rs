@@ -62,7 +62,7 @@ pub(super) async fn tor_main_loop() -> Result<()> {
 
 
     // Spawns the tor thread to handle tor stdout
-    let handle = thread::spawn(move || {
+    let handle = thread::Builder::new().name("tor-stdout".to_string()).spawn(move || {
         let res = block_on(handle_tor_stdout(temp, child));
         if res.is_ok() {
             info!("TOR: Thread finished");
@@ -70,7 +70,7 @@ pub(super) async fn tor_main_loop() -> Result<()> {
             let err = res.unwrap_err();
             error!("TOR: failed {}", err);
         }
-    });
+    }).unwrap();
 
     let rx = get_to_tor_rx().await;
     // If we should exit, break and tell the tor process to exit as well

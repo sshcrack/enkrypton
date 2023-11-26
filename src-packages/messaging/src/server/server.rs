@@ -10,7 +10,7 @@ use super::routes::{hello, ws_index};
 
 /// Starts the local webserver in a new thread and runs the server_mainloop
 pub fn start_webserver() {
-    thread::spawn(|| {
+    thread::Builder::new().name("webserver".to_string()).spawn(move || {
         let res = block_on(server_mainloop());
 
         if res.is_err() {
@@ -18,7 +18,7 @@ pub fn start_webserver() {
         } else {
             info!("Webserver stopped.")
         }
-    });
+    }).unwrap();
 }
 
 /// Just initializes a new async webserver and listens just to local connections and to the specified port

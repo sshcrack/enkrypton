@@ -24,7 +24,7 @@ pub async fn inner_func(pass: &str) -> Result<()> {
     if !state.has_parsed() {
         state.read_or_generate(pass).await?;
 
-        if state.is_unlocked() {
+        if state.is_unlocked()? {
             return Ok(());
         }
     }

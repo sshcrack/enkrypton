@@ -1,13 +1,12 @@
 use log::debug;
 
 use storage_internal::STORAGE;
+use crate::util::assert_unlocked_str;
 
 /// Saves the storage if the storage is unlocked
 #[tauri::command]
 pub async fn storage_save() -> Result<(), String> {
-    if !(STORAGE.read().await).is_unlocked() {
-        return Err("Storage is not unlocked".to_string());
-    }
+    assert_unlocked_str().await?;
 
     debug!("Saving storage...");
     let r = STORAGE.read().await.save().await.or_else(|e| Err(e.to_string()));

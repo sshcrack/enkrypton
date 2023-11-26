@@ -6,5 +6,5 @@ use storage_internal::STORAGE;
 #[tauri::command]
 pub async fn storage_exists() -> Result<bool, String> {
     debug!("Reading storage...");
-    Ok(STORAGE.read().await.exists())
+    Ok(STORAGE.read().await.exists().or_else(|e| Err(e.to_string()))?)
 }

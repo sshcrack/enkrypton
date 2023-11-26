@@ -40,7 +40,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     debug!("Writing to rwlock...");
 
     // Starts the tor thread
-    let handle = thread::spawn(move || {
+    let handle = thread::Builder::new().name("tor-mainloop".to_string()).spawn(move || {
         let res = block_on(tor_main_loop());
         if res.is_ok() {
             info!("TOR: thread has finished!");
@@ -49,7 +49,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
 
         let err = res.unwrap_err();
         error!("TOR thread has failed: {:#?}", err);
-    });
+    }).unwrap();
 
     debug!("Writing tor thread");
     TOR_THREAD.write().await.replace(handle);

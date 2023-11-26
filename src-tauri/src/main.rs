@@ -1,7 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(any(debug_assertions, feature="enable-console")), windows_subsystem = "windows")]
 
-/** This crate just describes the ws and https client.*/
 mod commands;
 mod startup;
 mod util;

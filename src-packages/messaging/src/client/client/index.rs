@@ -37,7 +37,7 @@ pub struct MessagingClient {
     pub write: Arc<Mutex<WriteStream>>,
 
     /// The address the client is connected to
-    receiver: String,
+    pub(super) receiver: String,
     /// The current heartbeat thread handle
     pub(super) heartbeat_thread: Arc<Option<JoinHandle<()>>>,
     /// The thread used to read messages from the server
@@ -122,7 +122,7 @@ impl MessagingClient {
         let arc_write = Arc::new(Mutex::new(write));
 
         // Spawning the new flush thread
-        let checker = FlushChecker::new(arc_write.clone()).await?;
+        let checker = FlushChecker::new(onion_hostname, arc_write.clone()).await?;
         let flusher_exit = checker.should_exit.clone();
 
         // Constructing the client as the connection was successful
@@ -174,7 +174,7 @@ impl MessagingClient {
         }
 
         let tmp = self.receiver.clone();
-        let handle = thread::spawn(move || {
+        let handle = thread::Builder::new().name(format!("read-{}", self.receiver)).spawn(move || {
             // Handling the incoming packets concurrently (more performance)
             let future = receiver.for_each_concurrent(2, |msg| {
                 let receiver = tmp.clone();
@@ -227,7 +227,7 @@ impl MessagingClient {
             flush_exit.store(true, Ordering::Relaxed);
             let f = block_on(MESSAGING.read());
             block_on(f.remove_connection(&tmp));
-        });
+        }).unwrap();
 
         self.read_thread = Arc::new(Some(handle));
     }

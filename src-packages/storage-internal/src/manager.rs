@@ -163,7 +163,7 @@ impl StorageManager {
         let pass = pass.as_bytes();
 
         let mut newly_generated = false;
-        let storage = if !self.exists() {
+        let storage = if !self.exists()? {
             debug!("Generating storage...");
             newly_generated = true;
             // Generate a new storage with the given password
@@ -201,11 +201,11 @@ impl StorageManager {
     /// Saves the current storage to the file
     pub async fn save(&self) -> Result<()> {
         debug!("Writing to {:?}...", &self.path);
-        let mut f = File::create(&self.path).await?;
 
         debug!("Getting raw...");
         let raw = self.modify_storage(|e| e.to_raw()).await?;
         debug!("Writing total of {} bytes...", raw.len());
+        let mut f = File::create(&self.path).await?;
         f.write_all(&raw).await?;
 
         #[cfg(target_family = "unix")]
@@ -217,7 +217,7 @@ impl StorageManager {
 
     /// Deletes the storage file (in case of a forgotten password)
     pub async fn delete(&mut self) -> Result<()> {
-        if !self.exists() {
+        if !self.path.is_file() {
             return Ok(());
         }
 
@@ -307,13 +307,13 @@ impl StorageManager {
     }
 
     /// Returns wether the storage is unlocked
-    pub fn is_unlocked(&self) -> bool {
-        return self.exists() && self.is_unlocked;
+    pub fn is_unlocked(&self) -> Result<bool> {
+        return Ok(self.exists()? && self.is_unlocked);
     }
 
     /// Returns wether the storage file exists
-    pub fn exists(&self) -> bool {
-        return self.path.is_file();
+    pub fn exists(&self) -> Result<bool> {
+        return Ok(self.path.is_file() && self.path.metadata()?.len() != 0);
     }
 
     /// Returns wether the storage has been parsed

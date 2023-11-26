@@ -7,7 +7,7 @@ use std::{
 };
 use std::time::Duration;
 
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use payloads::{payloads::{TorStartupErrorPayload, splashscreen::SplashscreenClosedPayload}, event::AppHandleExt};
 use shared::APP_HANDLE;
 use tauri::{
@@ -90,23 +90,21 @@ pub fn startup(app: &mut App) {
         });
     });
 
-    let term = Arc::new(AtomicBool::new(false));
-
     // Handle the SIGINT signal and stop tor first
     let handle = app.handle();
-    thread::Builder::new().name("exit_listener".to_string()).spawn(move || {
-        signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&term)).unwrap();
-        while !term.load(Ordering::Relaxed) {
-                thread::sleep(Duration::from_millis(100));
-        }
+    if let Ok(mut s) = signal_hook::iterator::Signals::new(signal_hook::consts::TERM_SIGNALS) {
+        thread::Builder::new().name("exit_listener".to_string()).spawn(move || {
+            for _ in s.forever() {
+                let r = block_on(on_exit());
 
-        debug!("Running stop on main thread");
-        let r = block_on(on_exit());
+                handle.exit(0);
 
-        handle.exit(0);
-
-        if let Err(e) = r {
-            error!("Could not exit: {}", e);
-        }
-    }).unwrap();
+                if let Err(e) = r {
+                    error!("Could not exit: {}", e);
+                }
+            }
+        }).unwrap();
+    } else {
+        error!("Could not listen for exit signals");
+    }
 }

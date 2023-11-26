@@ -66,7 +66,7 @@ export function ChatInner(props: ChatProps) {
                 <InputLeftAddon children='Hostname' />
                 <Input value={active?.onionHostname} isReadOnly />
             </InputGroup>
-            {(!client?.status || client.status !== "Connected") ? <StatusScreen client={client} /> : <Messages />}
+            {(client?.status && client.status !== "Connected") ? <StatusScreen client={client} /> : <Messages />}
         </Flex>
         <Flex w='100%' >
             { !client?.status || client.status !== "Connected" ? <ConnectButton pressedConnect={pressedConnected} setPressedConnect={setPressedConnect} client={client} /> : <SendButton client={client} /> }

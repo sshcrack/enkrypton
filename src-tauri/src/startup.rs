@@ -1,13 +1,6 @@
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread,
-};
-use std::time::Duration;
+use std::thread;
 
-use log::{debug, error, info, warn};
+use log::{ error, warn};
 use payloads::{payloads::{TorStartupErrorPayload, splashscreen::SplashscreenClosedPayload}, event::AppHandleExt};
 use shared::APP_HANDLE;
 use tauri::{

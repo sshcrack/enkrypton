@@ -5,6 +5,7 @@ use std::{
     },
     thread,
 };
+use std::time::Duration;
 
 use log::{debug, error, warn};
 use payloads::{payloads::{TorStartupErrorPayload, splashscreen::SplashscreenClosedPayload}, event::AppHandleExt};
@@ -95,7 +96,9 @@ pub fn startup(app: &mut App) {
     let handle = app.handle();
     thread::Builder::new().name("exit_listener".to_string()).spawn(move || {
         signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&term)).unwrap();
-        while !term.load(Ordering::Relaxed) {}
+        while !term.load(Ordering::Relaxed) {
+                thread::sleep(Duration::from_millis(100));
+        }
 
         debug!("Running stop on main thread");
         let r = block_on(on_exit());

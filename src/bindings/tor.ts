@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api"
 
 const tor = {
     send_ready: () => emit("splashscreen_ready"),
-    splashscreen_closed: () => invoke("splashscreen_closed") as Promise<boolean>,
+    is_splashscreen_closed: () => invoke("splashscreen_closed") as Promise<boolean>,
     get_hostname: () => invoke("tor_hostname") as Promise<string>
 }
 

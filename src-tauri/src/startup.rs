@@ -58,7 +58,7 @@ pub fn startup(app: &mut App) {
 
             if res.is_ok() {
                 // After starting tor, close the splashscreen and show the main window
-                #[cfg(debug_assertions)]
+                #[cfg(any(debug_assertions, feature="enable-console"))]
                 window.open_devtools();
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();

@@ -12,16 +12,17 @@ import ws from '../bindings/ws';
 
 function App() {
   //TODO disable
-  const [isReady, setReady] = useState(false);
-  useEffect(() => {
-    tor.splashscreen_closed().then(e => setReady(e))
+  const [splashscreenClosed, setClosed] = useState(false);
 
-    const unlisten = listenSync("splashscreen_closed", () => setReady(true));
+  useEffect(() => {
+    tor.is_splashscreen_closed().then(e => setClosed(e))
+
+    const unlisten = listenSync("splashscreen_closed", () => setClosed(true));
 
     return () => unlisten()
   }, [])
 
-  if (isReady)
+  if (splashscreenClosed)
     return <MainProvider>
       <StorageProvider>
         <InnerApp />

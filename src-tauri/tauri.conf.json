@@ -57,6 +57,9 @@
     "bundle": {
       "active": true,
       "targets": "all",
+      "publisher": "sshcrack",
+      "longDescription": "This app uses RSA to encrypt messages being sent over the tor network. There is no central server as this app is centralized.",
+      "category": "SocialNetworking",
       "identifier": "me.sshcrack.enkrypton",
       "icon": [
         "icons/32x32.png",

@@ -9,5 +9,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 lazy_static = "1.4.0"
-openssl = "0.10.59"
-serde = { version = "1.0.192", features = ["derive"] }
+openssl = "0.10.60"
+serde = { version = "1.0.193", features = ["derive"] }

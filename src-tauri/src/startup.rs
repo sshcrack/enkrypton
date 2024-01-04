@@ -1,12 +1,4 @@
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread,
-    time::Duration,
-};
-
+use std::thread;
 use log::{error, warn};
 use payloads::{
     event::AppHandleExt,

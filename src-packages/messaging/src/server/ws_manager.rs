@@ -46,7 +46,7 @@ impl Actor for WsActor {
             let p = rx.try_recv();
             if let Err(e) = p {
                 if e == TryRecvError::Closed {
-                    debug!("[SERVER] Channel has been closed. Stopping...");
+                    warn!("[SERVER] Channel has been closed. Stopping...");
                     ctx.stop();
                 }
 
@@ -74,7 +74,7 @@ impl Actor for WsActor {
                 return;
             }
 
-            debug!(
+            warn!(
                 "[SERVER] Websocket timed out, stopping (onionHost: {:?})",
                 a.receiver
             );
@@ -90,7 +90,7 @@ impl Actor for WsActor {
         self.s_tx.close();
 
         if let Some(onion_host) = &self.receiver {
-            debug!("[SERVER] Removing connection for {}", onion_host);
+            debug!("[SERVER] Connection was stopped. Removing connection for {}", onion_host);
 
             // Sending a disconnect update to the frontend
             let _ = block_on(get_app())
@@ -232,7 +232,7 @@ impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
                 }
 
                 if self.c_tx.is_closed() {
-                    error!("[SERVER] Client receive channel close, stopping actor");
+                    warn!("[SERVER] Client receive channel close, stopping actor");
                     ctx.stop();
                     return;
                 }

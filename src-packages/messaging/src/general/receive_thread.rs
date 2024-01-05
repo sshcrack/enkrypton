@@ -10,7 +10,7 @@ use log::{debug, error, warn};
 use payloads::{
     event::AppHandleExt,
     packets::{C2SPacket, S2CPacket},
-    payloads::{WsMessagePayload, WsMessageStatus},
+    payloads::{WsMessagePayload, WsMessageStatus, WsClientUpdatePayload, WsClientStatus},
 };
 use shared::get_app;
 use smol::block_on;
@@ -80,7 +80,11 @@ impl ConnectionReadThread {
         }
 
         // We have to be verified
-        MESSAGING.read().await.assert_verified(&receiver_host).await?;
+        MESSAGING
+            .read()
+            .await
+            .assert_verified(&receiver_host)
+            .await?;
 
         let (date, msg) = msg.unwrap();
         // Just a wrapper around handling the message to catch errors
@@ -149,58 +153,71 @@ impl ConnectionReadThread {
 
         let receiver_host = conn.receiver_host.clone();
         // Spawns the new read thrad
-        thread::Builder::new().name(format!("conn-reader-{}", receiver_host)).spawn(move || loop {
-            let msg = match &receiver {
-                Either::Left(r) => {
-                    // Reads the message from the receiver
-                    let msg = block_on(r.recv());
-                    if let Err(e) = msg {
-                        error!("Could not read packet: {:?}", e);
-                        break;
-                    }
+        thread::Builder::new()
+            .name(format!("conn-reader-{}", receiver_host))
+            .spawn(move || {
+                loop {
+                    let msg = match &receiver {
+                        Either::Left(r) => {
+                            // Reads the message from the receiver
+                            let msg = block_on(r.recv());
+                            if let Err(e) = msg {
+                                error!("Could not read packet: {:?}", e);
+                                break;
+                            }
 
-                    // Handle the message and store it
-                    match msg.unwrap() {
-                        S2CPacket::Message(msg) => Some(msg),
-                        _ => {
-                            warn!("Main Manager received message it could not handle");
-                            None
+                            // Handle the message and store it
+                            match msg.unwrap() {
+                                S2CPacket::Message(msg) => Some(msg),
+                                _ => {
+                                    warn!("Main Manager received message it could not handle");
+                                    None
+                                }
+                            }
                         }
+
+                        Either::Right(r) => {
+                            // Reads the message from the receiver
+                            let msg = block_on(r.recv());
+                            if let Err(e) = msg {
+                                error!("Could not read packet: {:?}", e);
+                                break;
+                            }
+
+                            // Handle the message and store it
+                            match msg.unwrap() {
+                                C2SPacket::Message(msg) => Some(msg),
+                                _ => {
+                                    warn!("Main Manager received message it could not handle");
+                                    None
+                                }
+                            }
+                        }
+                    };
+
+                    // Handles the message
+                    let h = Self::handle(msg, info_read.clone(), &receiver_host);
+                    // And wait for it to be handled
+                    //TODO do not block here
+                    let h = block_on(h);
+
+                    if let Err(e) = h {
+                        error!("{:?}", e);
                     }
                 }
+                let msg = MESSAGING.read();
+                let msg = block_on(msg);
+                let f = msg.remove_connection(&receiver_host);
+                block_on(f);
 
-                Either::Right(r) => {
-                    // Reads the message from the receiver
-                    let msg = block_on(r.recv());
-                    if let Err(e) = msg {
-                        error!("Could not read packet: {:?}", e);
-                        break;
-                    }
+                let _ = block_on(get_app())
+                .emit_payload(WsClientUpdatePayload {
+                    hostname: receiver_host.to_string(),
+                    status: WsClientStatus::Disconnected,
+                })
+                .map_err(|e| warn!("[SERVER] Could not emit ws client update: {:?}", e));
 
-                    // Handle the message and store it
-                    match msg.unwrap() {
-                        C2SPacket::Message(msg) => Some(msg),
-                        _ => {
-                            warn!("Main Manager received message it could not handle");
-                            None
-                        }
-                    }
-                }
-            };
-
-            // Handles the message
-            let h = Self::handle(
-                msg,
-                info_read.clone(),
-                &receiver_host,
-            );
-            // And wait for it to be handled
-            //TODO do not block here
-            let h = block_on(h);
-
-            if let Err(e) = h {
-                error!("{:?}", e);
-            }
-        }).unwrap()
+            })
+            .unwrap()
     }
 }

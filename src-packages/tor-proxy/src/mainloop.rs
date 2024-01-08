@@ -55,7 +55,7 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     let child = child.spawn()?;
     let id = child.id();
 
-    // Wether the tor handler thread should exit
+    // whether the tor handler thread should exit
     let should_exit = Arc::new(AtomicBool::new(false));
 
     let temp = should_exit.clone();

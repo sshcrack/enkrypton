@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use tauri::{AppHandle, Manager, Error};
 
+//noinspection SpellCheckingInspection
 /// Describes any sendable payload and contains a function to get the name of the payload
 pub trait Sendable {
     fn get_name(&self) -> String;

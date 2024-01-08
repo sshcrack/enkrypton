@@ -25,7 +25,7 @@ lazy_static! {
 pub(super) struct FlushChecker {
     /// The last time we flushed the websocket
     pub(super) last_update: Arc<RwLock<Instant>>,
-    /// Wether the current thread should exit
+    /// whether the current thread should exit
     pub(super) should_exit: Arc<AtomicBool>,
     #[allow(dead_code)]
     /// Not used for now

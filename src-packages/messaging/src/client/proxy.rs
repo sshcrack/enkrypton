@@ -33,7 +33,7 @@ impl SocksProxy {
         let password = url.password();
 
         // If the password is set, the username must be set too
-        let mut auth = None as Option<(String, String)>;
+        let mut auth = None;
         if let Some(passwd) = password {
             if !username.is_empty() {
                 auth = Some((username.to_string(), passwd.to_string()));

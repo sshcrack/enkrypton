@@ -1,5 +1,7 @@
+// noinspection JSUnusedGlobalSymbols
+
 import { Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Input, useToast } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import tor from '../../bindings/tor';
 import ws from '../../bindings/ws';
 
@@ -15,6 +17,7 @@ function isAddressValid(_value: string) {
 
 const debugMode = true;
 
+//TODO use later
 export default function ConnectForm({ onConnected }: ConnectFormProps) {
     const [connecting, setConnecting] = useState(false);
     const [input, setInput] = useState('')
@@ -33,7 +36,7 @@ export default function ConnectForm({ onConnected }: ConnectFormProps) {
 
     useEffect(() => onSubmit(), [input])
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value)
     const isError = !isAddressValid(input)
     const onSubmit = () => {
         console.log("On submit", input)

@@ -97,7 +97,6 @@ async fn handle_msg(msg: &str, tx: &Sender<Tor2ClientMsg>) -> Result<()> {
         return Ok(());
     }
 
-    //TODO remove duplicate if functions here
     if msg.contains(WARN_MSG) {
         warn!("TOR: {}", msg);
         // Warn messages
@@ -127,12 +126,12 @@ async fn handle_bootstrap(msg: &str, tx: &Sender<Tor2ClientMsg>) -> Result<()> {
 
     // Splitting the message into the main fragment and the percentage
     let main_fragment = split.get(1).unwrap_or(&"");
-    let mut space_split: Vec<&str> = main_fragment.split(" ").collect();
+    let space_split: Vec<&str> = main_fragment.split(" ").collect();
 
     // removing the first element so array can be joined together later for status message
-    //TODO this panics, replace it by other things and make code cleaner pls thx
     let percentage = space_split
-        .remove(0)
+        .get(0)
+        .ok_or(anyhow!("Could not get percentage from bootstrap message"))?
         // remove percentage symbol
         .replace("%", "");
 

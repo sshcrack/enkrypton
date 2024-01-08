@@ -34,7 +34,7 @@ pub fn is_onion_hostname(addr: &str) -> bool {
 
 
 /// This function is called when the application is closed. It stops the tor process and saves the storage.
-pub async fn on_exit() -> anyhow::Result<()> {
+pub async fn on_exit() -> Result<()> {
     debug!("Acquiring storage lock...");
 
     let mut e = STORAGE.write().await;

@@ -36,7 +36,7 @@ export default class MessagingClient extends (EventEmitter as unknown as new () 
         this.updateMsg(-1, "Success").then(() => console.log("Updated msg"))
     }
 
-    public async destroy() {
+    public destroy() {
         this.unlisten()
     }
 
@@ -61,20 +61,6 @@ export default class MessagingClient extends (EventEmitter as unknown as new () 
 
     public messages(): ChatMessage[] {
         return this._messages as ChatMessage[];
-    }
-
-    public async setStatus(date: number, status: WsMessageStatus) {
-        if (this._messages === null)
-            throw new Error("Messages not loaded yet")
-
-        const index = this._messages.findIndex(m => m.date === date)
-        if (index === -1) {
-            console.warn("Could not find message with date", date)
-            return false;
-        }
-
-        this._messages[index].status = status
-        return true
     }
 
     public async updateMsg(date: number, status: WsMessageStatus) {

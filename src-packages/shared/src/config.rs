@@ -83,6 +83,7 @@ impl TorConfig {
         return format!("127.0.0.1:{}", self.service_port);
     }
 
+    //noinspection SpellCheckingInspection
     /// Converts the configuration to a `torrc` file format
     pub fn to_text(&self) -> String {
         return format!(

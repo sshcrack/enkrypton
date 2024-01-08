@@ -11,7 +11,6 @@ import { listenSync } from '../bindings/tauri_prom_wrapper';
 import ws from '../bindings/ws';
 
 function App() {
-  //TODO disable
   const [splashscreenClosed, setClosed] = useState(false);
 
   useEffect(() => {

@@ -50,6 +50,7 @@ pub struct MessagingClient {
 }
 
 impl MessagingClient {
+    //noinspection SpellCheckingInspection
     /// Connects to the given server and returns the newly constructed client
     pub async fn new(onion_hostname: &str) -> Result<Self> {
         // Sending the status update to the frontend (So the user knows what's going on)
@@ -62,7 +63,7 @@ impl MessagingClient {
             .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
 
         debug!("[CLIENT] Creating verify packet...");
-        // Creating a veriy packet to send to the client
+        // Creating a verify packet to send to the client
         let verify_packet = C2SPacket::identity(onion_hostname).await?;
 
         #[cfg(not(feature = "dev"))]

@@ -2,6 +2,7 @@ use actix_web::web::Bytes;
 use actix_web_actors::ws::Message as ActixMessage;
 use bincode::ErrorKind;
 use duplicate::duplicate_item;
+//noinspection SpellCheckingInspection
 use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
 mod client_2_server;
@@ -18,7 +19,7 @@ pub use server_2_client::*;
 impl TryInto<Vec<u8>> for name {
     type Error = Box<ErrorKind>;
 
-    fn try_into(self) -> std::result::Result<Vec<u8>, Self::Error> {
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
         bincode::serialize(&self)
     }
 }
@@ -29,7 +30,7 @@ impl TryInto<Vec<u8>> for name {
 impl TryInto<Bytes> for name {
     type Error = Box<ErrorKind>;
 
-    fn try_into(self) -> std::result::Result<Bytes, Self::Error> {
+    fn try_into(self) -> Result<Bytes, Self::Error> {
         let b: Vec<u8> = self.try_into()?;
         Ok(Bytes::from(b))
     }
@@ -40,7 +41,7 @@ impl TryInto<Bytes> for name {
 impl TryFrom<&Vec<u8>> for name {
     type Error = Box<ErrorKind>;
 
-    fn try_from(bin: &Vec<u8>) -> std::result::Result<Self, Self::Error> {
+    fn try_from(bin: &Vec<u8>) -> Result<Self, Self::Error> {
         bincode::deserialize(bin)
     }
 }
@@ -49,7 +50,7 @@ impl TryFrom<&Vec<u8>> for name {
 impl TryInto<TungsteniteMessage> for C2SPacket {
     type Error = Box<ErrorKind>;
 
-    fn try_into(self) -> std::result::Result<TungsteniteMessage, Self::Error> {
+    fn try_into(self) -> Result<TungsteniteMessage, Self::Error> {
         let res = TungsteniteMessage::Binary(self.try_into()?);
         Ok(res)
     }

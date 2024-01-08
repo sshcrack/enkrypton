@@ -218,12 +218,12 @@ impl WsActor {
 impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
     fn handle(&mut self, msg: Result<Message, ProtocolError>, ctx: &mut Self::Context) {
         match msg {
-            Ok(ws::Message::Ping(msg)) => {
+            Ok(Message::Ping(msg)) => {
                 ctx.pong(&msg);
                 self.last_heartbeat = Instant::now();
             }
-            Ok(ws::Message::Text(_)) => {}
-            Ok(ws::Message::Binary(bin)) => {
+            Ok(Message::Text(_)) => {}
+            Ok(Message::Binary(bin)) => {
                 // Deserialize the packet and process it further
                 let res = C2SPacket::try_from(&bin.to_vec());
                 if let Err(e) = res {

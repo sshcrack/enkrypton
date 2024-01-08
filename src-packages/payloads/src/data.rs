@@ -22,6 +22,7 @@ pub struct StorageData {
     pub chats: HashMap<String, StorageChat>,
 }
 
+//noinspection SpellCheckingInspection
 /// This chat contains all information about a receiver such as messages and keypairs
 #[cfg_attr(feature="export_ts", derive(TS))]
 #[cfg_attr(feature="export_ts", ts(export))]

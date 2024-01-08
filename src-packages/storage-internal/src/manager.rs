@@ -34,18 +34,18 @@ pub type Storage = SecureStorage<StorageData>;
 
 /// Manages the storage file, the encryption / decryption process and saving the storage file again
 pub struct StorageManager {
-    /// The path to the encrypted storage fiel
+    /// The path to the encrypted storage file
     path: Box<Path>,
 
-    /// Wether this storage has already been unlocked
+    /// whether this storage has already been unlocked
     is_unlocked: bool,
-    /// Wether this storage has already been parsed
+    /// whether this storage has already been parsed
     has_parsed: bool,
 
     /// The inner storage (this can be encrypted or decrypted, check the library for usage)
     storage: Arc<RwLock<Option<Storage>>>,
 
-    /// Wether the threads should exit
+    /// whether the threads should exit
     should_exit: Arc<AtomicBool>,
     /// This is true if the storage has been modified since the last save
     dirty: Arc<AtomicBool>,
@@ -94,6 +94,7 @@ impl StorageManager {
         Ok(())
     }
 
+    //noinspection RsSleepInsideAsyncFunction
     /// Checks every 20 seconds if the storage is marked as dirty and if so, saves ti.
     fn run_save_thread(&mut self) {
         let temp = self.storage.clone();
@@ -104,7 +105,7 @@ impl StorageManager {
         let handle = spawn(async move {
             // Checks if the current save thread should exit
             while !should_exit.load(Ordering::Relaxed) {
-                //TODO Cleanup
+                //TODO Cleanup to not duplicate this func
 
                 thread::sleep(Duration::from_secs(20));
                 // Return if none of the files have been modified
@@ -306,17 +307,17 @@ impl StorageManager {
         .await
     }
 
-    /// Returns wether the storage is unlocked
+    /// Returns whether the storage is unlocked
     pub fn is_unlocked(&self) -> Result<bool> {
         return Ok(self.exists()? && self.is_unlocked);
     }
 
-    /// Returns wether the storage file exists
+    /// Returns whether the storage file exists
     pub fn exists(&self) -> Result<bool> {
         return Ok(self.path.is_file() && self.path.metadata()?.len() != 0);
     }
 
-    /// Returns wether the storage has been parsed
+    /// Returns whether the storage has been parsed
     pub fn has_parsed(&self) -> bool {
         return self.has_parsed;
     }

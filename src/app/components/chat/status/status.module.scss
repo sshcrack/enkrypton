@@ -9,6 +9,7 @@
     flex: 1;
     background: linear-gradient(to right, var(--bg-start-color), var(--bg-end-color));
     height: 10px;
+    //noinspection CssInvalidFunction
     transform: translateY(calc(-1 * var(--text-height) / 2));
 }
 
@@ -21,7 +22,7 @@
     position: absolute;
     border-radius: var(--chakra-radii-xl);
     background: linear-gradient(45deg, var(--start-color),var(--end-color));
-    left: 0%;
+    left: 0;
 }
 
 .animate {

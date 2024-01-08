@@ -28,6 +28,7 @@ pub struct SecureStorage<T: zeroize::Zeroize> {
     pub data: Option<T>,
 }
 
+#[allow(clippy::wrong_self_convention)]
 impl<T> SecureStorage<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,

@@ -1,3 +1,4 @@
+//noinspection CssUnusedSymbol
 .tor-status-wrapper {
   height: 100%;
   width: 75%;
@@ -8,9 +9,10 @@
 .error {
   background-color: #c95100;
 
+  //noinspection CssUnusedSymbol
   .tor-status-wrapper {
     width: 90% !important;
-    gap: 0px !important;
+    gap: 0 !important;
   }
 
 

@@ -20,7 +20,7 @@ function TorStart() {
         });
 
         let unlisten_error = listenSync("tor_start_error", ({ payload }) => setError(payload));
-        tor.send_ready();
+        tor.send_ready().catch(console.error);
 
         return () => {
             unlisten_start && unlisten_start();

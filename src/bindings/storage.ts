@@ -30,6 +30,6 @@ const storage = {
 listen("storage_changed", ({ }: Event<{}>) => {
     listeners.map(l => l())
     console.log("Storage changed")
-})
+}).catch(console.error)
 
 export default storage;

@@ -20,6 +20,7 @@ use crate::commands::storage::*;
 use crate::commands::tor::*;
 use crate::util::on_exit;
 
+//noinspection RsCompileErrorMacro
 /// This is the main loop of this application, basically does everything
 fn main() {
     block_on(setup_tor_channels());

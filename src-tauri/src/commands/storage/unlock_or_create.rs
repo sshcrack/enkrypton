@@ -18,7 +18,7 @@ pub async fn storage_unlock_or_create(pass: &str) -> Result<(), String> {
 
     Ok(())
 }
-/// Inner function to catch the erorr if the wrong password was used
+/// Inner function to catch the error if the wrong password was used
 pub async fn inner_func(pass: &str) -> Result<()> {
     let mut state = STORAGE.write().await;
     if !state.has_parsed() {

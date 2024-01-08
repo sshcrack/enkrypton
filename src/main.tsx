@@ -34,7 +34,7 @@ const ConsoleListener = ({ children }: React.PropsWithChildren<{}>) => {
 const theme: Dict = extendTheme({
 })
 
-export function renderPage(Page: () => JSX.Element) {
+export function renderPage(Page: () => React.JSX.Element) {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
       <ChakraProvider theme={theme}>

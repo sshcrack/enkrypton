@@ -44,13 +44,13 @@ listen("ws_client_update", ({ payload }: Event<WsClientUpdatePayload>) => {
     // Constructing the client
     const c = ws.get(hostname)
     c.status = status
-})
+}).catch(console.error)
 
 listen("ws_msg_update", ({ payload: { hostname, date, status } }: Event<WsMessageStatusPayload>) => {
     const c = ws.get(hostname)
 
     console.log("Updating messages...")
-    c.updateMsg(date, status)
-})
+    c.updateMsg(date, status).catch(console.error)
+}).catch(console.error)
 
 export default ws;

@@ -90,7 +90,7 @@ impl Response {
                 break;
             }
 
-            // Split the line at the first occurence of the separator
+            // Split the line at the first occurrence of the separator
             let mut pair = Vec::from_iter(buf.split(HEADER_SEPARATOR));
             if pair.len() < 2 {
                 let char_vec: Vec<String> =

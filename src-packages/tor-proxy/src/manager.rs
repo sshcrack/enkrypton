@@ -61,13 +61,13 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
         if rx.len() > 0 {
             let msg = rx.recv().await?;
             match msg {
-                Tor2ClientMsg::BootstrapProgress(prog, status) => {
+                Tor2ClientMsg::BootstrapProgress(progress, status) => {
                     on_event(StartTorPayload {
-                        progress: prog / 3.0 + 2.0 / 3.0,
+                        progress: progress / 3.0 + 2.0 / 3.0,
                         message: status,
                     });
 
-                    if prog == 1.0 {
+                    if progress == 1.0 {
                         break;
                     }
                 }
@@ -106,7 +106,7 @@ pub async fn wait_for_exit() {
         .expect("msg");
 }
 
-pub async fn stop_tor() -> anyhow::Result<()> {
+pub async fn stop_tor() -> Result<()> {
     let handle = TOR_THREAD.read().await;
     if !handle.is_some() {
         return Err(anyhow!("Could not stop tor, tor is not running"));

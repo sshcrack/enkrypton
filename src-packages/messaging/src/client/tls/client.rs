@@ -70,6 +70,7 @@ impl WebClient {
             .with_no_client_auth()
     }
 
+    //noinspection SpellCheckingInspection
     /// Creates a connection to the given url using the proxy
     pub(super) async fn create_connection(
         &self,

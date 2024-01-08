@@ -169,7 +169,7 @@ impl Connection {
         let raw = msg.as_bytes().to_vec();
 
         let tmp = self.receiver_host.clone();
-        println!("Reading pubkey for {}...", tmp);
+        println!("Reading public key for {}...", tmp);
 
         // Firstly we need to get the public key of the receiver
         let pub_key = STORAGE

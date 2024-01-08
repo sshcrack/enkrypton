@@ -152,7 +152,7 @@ impl ConnectionReadThread {
         let receiver = info_read.read().await.get_receiver();
 
         let receiver_host = conn.receiver_host.clone();
-        // Spawns the new read thrad
+        // Spawns the new read thread
         thread::Builder::new()
             .name(format!("conn-reader-{}", receiver_host))
             .spawn(move || {

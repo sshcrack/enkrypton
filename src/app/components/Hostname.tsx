@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import { useEffect, useState } from 'react';
 import { Text } from '@chakra-ui/react';
 import tor from '../../bindings/tor';

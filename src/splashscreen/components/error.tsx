@@ -17,9 +17,10 @@ export default function ErrorScreen({ error }: ErrorScreenProps) {
 
     useEffect(() => {
         const window = "splashscreen"
-        invokeWindowTauri(window, "setDecorations", true)
-        invokeWindowTauri(window, "setMaximizable", true)
-        invokeWindowTauri(window, "maximize")
+        const p1 = invokeWindowTauri(window, "setDecorations", true)
+        const p2 = invokeWindowTauri(window, "setMaximizable", true)
+        const p3 = invokeWindowTauri(window, "maximize")
+        Promise.all([p1, p2, p3]).catch(console.error)
     }, [])
 
 

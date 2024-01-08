@@ -46,7 +46,7 @@ export default function StatusScreen({ client }: StatusScreenProps) {
             <StatusLineBetween animate={!status || status == 'ConnectingProxy'} isDone={proxyDone} isFailed={failed} />
 
             <StatusPoint label='Tor Network'>
-                <img src="/tor.svg" style={icoStyle} />
+                <img alt={"tor svg"} src="/tor.svg" style={icoStyle} />
             </StatusPoint>
 
             <StatusLineBetween animate={proxyDone && status == 'ConnectingHost'} isDone={hostDone} isFailed={failed} />

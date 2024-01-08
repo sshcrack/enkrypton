@@ -11,8 +11,14 @@ use tauri::{
     App, Manager,
 };
 use tor_proxy::{manager, misc::messages::TorStartError};
-
 use crate::util::on_exit;
+
+
+#[cfg(target_family = "windows")]
+use std::sync::{Arc, atomic::{Ordering, AtomicBool}};
+#[cfg(target_family = "windows")]
+use std::time::Duration;
+
 
 /// The whole startup process of this app
 pub fn startup(app: &mut App) {

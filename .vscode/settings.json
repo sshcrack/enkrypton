@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
-        "enkrypton"
+        "enkrypton",
+        "unlisten"
     ],
     "rust-analyzer.linkedProjects": [
         "./src-tauri/Cargo.toml"

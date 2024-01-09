@@ -1,5 +1,5 @@
 /**
- * Represents a general user.
+ * Represents just a general user with nickname and onion hostname
  */
 export type GeneralUser = {
     /**

@@ -6,7 +6,14 @@ import { Flex, Spinner, Text } from '@chakra-ui/react'
 
 export type MessagesProps = {}
 
+/**
+ * Estimated height for each message .
+ */
 const ESTIMATED_ITEM_HEIGHT = 100
+/**
+ * Displays the messages of the currently active client (uses ChatContext).
+ * @param props No Props here
+ */
 export default function Messages({ }: MessagesProps) {
     const { client } = useContext(ChatContext)
     if(!client)
@@ -15,6 +22,7 @@ export default function Messages({ }: MessagesProps) {
     const msg = client.messages()
     return <>
         {msg.map(({ msg, self_sent, date, status }, i) => {
+            // Parsing backend status to message status
             let statusMsg: 'waiting' | 'sent' | 'received' | 'read' = "waiting";
             switch (status) {
                 case "Failed":
@@ -54,6 +62,7 @@ export default function Messages({ }: MessagesProps) {
                 titleColor={failed ? "red" : 'white'}
             />
 
+            // Rendering the message only if it is visible
             return <RenderIfVisible defaultHeight={ESTIMATED_ITEM_HEIGHT}>
                 {msgComp}
             </RenderIfVisible>

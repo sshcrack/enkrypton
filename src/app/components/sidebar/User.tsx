@@ -1,17 +1,20 @@
 import { Flex, FlexProps, Text } from '@chakra-ui/react'
 import { GeneralUser } from '../../../bindings/ws/client/types'
-import "./User.scss"
 import UserAvatar from './UserAvatar'
 import { useContext } from "react"
 import { MainContext } from '../MainProvider'
 
 export type ReceiverSidebarProps = {
+    /**
+     * The user that should be represented by this sidebar.
+     */
     user: GeneralUser
 } & FlexProps
 
 export default function UserSidebar({ user, ...props }: ReceiverSidebarProps) {
     const { setActive, active } = useContext(MainContext)
 
+    // checking if current item is active
     const isActive = user.onionHostname === active?.onionHostname
     const { onionHostname, nickname } = user
 

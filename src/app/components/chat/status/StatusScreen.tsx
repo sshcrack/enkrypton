@@ -8,18 +8,28 @@ import StatusLineBetween from './StatusLineBetween';
 import StatusPoint from './StatusPoint';
 
 export type StatusScreenProps = {
+    /**
+     * The client to display the status of.
+     */
     client: MessagingClient
 }
 
+/**
+ * Shows the connection status of the given client.
+ * @param props For more Doc look at StatusScreenProps
+ */
 export default function StatusScreen({ client }: StatusScreenProps) {
+    // The current status fo the client.
     const [status, setStatus] = useState<WsClientStatus | null>(client.status)
 
     useEffect(() => {
+        // Listener for status changes.
         const l = (s: WsClientStatus) => {
             console.log("Status change")
             setStatus(s)
         }
 
+        // Adding the listener (so status actually changes)
         client.addListener("on_status_change", l)
         return () => {
             client.removeListener("on_status_change", l)
@@ -27,11 +37,13 @@ export default function StatusScreen({ client }: StatusScreenProps) {
     }, [client])
 
 
+    // Basic logic states
     const failed = status == "Disconnected"
     const proxyDone = (status && status !== "ConnectingProxy") as boolean
     const hostDone = (proxyDone && status !== "ConnectingHost") as boolean
     const identityDone = (hostDone && status !== "WaitingIdentity") as boolean
 
+    // The status screen itself, StatusPoints being all the points of the status screen.
     const icoStyle = { width: "2.5em", height: "2.5em" };
     return <Flex w='100%' h='100%' justifyContent='center' flexDir='column' alignItems='center' p='6' style={{ "--text-height": "1.5em" } as any}>
         <Flex h='20%' transform='translateY(-20%)' flexDir='column' gap='5'>

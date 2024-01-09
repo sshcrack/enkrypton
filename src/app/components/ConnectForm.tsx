@@ -10,14 +10,16 @@ export type ConnectFormProps = {
 }
 
 function isAddressValid(_value: string) {
-    //TODO - actually check here lol
+    //TODO - actually check here
     return true;
 }
 
 
 const debugMode = true;
 
-//TODO use later
+/**
+ * Unused for now. Maybe will be adding in back later.
+ */
 export default function ConnectForm({ onConnected }: ConnectFormProps) {
     const [connecting, setConnecting] = useState(false);
     const [input, setInput] = useState('')

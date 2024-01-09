@@ -1,12 +1,14 @@
 import { Button, Input, InputGroup, InputRightElement } from '@chakra-ui/react';
-import { useState } from 'react';
-import MessagingClient from '../../../bindings/ws/client';
+import { useContext, useState } from 'react';
+import { ChatContext } from './ChatProvider';
 
-export type SendButtonProps = {
-    client: MessagingClient | null
-}
-
-export default function SendButton({ client }: SendButtonProps) {
+/**
+ * The input group to send a message.
+ * @param _ no params
+ */
+export default function SendForm(_: {}) {
+    // The client itself and the messageUpdate number to cause a rerender / refetch
+    const { client } = useContext(ChatContext)
     const [msg, setMsg] = useState("")
     const [sending, setSending] = useState(false)
 

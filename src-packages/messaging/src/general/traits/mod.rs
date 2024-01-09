@@ -10,7 +10,15 @@ use encryption::consts::DIGEST;
 
 #[async_trait::async_trait]
 pub trait IdentityProvider<T> {
-    /// Returns the identity with the given receiver, look at the implementations for more detail
+    /// Creates a new identity for the given receiver
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver` - The onion hostname of the receiver
+    ///
+    /// # Returns
+    ///
+    /// The identity packet
     async fn identity(receiver: &str) -> Result<T>;
 }
 
@@ -18,7 +26,11 @@ pub trait IdentityProvider<T> {
 
 #[async_trait::async_trait]
 pub trait IdentityVerify {
-    /// Verifies the identity and stores public keys in storage if needed
+    /// Verifies the identity packet
+    ///
+    /// # Returns
+    ///
+    /// Whether the identity packet is valid (fails Err if not valid)
     async fn verify(&self) -> Result<()>;
 }
 

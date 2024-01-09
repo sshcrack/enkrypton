@@ -19,7 +19,8 @@
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
 				"ExodiusStudios.comment-anchors",
-				"aaron-bond.better-comments"
+				"aaron-bond.better-comments",
+				"streetsidesoftware.code-spell-checker"
 			]
 		}
 	},

@@ -27,6 +27,8 @@ pub(super) enum ConnInfo {
 }
 
 impl ConnInfo {
+    /// # Returns
+    /// 
     /// Gets the general receiver for the connection (mostly used for messages)
     pub fn get_receiver(&self) -> Either<Receiver<S2CPacket>, Receiver<C2SPacket>> {
         match self {
@@ -99,6 +101,16 @@ impl Connection {
         Ok(())
     }
 
+    /// Creates a new generic connection
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_host` - The receiver host of this connection
+    /// * `info` - Additional information and communication channels between structs
+    ///
+    /// # Returns
+    ///
+    /// The newly constructed connection
     async fn new_general(receiver_host: &str, info: ConnInfo) -> Self {
         println!("New client connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
@@ -119,20 +131,46 @@ impl Connection {
         s
     }
 
-    /// Creates a new generic connection from a client
+    /// Creates a new client connection
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_host` - The receiver host of this connection
+    /// * `c` - The messaging client to use for this connection
+    ///
+    /// # Returns
+    ///
+    /// The newly constructed connection
     pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
         println!("New client connection: {:?}", receiver_host);
         Self::new_general(receiver_host, ConnInfo::Client(c)).await
     }
 
-    /// Creates a new generic connection from a server channels
-    /// This function assumes the identity has already been verified
+    /// Creates a new server connection.
+    /// This function assumes that the connection is already verified
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_host` - The receiver host of this connection
+    /// * `c` - The channels used to send commands to the server ws handler and to receive messages from the server
+    ///
+    /// # Returns
+    ///
+    /// The newly constructed connection
     pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
         println!("New server connection: {:?}", receiver_host);
         Self::new_general(receiver_host, ConnInfo::Server(c)).await
     }
 
     /// Sends a message to the receiver
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message that should be sent
+    ///
+    /// # Returns
+    ///
+    /// Whether the message was sent successfully
     pub async fn send_msg(&self, msg: &str) -> Result<()> {
         // Adding message to storage
         let date = STORAGE
@@ -164,7 +202,7 @@ impl Connection {
         Ok(())
     }
 
-    /// Sends a message to the receiver with the given date and msg
+    /// Sends a message to the receiver with the given date and msg, internal function
     async fn inner_send(&self, msg: &str, date: u128) -> Result<()> {
         let raw = msg.as_bytes().to_vec();
 

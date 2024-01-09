@@ -6,7 +6,12 @@ import { UnlistenFn } from '@tauri-apps/api/event';
 import { ChakraProvider, extendTheme, useColorMode } from '@chakra-ui/react';
 import { Dict } from '@chakra-ui/utils';
 
-const ConsoleListener = ({ children }: React.PropsWithChildren<{}>) => {
+/**
+ * Attaches the logging process (so backend logging messages get forwarded to frontend) and additionally toggles color
+ * mode to dark if it is set as light mode.
+ * @param props the children of the page to render
+ */
+const LoggingListener = ({ children }: React.PropsWithChildren<{}>) => {
   const { colorMode, toggleColorMode } = useColorMode()
 
   useEffect(() => {
@@ -31,16 +36,19 @@ const ConsoleListener = ({ children }: React.PropsWithChildren<{}>) => {
   return <>{children}</>
 }
 
-const theme: Dict = extendTheme({
-})
+const theme: Dict = extendTheme({})
 
+/**
+ * Renders a page to the root element.
+ * @param Page the page to render.
+ */
 export function renderPage(Page: () => React.JSX.Element) {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
       <ChakraProvider theme={theme}>
-        <ConsoleListener>
+        <LoggingListener>
           <Page />
-        </ConsoleListener>
+        </LoggingListener>
       </ChakraProvider>
     </React.StrictMode>
   );

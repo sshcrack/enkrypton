@@ -1,13 +1,14 @@
 pub mod consts;
 
 use anyhow::Result;
+use consts::{RSA_KEY_SIZE, RSA_PADDING};
 use openssl::{
+    encrypt::{Decrypter, Encrypter},
     error::ErrorStack,
-    pkey::{Private, Public, PKey},
-    rsa::Rsa, encrypt::{Encrypter, Decrypter},
+    pkey::{PKey, Private, Public},
+    rsa::Rsa,
 };
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use consts::{RSA_PADDING, RSA_KEY_SIZE};
 
 /// Just a wrapper to the openssl RSA Key. Used for serialization and deserialization.
 #[derive(Clone, Debug)]
@@ -27,7 +28,7 @@ impl Serialize for PrivateKey {
     }
 }
 
-/// Deserialize the private key from a PEM string
+/// Parses the public key from a PEM string (String is given in Vec<u8> utf8 bytes)
 impl<'a> Deserialize<'a> for PrivateKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -46,7 +47,7 @@ impl<'a> Deserialize<'a> for PrivateKey {
 #[derive(Clone, Debug)]
 pub struct PublicKey(pub Rsa<Public>);
 
-/// Well, a private key can be converted into a public key so we do that here.
+/// Converts the private key to a public key by converting it to a pem and then back to a public key
 impl TryInto<PublicKey> for PrivateKey {
     type Error = ErrorStack;
 
@@ -86,50 +87,79 @@ impl<'a> Deserialize<'a> for PublicKey {
     }
 }
 
-/// Generates a brand new key pair with 4096 bits
-pub fn generate_pair() -> PrivateKey {
-    // Generating the actual keypair
-    let res = Rsa::generate(*RSA_KEY_SIZE).unwrap();
+impl PrivateKey {
+    /// Generates a new RSA key pair with the key size of RSA_KEY_SIZE.
+    ///
+    /// # Returns
+    ///
+    /// The generated RSA key pair.
+    ///
+    /// # Returns
+    ///
+    /// The generated RSA key pair.
+    pub fn generate_pair() -> Result<Self> {
+        let res = Rsa::generate(*RSA_KEY_SIZE)?;
 
-    PrivateKey(res)
+        Ok(Self(res))
+    }
+
+    /// Decrypts the given data with the given private key.
+    ///
+    /// # Arguments
+    ///
+    /// * `encrypted` - The encrypted data to decrypt.
+    /// * `encrypted` - The private key
+    ///
+    /// # Returns
+    ///
+    ///
+    pub fn rsa_decrypt(&self, encrypted: Vec<u8>) -> Result<Vec<u8>> {
+        let key = PKey::from_rsa(self.0.clone())?;
+
+        let mut decrypter = Decrypter::new(&key)?;
+        decrypter.set_rsa_padding(*RSA_PADDING)?;
+
+        // Create an output buffer
+        let buffer_len = decrypter.decrypt_len(&encrypted)?;
+        let mut decrypted = vec![0; buffer_len];
+
+        // Encrypt and truncate the buffer
+        let decrypted_len = decrypter.decrypt(&encrypted, &mut decrypted)?;
+        decrypted.truncate(decrypted_len);
+
+        Ok(decrypted)
+    }
 }
 
-///Encrypting the data with the given key
-pub fn rsa_encrypt(data: Vec<u8>, key: &PublicKey) -> Result<Vec<u8>> {
-    let key = key.0.clone();
+impl PublicKey {
+    /// Encrypts the given data with the given public key.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A vector of bytes to encrypt.
+    /// * `key` - The public key to encrypt the data with.
+    ///
+    /// # Returns
+    /// The encrypted data.
+    ///
+    pub fn rsa_encrypt(&self, data: Vec<u8>) -> Result<Vec<u8>> {
+        let key = self.0.clone();
 
-    // Generate a keypair
-    let key = PKey::from_rsa(key)?;
+        // Generate a keypair
+        let key = PKey::from_rsa(key)?;
 
-    // Encrypt the data with RSA PKCS1
-    let mut encrypter = Encrypter::new(&key)?;
-    encrypter.set_rsa_padding(*RSA_PADDING)?;
+        // Encrypt the data with RSA PKCS1
+        let mut encrypter = Encrypter::new(&key)?;
+        encrypter.set_rsa_padding(*RSA_PADDING)?;
 
-    // Create an output buffer
-    let buffer_len = encrypter.encrypt_len(&data)?;
-    let mut encrypted = vec![0; buffer_len];
+        // Create an output buffer
+        let buffer_len = encrypter.encrypt_len(&data)?;
+        let mut encrypted = vec![0; buffer_len];
 
-    // Encrypt and truncate the buffer
-    let encrypted_len = encrypter.encrypt(&data, &mut encrypted)?;
-    encrypted.truncate(encrypted_len);
+        // Encrypt and truncate the buffer
+        let encrypted_len = encrypter.encrypt(&data, &mut encrypted)?;
+        encrypted.truncate(encrypted_len);
 
-    Ok(encrypted)
-}
-
-/// Decrypting the data with the given openssl key
-pub fn rsa_decrypt(encrypted: Vec<u8>, key: PrivateKey) -> Result<Vec<u8>> {
-    let key = PKey::from_rsa(key.0.clone())?;
-
-    let mut decrypter = Decrypter::new(&key)?;
-    decrypter.set_rsa_padding(*RSA_PADDING)?;
-
-    // Create an output buffer
-    let buffer_len = decrypter.decrypt_len(&encrypted)?;
-    let mut decrypted = vec![0; buffer_len];
-
-    // Encrypt and truncate the buffer
-    let decrypted_len = decrypter.decrypt(&encrypted, &mut decrypted)?;
-    decrypted.truncate(decrypted_len);
-
-    Ok(decrypted)
+        Ok(encrypted)
+    }
 }

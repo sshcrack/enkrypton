@@ -30,7 +30,7 @@ pub(super) type WriteStream = SplitSink<WebSocketStream<Socks5Stream<TcpStream>>
 // The read stream of the websocket
 pub(super) type ReadStream = SplitStream<WebSocketStream<Socks5Stream<TcpStream>>>;
 
-/// The client used to communicate with the server over the tor network
+/// The main websocket client used to communicate with the server over the tor network
 #[derive(Debug)]
 pub struct MessagingClient {
     /// The stream to send messages to the server
@@ -45,13 +45,21 @@ pub struct MessagingClient {
 
     /// A receiver used in the common messaging manager to receive general messages
     pub rx: Receiver<S2CPacket>,
-    /// The flush checker used to check if we should flush the websocket (So if we should send all messages in queue)
+    /// The flush checker used to check if we should flush the websocket (So if we should send all messages in queue).
     flush_checker: FlushChecker
 }
 
 impl MessagingClient {
     //noinspection SpellCheckingInspection
     /// Connects to the given server and returns the newly constructed client
+    ///
+    /// # Arguments
+    ///
+    /// * `onion_hostname` - The hostname to connect to
+    ///
+    /// # Returns
+    /// The constructed websocket client
+    /// 
     pub async fn new(onion_hostname: &str) -> Result<Self> {
         // Sending the status update to the frontend (So the user knows what's going on)
         let _ = get_app()
@@ -66,17 +74,20 @@ impl MessagingClient {
         // Creating a verify packet to send to the client
         let verify_packet = C2SPacket::identity(onion_hostname).await?;
 
+        // For developing purposes, one could send himself messages, obviously disabling that for production
         #[cfg(not(feature = "dev"))]
         let connect_host = onion_hostname.to_string();
         #[cfg(feature = "dev")]
         let connect_host = onion_hostname
             .replace("-dev-server", "")
             .replace("-dev-client", "");
+
         // The address which is used to connect to the websocket
         let onion_addr = format!("ws://{}.onion/ws/", connect_host);
 
         debug!("[CLIENT] Creating proxy...");
-        // Creating the Socks5Proxy client,u sed to connect to the tor network
+
+        // Creating the Socks5Proxy client which is used to connect to the tor network
         let proxy = SocksProxy::new()?;
         debug!("[CLIENT] Connecting Proxy...");
         let mut onion_addr = Url::parse(&onion_addr)?;
@@ -84,11 +95,12 @@ impl MessagingClient {
             .set_scheme("ws")
             .or(Err(anyhow!("[CLIENT] Could not set scheme")))?;
 
-        // Connecting to the onion server over the tor network
+        // Connecting to the destination host using the proxyy
         let sock = proxy.connect(&onion_addr).await?;
 
         debug!("[CLIENT] Connecting Tungstenite...");
-        // Again, sending a new status update
+
+        // And notifying the front end again about our progress
         let _ = get_app()
             .await
             .emit_payload(WsClientUpdatePayload {
@@ -148,6 +160,14 @@ impl MessagingClient {
     }
 
     /// Adds the given packet to the send queue of the client
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The packet to add to the queue
+    ///
+    /// # Returns
+    /// If it was successful in a `Result`
+    /// 
     pub async fn feed_packet(&self, msg: C2SPacket) -> Result<()> {
         debug!("[CLIENT] Locking write mutex...");
         let mut state = self.write.lock().await;
@@ -160,7 +180,15 @@ impl MessagingClient {
     }
 
     /// Spawns a thread to read incoming packets from the server.
-    /// Handles other misc packages and sends messages to the common messaging manager
+    /// Handles other misc packages and sends messages to the common messaging manager.
+    /// Sets the handle to the thread in the read_thread field.
+    ///
+    /// # Arguments
+    ///
+    /// * `tx` - The sender used to send messages to the common messaging manager (and then to the server)
+    /// * `(tuple)` - Contains read and write streams about the self hosted server to send messages between
+    /// * `flush_exit` - Whether the flush checker should exit
+    ///
     fn spawn_read_thread(
         &mut self,
         tx: Sender<S2CPacket>,
@@ -232,7 +260,19 @@ impl MessagingClient {
         self.read_thread = Arc::new(Some(handle));
     }
 
-    /// Handles the given packet with environment variables (such as receiver, write stream, etc.)
+    /// Handles the given packet with additional variables (such as receiver, write stream, etc.)
+    /// which can be useful to reply to this packet.
+    ///
+    /// # Arguments
+    ///
+    /// * `packet` - The packet that was sent from the receiver to us
+    /// * `receiver` - The receiver onion hostname
+    /// * `write` - A stream to send packets to the server
+    /// * `tx` - A sender to send packets to the common messaging manager
+    ///
+    /// # Returns
+    /// A result if it was successful
+    /// 
     async fn handle_packet(
         packet: S2CPacket,
         receiver: &str,

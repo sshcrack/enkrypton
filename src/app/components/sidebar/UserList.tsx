@@ -16,6 +16,10 @@ export type UserListProps = {
     setReceivers: ReactSetState<GeneralUser[]>
 } & Omit<FlexProps, "children">
 
+/**
+ * The sidebar that displays all users.
+ * @param props Type of UserListProps
+ */
 export default function UserList({ receivers, setReceivers, ...props }: UserListProps) {
     // Currently active user
     const { setActive, active } = useContext(MainContext);

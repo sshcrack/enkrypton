@@ -8,6 +8,12 @@ type Event2Payload = {
     "splashscreen_closed": null
 }
 
+/**
+ * Listens to a tauri event and calls the handler with the correct payload.
+ * @param event The event name.
+ * @param handler The handler to call.
+ * @returns a function to remove the listener.
+ */
 export function listenSync<E extends keyof Event2Payload>(event: E, handler: (payload: Event<Event2Payload[E]>) => unknown) {
     let unlistenFunc: UnlistenFn = () => { }
 

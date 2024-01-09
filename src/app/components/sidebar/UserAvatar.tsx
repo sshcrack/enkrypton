@@ -9,6 +9,10 @@ export type UserAvatarProps = {
     seed: string
 }
 
+/**
+ * Generates the avatar of a user from a given seed.
+ * @param props
+ */
 export default function UserAvatar({ seed }: UserAvatarProps) {
     // Creates the avatar once from the given seed
     const avatar = useMemo(() => {

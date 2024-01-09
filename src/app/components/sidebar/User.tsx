@@ -11,6 +11,10 @@ export type ReceiverSidebarProps = {
     user: GeneralUser
 } & FlexProps
 
+/**
+ * Dispalys a sidebar item for a user.
+ * @param props
+ */
 export default function UserSidebar({ user, ...props }: ReceiverSidebarProps) {
     const { setActive, active } = useContext(MainContext)
 

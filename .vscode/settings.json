@@ -3,6 +3,8 @@
         "enkrypton",
         "smol",
         "splashscreen",
+        "tauri",
+        "torrc",
         "unlisten"
     ],
     "rust-analyzer.linkedProjects": [

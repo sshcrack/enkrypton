@@ -12,7 +12,11 @@ use tauri::async_runtime::block_on;
 
 use crate::{misc::{integrity_check::check_integrity, tools::{get_to_tor_tx, get_from_tor_rx}, messages::{Client2TorMsg, Tor2ClientMsg, TorStartError}}, consts::{TOR_START_LOCK, TOR_THREAD}, mainloop::tor_main_loop, service::get_service_hostname};
 
-// Starts tor and accepts a function that will be used to report about the progress
+/// Starts tor and accepts a function that will be used to report about the progress
+///
+/// # Arguments
+///
+/// * `on_event` - The function that will be used to report about the progress
 pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     let already_started = TOR_THREAD.read().await;
     if already_started.is_some() {
@@ -68,6 +72,7 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
                     });
 
                     if progress == 1.0 {
+                        // Tor is done starting up so we are exiting the read loop
                         break;
                     }
                 }

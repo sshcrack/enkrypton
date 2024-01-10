@@ -2,7 +2,7 @@ use std::{fs::File, io::{self, Cursor}};
 
 use anyhow::Result;
 use log::error;
-use sha2::{Digest, Sha256};
+use sha2::{Digest, Sha256, digest::KeyInit};
 
 use crate::consts::{TOR_BINARY_PATH, TOR_BINARY_HASH};
 
@@ -42,6 +42,10 @@ fn extract_tor() -> Result<()> {
 }
 
 /// Checks if the tor binary is valid by comparing the hash of the binary to the hash in `TOR_BINARY_HASH`
+/// 
+/// # Returns
+/// 
+/// a boolean indicating whether the tor binary is valid or not (has a valid hash)
 fn is_tor_binary_valid() -> Result<bool> {
     let mut file = File::open(TOR_BINARY_PATH.clone())?;
 

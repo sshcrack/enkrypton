@@ -7,7 +7,8 @@ use regex::Regex;
 use storage_internal::STORAGE;
 use tor_proxy::manager::{stop_tor, wait_for_exit};
 
-/// A function to convert an error to a string
+/// A function to convert an error to a string.
+/// Acts as a helper function for commands
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where
     E: ToString + Display,

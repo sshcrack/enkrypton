@@ -18,7 +18,16 @@ pub trait Parsable<'a, T>
 where
     T: serde::de::Deserialize<'a> + serde::Serialize + Debug + Zeroize,
 {
-    /// Parses the given raw file and returns a SecureStorage
+    /// Parses the given raw file and returns a SecureStorage.
+    /// Don't forget to call self.decrypt!
+    ///
+    /// # Arguments
+    ///
+    /// * `raw` - The raw file in bytes that should be parsed
+    ///
+    /// # Returns
+    ///
+    /// The parsed `SecureStorage`
     fn parse(raw: &[u8]) -> Result<SecureStorage<T>>;
 }
 
@@ -27,7 +36,6 @@ impl<'a, T> Parsable<'a, T> for SecureStorage<T>
 where
     T: serde::de::Deserialize<'a> + serde::Serialize + Debug + Zeroize,
 {
-    /// Don't forget to call self.decrypt!
     fn parse(raw: &[u8]) -> Result<SecureStorage<T>> {
         let mut buffer = Vec::from(raw);
         if raw.len() < FILE_ID_BYTES.len() {

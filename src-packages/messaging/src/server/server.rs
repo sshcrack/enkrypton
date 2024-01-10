@@ -8,7 +8,8 @@ use tauri::async_runtime::block_on;
 
 use super::routes::{hello, ws_index};
 
-/// Starts the local webserver in a new thread and runs the server_mainloop
+/// Starts the local webserver in a new thread which runs the server_mainloop.
+/// Listens to CONFIG.service_port() and only to localhost
 pub fn start_webserver() {
     thread::Builder::new().name("webserver".to_string()).spawn(move || {
         let res = block_on(server_mainloop());
@@ -21,7 +22,8 @@ pub fn start_webserver() {
     }).unwrap();
 }
 
-/// Just initializes a new async webserver and listens just to local connections and to the specified port
+/// Just initializes a new async webserver and listens just to local connections and to the specified port.
+/// Used to listen for new websocket connections
 async fn server_mainloop() -> Result<()> {
     HttpServer::new(|| {
         return App::new()

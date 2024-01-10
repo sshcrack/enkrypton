@@ -177,14 +177,27 @@ impl MessagingManager {
         self.connections.read().await.contains_key(onion_host)
     }
 
-    // TODO End of day, continue commenting here
-
     /// Removes the connection with the given host name
+    ///
+    /// # Arguments
+    ///
+    /// * `onion_host` - The receiver to remove the connection from
+    ///
     pub async fn remove_connection(&self, onion_host: &str) {
         self.connections.write().await.remove(onion_host);
     }
 
     /// Setting the new msg status and updates the storage/frontend
+    ///
+    /// # Arguments
+    ///
+    /// * `onion_host` - The host to set the msg status for
+    /// * `date` - The message id / date of the message to update
+    /// * `status` - The new status to set
+    ///
+    /// # Returns
+    /// 
+    /// A `Result whether the operation was successful
     pub async fn set_msg_status(
         &self,
         onion_host: &str,

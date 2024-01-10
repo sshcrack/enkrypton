@@ -33,7 +33,7 @@ lazy_static! {
 
 }
 
-/// Sets all channels up. Documentation is at the channels themselves
+/// Initializes every channel used to communicate with the tor thread
 pub async fn setup_tor_channels() {
     let (to_tx, to_rx) = async_channel::unbounded::<Client2TorMsg>();
     let (from_tx, from_rx) = async_channel::unbounded::<Tor2ClientMsg>();
@@ -47,7 +47,9 @@ pub async fn setup_tor_channels() {
 
 
 /// Gets the hash of the tor binary, which is platform specific so this is just a helper function
+/// 
 /// # Returns
+/// 
 /// The hash of the tor binary encoded in hex
 fn get_tor_binary_hash() -> String {
     #[cfg(all(target_os ="windows", target_arch = "x86_64"))]

@@ -1,6 +1,6 @@
 [package]
 name = "enkrypton"
-version = "1.0.0"
+version = "1.0.2"
 description = "End-To-End Encrypted Decentralized Messaging App with Tor"
 authors = ["sshcrack"]
 license = ""

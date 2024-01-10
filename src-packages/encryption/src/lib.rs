@@ -113,7 +113,7 @@ impl PrivateKey {
     /// # Returns
     ///
     ///
-    pub fn rsa_decrypt(&self, encrypted: Vec<u8>) -> Result<Vec<u8>> {
+    pub fn decrypt(&self, encrypted: Vec<u8>) -> Result<Vec<u8>> {
         let key = PKey::from_rsa(self.0.clone())?;
 
         let mut decrypter = Decrypter::new(&key)?;
@@ -142,7 +142,7 @@ impl PublicKey {
     /// # Returns
     /// The encrypted data.
     ///
-    pub fn rsa_encrypt(&self, data: Vec<u8>) -> Result<Vec<u8>> {
+    pub fn encrypt(&self, data: Vec<u8>) -> Result<Vec<u8>> {
         let key = self.0.clone();
 
         // Generate a keypair

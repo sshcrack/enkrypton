@@ -5,7 +5,6 @@ use std::{
 
 use actix_web::Either;
 use anyhow::{anyhow, Result};
-use encryption::rsa_decrypt;
 use log::{debug, error, warn};
 use payloads::{
     event::AppHandleExt,
@@ -73,7 +72,7 @@ impl ConnectionReadThread {
         debug!("Done");
         drop(storage);
 
-        let msg = rsa_decrypt(msg, priv_key)?;
+        let msg = priv_key.decrypt(msg)?;
         let msg = String::from_utf8(msg)?;
 
         println!(

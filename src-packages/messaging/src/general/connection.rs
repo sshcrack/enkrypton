@@ -5,7 +5,6 @@ use crate::{client::MessagingClient, server::ws_manager::ServerChannels};
 use actix_web::Either;
 use anyhow::{anyhow, Result};
 use async_channel::{Receiver, Sender};
-use encryption::rsa_encrypt;
 use log::{debug, error, info};
 use payloads::{
     event::AppHandleExt,
@@ -223,7 +222,7 @@ impl Connection {
 
         println!("Sending");
         // And encrypt the message
-        let bin = rsa_encrypt(raw, &pub_key)?;
+        let bin = pub_key.encrypt(raw)?;
 
         // And send it to the receiver
         match &*self.info.read().await {

@@ -2,7 +2,7 @@ use std::{fs::File, io::{self, Cursor}};
 
 use anyhow::Result;
 use log::error;
-use sha2::{Digest, Sha256, digest::KeyInit};
+use sha2::{Digest, Sha256};
 
 use crate::consts::{TOR_BINARY_PATH, TOR_BINARY_HASH};
 

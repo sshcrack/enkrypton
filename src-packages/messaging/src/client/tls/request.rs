@@ -118,7 +118,7 @@ impl<'a> Request<'a> {
         let prepend = self.get_http_payload(&url, path)?;
         stream.write_all(prepend.as_bytes()).await?;
 
-        let resp = Response::from_stream(stream).await?;
+        let resp = Response::from_stream(stream).await;
         return Ok(resp);
     }
 }

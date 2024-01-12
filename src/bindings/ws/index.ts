@@ -3,8 +3,10 @@ import { ClientMap } from './client/map';
 import { WsClientUpdatePayload } from '../rs/WsClientUpdatePayload';
 import { WsMessageStatusPayload } from '../rs/WsMessageStatusPayload';
 
-if (!window.clients)
+if (!window.clients) {
+    console.log("New client map")
     window.clients = new ClientMap();
+}
 
 
 

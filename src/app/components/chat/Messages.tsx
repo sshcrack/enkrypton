@@ -21,7 +21,7 @@ export default function Messages({ }: MessagesProps) {
 
     const msg = client.messages()
     return <>
-        {msg.map(({ msg, self_sent, date, status }, i) => {
+        {msg.map(({ msg, self_sent, date, status }) => {
             // Parsing backend status to message status
             let statusMsg: 'waiting' | 'sent' | 'received' | 'read' = "waiting";
             switch (status) {
@@ -46,7 +46,6 @@ export default function Messages({ }: MessagesProps) {
             const msgComp = <MessageBox
                 position={self_sent ? "right" : "left"}
                 type={'text'}
-                key={i}
                 date={date}
                 focus={false}
                 forwarded={false}
@@ -63,7 +62,7 @@ export default function Messages({ }: MessagesProps) {
             />
 
             // Rendering the message only if it is visible
-            return <RenderIfVisible defaultHeight={ESTIMATED_ITEM_HEIGHT}>
+            return <RenderIfVisible defaultHeight={ESTIMATED_ITEM_HEIGHT} key={`${date}`}>
                 {msgComp}
             </RenderIfVisible>
         })}

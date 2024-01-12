@@ -60,7 +60,7 @@ export default function App() {
 
   // Showing unlock screen if storage is locked
   if (!unlocked) {
-    return <Flex w='100%' h='100%' flexDir='column' justifyContent='space-between' p='2'>
+    return <Flex w='100%' h='100%' flexDir='column' justifyContent='space-between' p='5'>
       <Heading size='md'>Unlock Enkrypton</Heading>
 
       <FormControl isInvalid={(passInvalid || pwd.length === 0) && submittedOnce}>

@@ -4,14 +4,10 @@ import { Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Input
 import { ChangeEvent, useEffect, useState } from 'react';
 import tor from '../../bindings/tor';
 import ws from '../../bindings/ws';
+import { isAddressValid } from '../../tools/misc';
 
 export type ConnectFormProps = {
     onConnected: () => unknown
-}
-
-function isAddressValid(_value: string) {
-    //TODO - actually check here
-    return true;
 }
 
 

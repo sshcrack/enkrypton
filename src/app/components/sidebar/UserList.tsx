@@ -1,9 +1,10 @@
-import { Button, Flex, FlexProps, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useDisclosure } from '@chakra-ui/react'
+import { Button, Flex, FlexProps, FormControl, FormErrorMessage, FormHelperText, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useDisclosure } from '@chakra-ui/react'
 import { GeneralUser } from '../../../bindings/ws/client/types'
 import UserSidebar from './User'
 import { useContext, useEffect, useState } from "react"
 import { MainContext } from '../MainProvider'
 import { ReactSetState } from '../../../tools/react'
+import { isAddressValid } from '../../../tools/misc'
 
 export type UserListProps = {
     /**
@@ -34,6 +35,8 @@ export default function UserList({ receivers, setReceivers, ...props }: UserList
         setActive(receivers[0])
     }, [active, receivers])
 
+    const isError = !isAddressValid(toAdd)
+    console.log("Err", isError)
     return <>
         <Flex
             h='100%'
@@ -63,8 +66,16 @@ export default function UserList({ receivers, setReceivers, ...props }: UserList
                 <ModalHeader>Add User</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
-                    <Text>Which user do you want to add?</Text>
-                    <Input value={toAdd} onChange={e => setToAdd(e.target.value)} />
+                    <FormControl isInvalid={isError}>
+                        <Text>Which user do you want to add?</Text>
+                        <Input value={toAdd} onChange={e => setToAdd(e.target.value)} />
+
+                        {!isError ? (
+                            <FormHelperText>Enter the address the client should connect to</FormHelperText>
+                        ) : (
+                            <FormErrorMessage>This is not a valid onion address</FormErrorMessage>
+                        )}
+                    </FormControl>
                 </ModalBody>
 
                 <ModalFooter>
@@ -77,7 +88,7 @@ export default function UserList({ receivers, setReceivers, ...props }: UserList
                         if (receivers.some(e => e.onionHostname === toAdd))
                             return
 
-                        setReceivers([...receivers, { nickname: "Unknown", onionHostname: toAdd }])
+                        setReceivers([...receivers, { nickname: toAdd, onionHostname: toAdd }])
                     }}>Add User</Button>
                 </ModalFooter>
             </ModalContent>

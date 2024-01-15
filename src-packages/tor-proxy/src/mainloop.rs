@@ -21,10 +21,13 @@ use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
 use crate::{
-    consts::{TOR_BINARY_PATH, get_pluggable_transport},
+    consts::TOR_BINARY_PATH,
     misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
+
+#[cfg(all(target_family = "unix", feature = "snowflake"))]
+use crate::consts::get_pluggable_transport;
 
 #[cfg(all(feature = "snowflake", target_family = "unix"))]
 use crate::consts::get_rel_snowflake;

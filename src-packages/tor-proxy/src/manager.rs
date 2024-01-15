@@ -10,7 +10,7 @@ use shared::{get_torrc, config::CONFIG};
 use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
-use crate::{misc::{integrity_check::check_integrity, tools::{get_to_tor_tx, get_from_tor_rx}, messages::{Client2TorMsg, Tor2ClientMsg, TorStartError}}, consts::{TOR_START_LOCK, TOR_THREAD}, mainloop::tor_main_loop, service::get_service_hostname};
+use crate::{misc::{integrity_check::check_integrity, tools::{get_to_tor_tx, get_from_tor_rx}, messages::{Client2TorMsg, Tor2ClientMsg, TorStartError}}, consts::{TOR_START_LOCK, TOR_THREAD}, mainloop::tor_main_loop, service::get_service_hostname, config::ConfigExt};
 
 /// Starts tor and accepts a function that will be used to report about the progress
 ///
@@ -91,15 +91,18 @@ pub async fn start_tor(on_event: impl Fn(StartTorPayload) -> ()) -> Result<()> {
     Ok(())
 }
 
+/// Writes the configuration file for tor
 pub async fn write_torrc() -> Result<()> {
     let buf = get_torrc();
     let mut file = File::create(buf)?;
 
-    file.write_all(CONFIG.to_text().as_bytes())?;
+    let config = CONFIG.to_text().await?;
+    file.write_all(config.as_bytes())?;
 
     Ok(())
 }
 
+/// Waits for tor to exit and blocks the main handle
 pub async fn wait_for_exit() {
     let mut handle = TOR_THREAD.write().await;
 
@@ -111,6 +114,7 @@ pub async fn wait_for_exit() {
         .expect("msg");
 }
 
+/// Sends the exit signal to tor
 pub async fn stop_tor() -> Result<()> {
     let handle = TOR_THREAD.read().await;
     if !handle.is_some() {

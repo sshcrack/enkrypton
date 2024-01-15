@@ -3,6 +3,7 @@ use std::{fs::File, io::{self, Cursor}};
 use anyhow::Result;
 use log::error;
 use sha2::{Digest, Sha256};
+use shared::get_root_dir;
 
 use crate::consts::{TOR_BINARY_PATH, TOR_BINARY_HASH};
 
@@ -35,8 +36,8 @@ fn extract_tor() -> Result<()> {
     #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
     let tor_zip = include_bytes!("../../assets/windows/i686/tor.zip");
 
-    let target_dir = TOR_BINARY_PATH.parent().unwrap();
-    zip_extract::extract(Cursor::new(tor_zip),target_dir, true)?;
+    let target_dir = get_root_dir();
+    zip_extract::extract(Cursor::new(tor_zip),&target_dir, true)?;
 
     Ok(())
 }

@@ -1,11 +1,13 @@
 use std::{path::PathBuf, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
-use shared::get_tor_path;
 use lazy_static::lazy_static;
+use shared::get_tor_path;
 use tokio::sync::RwLock;
 
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
+#[cfg(feature = "snowflake")]
+use std::path::Path;
 
 lazy_static! {
     /// Hash of the Tor binary, used to verify the integrity of the binary
@@ -45,27 +47,51 @@ pub async fn setup_tor_channels() {
     FROM_TOR_RX.write().await.replace(from_rx);
 }
 
-
 /// Gets the hash of the tor binary, which is platform specific so this is just a helper function
-/// 
+///
 /// # Returns
-/// 
+///
 /// The hash of the tor binary encoded in hex
 fn get_tor_binary_hash() -> String {
-    #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
-    let hash = include_str!("../assets/windows/x86_64/tor.exe.hash");
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    let hash = include_str!("../assets/windows/x86_64/tor.hash");
 
-    #[cfg(all(target_os ="windows", target_arch = "x86", not(target_arch="x86_64")))]
-    let hash = include_str!("../assets/windows/i686/tor.exe.hash");
+    #[cfg(all(
+        target_os = "windows",
+        target_arch = "x86",
+        not(target_arch = "x86_64")
+    ))]
+    let hash = include_str!("../assets/windows/i686/tor.hash");
 
-    #[cfg(all(target_os ="linux", target_arch = "x86_64"))]
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     let hash = include_str!("../assets/linux/x86_64/tor.hash");
 
-    #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
+    #[cfg(all(target_os = "linux", target_arch = "x86", not(target_arch = "x86_64")))]
     let hash = include_str!("../assets/windows/i686/tor.hash");
 
     // Checks if the hash is valid
     hex::decode(hash).unwrap();
 
     return String::from(hash);
+}
+
+#[cfg(feature = "snowflake")]
+pub fn get_pluggable_transport() -> Box<Path> {
+    TOR_BINARY_PATH
+        .parent()
+        .unwrap()
+        .join("pluggable_transports")
+        .into_boxed_path()
+}
+
+#[cfg(feature = "snowflake")]
+pub fn get_snowflake_path() -> Box<Path> {
+    #[cfg(target_os = "windows")]
+    let snowflake_bin = "snowflake-client.exe";
+    #[cfg(not(target_os = "windows"))]
+    let snowflake_bin = "snowflake-client";
+
+    get_pluggable_transport()
+        .join(snowflake_bin)
+        .into_boxed_path()
 }

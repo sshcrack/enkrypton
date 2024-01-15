@@ -18,6 +18,17 @@ pub trait ConfigExt {
     async fn to_text(&self) -> Result<String>;
 }
 
+fn fix_bridges(bridges: Vec<String>) -> Vec<String> {
+    if cfg!(windows) {
+        bridges
+    } else {
+        bridges
+        .iter()
+        .map(|e| e.replace(".net.global.prod.fastly", ""))
+        .collect()
+    }
+}
+
 #[async_trait]
 impl ConfigExt for TorConfig {
     //noinspection SpellCheckingInspection
@@ -68,9 +79,11 @@ GeoIPv6File \"{}\"",
                 .map(|e| format!("Bridge {}", e))
                 .collect();
 
+            let bridges = fix_bridges(bridges);
+
             config = format!(
                 "{}
-ClientTransportPlugin snowflake exec {} -log snowflake.log
+ClientTransportPlugin snowflake exec ./{} -log snowflake.log
 
 {}
 UseBridges 1",

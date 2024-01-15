@@ -21,13 +21,13 @@ use log::{debug, error, info};
 use tauri::async_runtime::block_on;
 
 use crate::{
-    consts::TOR_BINARY_PATH,
+    consts::{TOR_BINARY_PATH, get_pluggable_transport},
     misc::{messages::Client2TorMsg, tools::get_to_tor_rx},
     parser::stdout::handle_tor_stdout,
 };
 
 #[cfg(all(feature = "snowflake", target_family = "unix"))]
-use crate::consts::get_snowflake_path;
+use crate::consts::get_rel_snowflake;
 
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -41,14 +41,27 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     // Setting executable perms for tor
     fs::set_permissions(&*TOR_BINARY_PATH, PermissionsExt::from_mode(0o755)).unwrap();
 
+
     #[cfg(all(target_family = "unix", feature = "snowflake"))]
-    // Setting executable perms for snowflake client if enabled
-    fs::set_permissions(&*get_snowflake_path(), PermissionsExt::from_mode(0o755)).unwrap();
+    {
+        let path = get_pluggable_transport();
+        let rel = get_rel_snowflake();
+
+        let mut path = path.join("..");
+        path.push(rel);
+
+        let path = path.into_boxed_path();
+
+        // Setting executable perms for snowflake client if enabled
+        fs::set_permissions(&path, PermissionsExt::from_mode(0o755)).unwrap();
+    }
 
     // Starts tor
     let mut child = Command::new(TOR_BINARY_PATH.clone());
     child.args(["-f", &get_torrc().to_string_lossy()]);
+    child.current_dir(TOR_BINARY_PATH.parent().unwrap());
     child.stdout(Stdio::piped());
+    child.stderr(Stdio::piped());
 
     #[cfg(target_family = "unix")]
     // We need to tell Linux about the additional dynamic libraries provided by tor

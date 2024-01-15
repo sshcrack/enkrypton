@@ -12,6 +12,7 @@ use payloads::{
     payloads::{WsClientStatus, WsClientUpdatePayload, WsMessageStatus},
 };
 use shared::{APP_HANDLE, util::now_millis};
+#[cfg(feature="dev")]
 use smol::block_on;
 use storage_internal::{helpers::ChatStorageHelper, STORAGE};
 use tokio::sync::RwLock;

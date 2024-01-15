@@ -28,6 +28,10 @@ pub fn get_tor_dir() -> PathBuf {
     let mut buf = get_root_dir();
     buf.push("tor");
 
+    if buf.is_file() {
+        fs::remove_file(&buf).unwrap();
+    }
+
     if !buf.is_dir() {
         create_dir_all(&buf).unwrap();
     }

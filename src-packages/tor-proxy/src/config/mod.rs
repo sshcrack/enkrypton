@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use shared::config::TorConfig;
 use std::path::PathBuf;
 
-use crate::consts::{get_pluggable_transport, get_snowflake_path};
+use crate::consts::{get_pluggable_transport, get_rel_snowflake};
 #[cfg(feature = "snowflake")]
 use anyhow::Result;
 #[cfg(feature = "snowflake")]
@@ -68,15 +68,14 @@ GeoIPv6File \"{}\"",
                 .map(|e| format!("Bridge {}", e))
                 .collect();
 
-            let snowflake_bin = get_snowflake_path().to_string_lossy().replace("\\", "/");
             config = format!(
                 "{}
-ClientTransportPlugin snowflake exec \"{}\"
-            
+ClientTransportPlugin snowflake exec {} -log snowflake.log
+
 {}
 UseBridges 1",
                 config,
-                snowflake_bin,
+                get_rel_snowflake(),
                 bridges.join("\n")
             );
         }

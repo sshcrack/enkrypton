@@ -67,6 +67,7 @@ impl Connection {
                 "Could not send client update, app handle not there"
             ))
             .and_then(|handle| {
+                #[cfg(feature="dev")]
                 block_on(block_on(STORAGE.read()).get_data(|e| {
                     println!("Current chats are: {:?}", e.chats);
                     Ok(())
@@ -183,6 +184,7 @@ impl Connection {
         let res = self.inner_send(msg, date).await;
         if res.is_err() {
             debug!("Inner Send failed, setting status to failed");
+            debug!("{:?}", res.as_ref().unwrap_err());
             MESSAGING
                 .read()
                 .await

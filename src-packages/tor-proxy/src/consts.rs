@@ -76,6 +76,7 @@ fn get_tor_binary_hash() -> String {
 }
 
 #[cfg(feature = "snowflake")]
+/// Returns the absolute path of the pluggable transport path used in tor (contains pt_config.json for example)
 pub fn get_pluggable_transport() -> Box<Path> {
     TOR_BINARY_PATH
         .parent()
@@ -85,13 +86,15 @@ pub fn get_pluggable_transport() -> Box<Path> {
 }
 
 #[cfg(feature = "snowflake")]
-pub fn get_snowflake_path() -> Box<Path> {
+/// Gets the relative path of the snowflake binary
+pub fn get_rel_snowflake() -> String {
     #[cfg(target_os = "windows")]
     let snowflake_bin = "snowflake-client.exe";
     #[cfg(not(target_os = "windows"))]
     let snowflake_bin = "snowflake-client";
 
-    get_pluggable_transport()
-        .join(snowflake_bin)
-        .into_boxed_path()
+    let parent_dir = get_pluggable_transport();
+    let parent_dir = parent_dir.file_name().unwrap().to_string_lossy();
+
+    format!("{}/{}", parent_dir, snowflake_bin)
 }

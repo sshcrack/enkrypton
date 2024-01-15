@@ -80,6 +80,11 @@ impl TorConfig {
         return &self.service_dir;
     }
 
+    /// The service directory that tor should use
+    pub fn data_dir(&self) -> &OsString {
+        return &self.data_dir;
+    }
+
     /// The host the tor proxy should be listening on
     pub fn get_socks_host(&self) -> String {
         return format!("127.0.0.1:{}", self.socks_port);
@@ -88,25 +93,6 @@ impl TorConfig {
     /// Returns the hidden service host, as the name suggests
     pub fn get_hidden_service_host(&self) -> String {
         return format!("127.0.0.1:{}", self.service_port);
-    }
-
-    //noinspection SpellCheckingInspection
-    /// Converts the configuration to a `torrc` file format
-    ///
-    /// # Returns
-    ///
-    /// The `torrc` file as a string
-    pub fn to_text(&self) -> String {
-        return format!(
-"SocksPort {}
-HiddenServiceDir \"{}\"
-HiddenServicePort 80 {}
-DataDirectory \"{}\"",
-            self.get_socks_host(),
-            self.service_dir.to_string_lossy().replace("\\", "/"),
-            self.get_hidden_service_host(),
-            self.data_dir.to_string_lossy().replace("\\", "/")
-        );
     }
 }
 

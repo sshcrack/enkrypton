@@ -10,10 +10,10 @@ use std::{
 };
 
 use shared::get_torrc;
-#[cfg(target_family="unix")]
-use shared::get_root_dir;
-#[cfg(target_family="unix")]
-use std::env;
+#[cfg(target_family = "unix")]
+use smol::fs::unix::PermissionsExt;
+#[cfg(target_family = "unix")]
+use std::{env, fs};
 use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
 
 use anyhow::{anyhow, Result};
@@ -26,6 +26,9 @@ use crate::{
     parser::stdout::handle_tor_stdout,
 };
 
+#[cfg(all(feature = "snowflake", target_family = "unix"))]
+use crate::consts::get_snowflake_path;
+
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -33,6 +36,14 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 /// Controls and interprets the output of the tor process
 pub(super) async fn tor_main_loop() -> Result<()> {
     info!("Starting tor...");
+
+    #[cfg(target_family = "unix")]
+    // Setting executable perms for tor
+    fs::set_permissions(&*TOR_BINARY_PATH, PermissionsExt::from_mode(0o755)).unwrap();
+
+    #[cfg(all(target_family = "unix", feature = "snowflake"))]
+    // Setting executable perms for snowflake client if enabled
+    fs::set_permissions(&*get_snowflake_path(), PermissionsExt::from_mode(0o755)).unwrap();
 
     // Starts tor
     let mut child = Command::new(TOR_BINARY_PATH.clone());
@@ -43,7 +54,11 @@ pub(super) async fn tor_main_loop() -> Result<()> {
     // We need to tell Linux about the additional dynamic libraries provided by tor
     {
         let ld = env::var("LD_LIBRARY_PATH").unwrap_or_default();
-        let ld = format!("{}:{}", ld, get_root_dir().to_string_lossy());
+        let ld = format!(
+            "{}:{}",
+            ld,
+            TOR_BINARY_PATH.parent().unwrap().to_string_lossy()
+        );
         child.env("LD_LIBRARY_PATH", ld);
     }
 
@@ -60,17 +75,19 @@ pub(super) async fn tor_main_loop() -> Result<()> {
 
     let temp = should_exit.clone();
 
-
     // Spawns the tor thread to handle tor stdout
-    let handle = thread::Builder::new().name("tor-stdout".to_string()).spawn(move || {
-        let res = block_on(handle_tor_stdout(temp, child));
-        if res.is_ok() {
-            info!("TOR: Thread finished");
-        } else {
-            let err = res.unwrap_err();
-            error!("TOR: failed {}", err);
-        }
-    }).unwrap();
+    let handle = thread::Builder::new()
+        .name("tor-stdout".to_string())
+        .spawn(move || {
+            let res = block_on(handle_tor_stdout(temp, child));
+            if res.is_ok() {
+                info!("TOR: Thread finished");
+            } else {
+                let err = res.unwrap_err();
+                error!("TOR: failed {}", err);
+            }
+        })
+        .unwrap();
 
     let rx = get_to_tor_rx().await;
     // If we should exit, break and tell the tor process to exit as well

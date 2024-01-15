@@ -18,6 +18,23 @@ pub fn get_root_dir() -> PathBuf {
     buf
 }
 
+
+/// The main root directory of tor, creating it if it does not exist
+///
+/// # Returns
+///
+/// Returns the path of the root directory
+pub fn get_tor_dir() -> PathBuf {
+    let mut buf = get_root_dir();
+    buf.push("tor");
+
+    if !buf.is_dir() {
+        create_dir_all(&buf).unwrap();
+    }
+
+    buf
+}
+
 /// The service directory the tor proxy should be using. Defaulted to `enkrypton_root/service`.
 /// Creates a directory if it does not exist
 ///
@@ -72,7 +89,7 @@ pub fn get_torrc() -> PathBuf {
 ///
 /// The platform specific path to the tor executable
 pub fn get_tor_path() -> PathBuf {
-    let tor_write_path = get_root_dir();
+    let tor_write_path = get_tor_dir();
     #[cfg(target_os="windows")]
     return tor_write_path.join("tor.exe");
 

@@ -1,9 +1,11 @@
+#[cfg(feature = "snowflake")]
 use anyhow::anyhow;
 use shared::config::TorConfig;
 use std::path::PathBuf;
 
-use crate::consts::{get_pluggable_transport, get_rel_snowflake};
+
 #[cfg(feature = "snowflake")]
+use crate::consts::{get_pluggable_transport, get_rel_snowflake};
 use anyhow::Result;
 #[cfg(feature = "snowflake")]
 use tokio::{
@@ -18,6 +20,7 @@ pub trait ConfigExt {
     async fn to_text(&self) -> Result<String>;
 }
 
+#[cfg(feature = "snowflake")]
 fn fix_bridges(bridges: Vec<String>) -> Vec<String> {
     if cfg!(windows) {
         bridges
@@ -43,6 +46,7 @@ impl ConfigExt for TorConfig {
         let geo_ip = data.clone().join("geoip");
         let geo_ip6 = data.clone().join("geoip6");
 
+        #[allow(unused_mut)]
         let mut config = format!(
             "SocksPort {}
 HiddenServiceDir \"{}\"

@@ -18,7 +18,7 @@ function Build-Features {
         $features_str = "-$features_str"
     }
 
-    cargo tauri build -b --features $features -c "./src-tauri/tauri-nobuild.json"
+    yarn tauri build -b --features $features -c "./src-tauri/tauri-nobuild.json"
     Copy-Item -Path "./src-tauri/target/release/$file$ext" -Destination "./build/$file$features_str$ext" -Force
 }
 

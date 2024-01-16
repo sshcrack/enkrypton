@@ -18,4 +18,13 @@ apt-get -y install --no-install-recommends libwebkit2gtk-4.0-dev \
     libssl-dev \
     libgtk-3-dev \
     libayatana-appindicator3-dev \
-    librsvg2-dev
+    librsvg2-dev \
+    jq \
+    ca-certificates
+
+
+WORKDIR /tmp
+RUN wget -O latest https://api.github.com/repos/PowerShell/PowerShell/releases/latest && \
+ wget -O powershell.deb $(cat latest | jq -r ".assets[] | .browser_download_url |  select(. | contains(\".deb\")) | select(. | contains(\"-lts_\") | not)") && \
+ dpkg -i powershell.deb && \
+ rm powershell.deb

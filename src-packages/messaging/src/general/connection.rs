@@ -28,7 +28,7 @@ pub(super) enum ConnInfo {
 
 impl ConnInfo {
     /// # Returns
-    /// 
+    ///
     /// Gets the general receiver for the connection (mostly used for messages)
     pub fn get_receiver(&self) -> Either<Receiver<S2CPacket>, Receiver<C2SPacket>> {
         match self {

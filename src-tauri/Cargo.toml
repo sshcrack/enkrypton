@@ -68,5 +68,5 @@ duplicate = "1.0.0"
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
 snowflake = ["tor-proxy/snowflake"]
-dev = ["messaging/dev", "tor-proxy/dev", "tauri/devtools"]
+dev = ["messaging/dev", "tor-proxy/dev", "tauri/devtools", "enable-console"]
 enable-console = []

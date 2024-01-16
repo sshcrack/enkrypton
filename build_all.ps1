@@ -30,7 +30,9 @@ Remove-Item -r ./build
 New-Item -ItemType Directory -Path ./build
 
 Build-Features -features ""
-Build-Features -features "enable-console"
+if($IsWindows) {
+    Build-Features -features "enable-console"
+}
 Build-Features -features "snowflake"
 Build-Features -features "dev"
 Build-Features -features "dev,snowflake"

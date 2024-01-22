@@ -12,6 +12,9 @@ import {
 } from '@chakra-ui/react'
 import TorStart from './TorStart';
 
+/**
+ * Creates the splashcreen for the app (which includes the unlock screen of the storage).
+ */
 export default function App() {
   const toast = useToast();
 
@@ -21,11 +24,13 @@ export default function App() {
   const [passInvalid, setPassInvalid] = useState(false);
   const [submittedOnce, setSubmittedOnce] = useState(false);
 
+  // Maybe the storage is already unlocked? Checking...
   useEffect(() => {
     storage.is_unlocked()
       .then(unlocked => setUnlocked(unlocked))
   }, [])
 
+  // Trying to unlock with given password
   const unlock = () => {
     setLoading(true)
     storage.unlockOrCreate(pwd)
@@ -39,9 +44,12 @@ export default function App() {
           return
         }
 
+        // Telling the user which error occurred and logging it to console
+        console.error(e)
         toast({
           title: "Error",
-          description: e
+          description: e,
+          status: "error"
         })
       })
       .finally(() => {
@@ -50,8 +58,9 @@ export default function App() {
       })
   }
 
+  // Showing unlock screen if storage is locked
   if (!unlocked) {
-    return <Flex w='100%' h='100%' flexDir='column' justifyContent='space-between' p='2'>
+    return <Flex w='100%' h='100%' flexDir='column' justifyContent='space-between' p='5'>
       <Heading size='md'>Unlock Enkrypton</Heading>
 
       <FormControl isInvalid={(passInvalid || pwd.length === 0) && submittedOnce}>
@@ -63,19 +72,17 @@ export default function App() {
           autoFocus
           onKeyUp={(e) => e.key === "Enter" && !loading && unlock()}
         />
-        {passInvalid ? (
+        {passInvalid ?
+        (
           <FormErrorMessage>
             Password is invalid.
           </FormErrorMessage>
         ) :
-          pwd.length === 0 ? (
-            <FormErrorMessage>
-              Password is too short
-            </FormErrorMessage>
-          ) :
-            (
-              <FormHelperText>Enter password to unlock.</FormHelperText>
-            )}
+        (
+          pwd.length === 0 ?
+            <FormErrorMessage>Password is too short</FormErrorMessage> :
+            <FormHelperText>Enter password to unlock.</FormHelperText>
+        )}
       </FormControl>
       <Button isLoading={loading} colorScheme='green' onClick={() => unlock()} w='50%' alignSelf='center'>Submit</Button>
     </Flex>

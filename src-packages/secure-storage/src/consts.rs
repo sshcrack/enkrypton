@@ -9,10 +9,10 @@ lazy_static! {
     pub static ref FILE_ID_BYTES: &'static [u8] = FILE_ID.as_bytes();
 
 
-    // The cipher we are going to use
+    /// The cipher we are going to encrypt using aes
     pub static ref CIPHER: Cipher = Cipher::aes_256_cbc();
-    // Key length of the cipher
+    /// Key length of the cipher we are using
     pub static ref KEY_LENGTH: usize = CIPHER.key_len();
-    // And the iv length that is needed
+    /// IV Length used to encrypt the data with aes
     pub static ref IV_LENGTH: usize = CIPHER.iv_len().unwrap();
 }

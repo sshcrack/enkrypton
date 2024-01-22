@@ -9,9 +9,13 @@ use ts_rs::TS;
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsMessageStatus {
+    /// That the message failed to send to the receiver
     Failed,
+    /// The message was successfully sent to the receiver
     Success,
+    /// The message is currently being sent to the receiver
     Sending,
+    /// The message has been sent but not yet received/decrypted by the receiver
     Sent
 }
 
@@ -21,9 +25,12 @@ pub enum WsMessageStatus {
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WsMessageStatusPayload {
+    /// The name of the receiver
     pub hostname: String,
+    /// The new status of the message
     pub status: WsMessageStatus,
     #[cfg_attr(feature="export_ts", ts(type="number"))]
+    /// The date/id of the message
     pub date: u128
 }
 

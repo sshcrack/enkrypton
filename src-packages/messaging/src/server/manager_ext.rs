@@ -7,12 +7,34 @@ use super::ws_manager::WsActor;
 
 /// Extends the manager with some helper functions for the server
 #[async_trait]
+/// Extension trait for the Manager trait.
 pub trait ManagerExt {
-    /// Sets the remote verified flag for a connection (just a helper function)
+    /// Sets the remote verified flag for a connection.
+    ///
+    /// # Arguments
+    ///
+    /// * `onion_host` - The onion host of the connection.
+    /// * `a` - The WsActor representing the connection.
     async fn set_remote_verified(&self, onion_host: &str, a: &WsActor);
-    /// Sets the self verified flag for a connection (just a helper function)
+
+    /// Sets the self verified flag for a connection.
+    ///
+    /// # Arguments
+    ///
+    /// * `onion_host` - The onion host of the connection.
+    /// * `a` - The WsActor representing the ws connection to the client.
     async fn set_self_verified(&self, onion_host: &str, a: &WsActor);
-    /// Inserts or adds a connection to the manager and returns it
+
+    /// Inserts or adds a connection to the manager and returns it.
+    ///
+    /// # Arguments
+    ///
+    /// * `onion_host` - The onion host of the connection.
+    /// * `a` - The WsActor representing the connection.
+    ///
+    /// # Returns
+    ///
+    /// The Connection object representing the added connection.
     async fn get_or_insert(&self, onion_host: &str, a: &WsActor) -> Connection;
 }
 

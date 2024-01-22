@@ -10,7 +10,9 @@ use ts_rs::TS;
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WsMessagePayload {
+    /// The hostname of the receiver that should receive this message
     pub receiver: String,
+    /// The message that should be sent to the receiver
     pub message: String
 }
 

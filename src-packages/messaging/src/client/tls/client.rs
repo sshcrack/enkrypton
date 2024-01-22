@@ -25,11 +25,17 @@ pub struct WebClient {
 }
 
 impl WebClient {
-    /// Returns the proxy used to connect to the tor network
+    /// Gets the underlying SocksProxy of this client
+    /// # Returns
+    /// 
+    /// The proxy used to connect to the tor network
     pub(super) fn proxy(&self) -> &SocksProxy {
         &self.proxy
     }
 
+    /// Creates a new web client from the config with the default tor proxy port
+    /// # Returns
+    /// 
     /// Creates a new web client from the config with the default tor proxy port
     pub fn from_config() -> Result<Self> {
         let tor_proxy = SocksProxy::new()?;
@@ -40,12 +46,23 @@ impl WebClient {
     /// Just just opens a connection to the proxy, uses it and closes it after that.
     /// Could be optimized but not doing that for literally one connection.
     /// Oh also: blocking so use in threads thanks
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - The url to send a get request to
+    ///
+    /// # Returns
+    ///
+    /// The struct that can be used to send the request
     pub fn get(&self, addr: &str) -> Request {
         Request::from_client(self, "GET", addr)
             .header("User-Agent", USER_AGENT)
             .header("Accept", "*/*")
     }
 
+    /// Gets a root store certificate store used to make https requests
+    /// # Returns
+    /// 
     /// The root store to use for the tls connection
     fn get_root_store(&self) -> RootCertStore {
         let mut root_store = RootCertStore::empty();
@@ -60,7 +77,11 @@ impl WebClient {
         return root_store;
     }
 
-    /// The tls config to use for the client
+    /// The tls config to use for the client 
+    ///
+    /// # Returns
+    ///
+    /// The TLS Configuration
     fn get_tls_config(&self) -> ClientConfig {
         let root_store = self.get_root_store();
 
@@ -72,6 +93,15 @@ impl WebClient {
 
     //noinspection SpellCheckingInspection
     /// Creates a connection to the given url using the proxy
+    ///
+    /// # Arguments
+    ///
+    /// * `proxy` - Proxy to use when connecting
+    /// * `url` - The url to connect to
+    ///
+    /// # Returns
+    /// Returns the connection to the given url
+    /// 
     pub(super) async fn create_connection(
         &self,
         proxy: Socks5Stream<TokioTcpStream>,

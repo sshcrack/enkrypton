@@ -7,9 +7,19 @@ use payloads::data::StorageChat;
 
 use crate::{StorageManager, STORAGE};
 
-/// Trait to either get a private key or if it does not exist, generate a new keypair and store it
+/// Trait to either get a private key or if it does not exist, generate a new key pair and store it
 #[async_trait]
+/// A trait for getting or creating a private key.
 pub trait GetPrivateKey {
+    /// Gets or creates a private key for the specified receiver.
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver` - The receiver for whom the private key is being retrieved or created.
+    ///
+    /// # Returns
+    ///
+    /// Returns the retrieved/generated private key
     async fn get_or_create_private_key(receiver: &str) -> Result<PrivateKey>;
 }
 

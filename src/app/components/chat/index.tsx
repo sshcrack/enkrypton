@@ -4,18 +4,17 @@ import 'react-chat-elements/dist/main.css';
 import { MainContext } from '../MainProvider';
 import ChatProvider, { ChatContext } from './ChatProvider';
 import Messages from './Messages';
-import SendButton from './SendButton';
+import SendForm from './SendButton';
 import './index.scss';
 import StatusScreen from './status/StatusScreen';
 import ConnectButton from './ConnectButton';
 
 
-
-export type ChatProps= FlexProps & {
-    allowConnect?: boolean
-}
-
-export default function Chat({ allowConnect, children, ...props }: ChatProps) {
+/**
+ * Displays the chat of the currently active client (fetched from MainContext).
+ * @param props Just the flexbox props
+ */
+export default function Chat({ children, ...props }: FlexProps) {
     const { active } = useContext(MainContext)
 
     if (!active)
@@ -28,13 +27,16 @@ export default function Chat({ allowConnect, children, ...props }: ChatProps) {
     </ChatProvider>
 }
 
-export function ChatInner(props: ChatProps) {
+function ChatInner(props: FlexProps) {
+    // The currently focused client (onion hostname of it)
     const { active } = useContext(MainContext)
+    // The client itself and the messageUpdate number to cause a rerender / refetch
     const { client, msgUpdate } = useContext(ChatContext)
 
     const [update, setUpdate] = useState(0)
     const [pressedConnected, setPressedConnect] = useState(false)
 
+    // Just scrolling to the bottom when a new message is received
     const chatFieldRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         if (!chatFieldRef.current)
@@ -52,7 +54,7 @@ export function ChatInner(props: ChatProps) {
         }, 10 * 1000)
     }, [update])
 
-    // Just waiting for it to load
+    // Waiting for the client to finally connect
     if (!client)
         return <Text>Loading...</Text>
 
@@ -69,7 +71,7 @@ export function ChatInner(props: ChatProps) {
             {(client?.status && client.status !== "Connected") ? <StatusScreen client={client} /> : <Messages />}
         </Flex>
         <Flex w='100%' >
-            { !client?.status || client.status !== "Connected" ? <ConnectButton pressedConnect={pressedConnected} setPressedConnect={setPressedConnect} client={client} /> : <SendButton client={client} /> }
+            { !client?.status || client.status !== "Connected" ? <ConnectButton pressedConnect={pressedConnected} setPressedConnect={setPressedConnect} /> : <SendForm /> }
         </Flex>
     </Flex>
 }

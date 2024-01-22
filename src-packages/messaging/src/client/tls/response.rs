@@ -16,9 +16,19 @@ pub struct Response {
     headers: Option<HashMap<String, String>>,
 }
 
+/// The seperator between the header key and value
 const HEADER_SEPARATOR: &str = ": ";
+
+/// Represents a response from the web client.
 impl Response {
-    /// Returns the cached headers or reads the headers of this response from the BufReader
+    /// Retrieves the headers of the response.
+    ///
+    /// If the headers have already been retrieved, it returns a clone of the cached headers.
+    /// Otherwise, it reads the status code and then reads the headers from the stream.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `HashMap` of the headers.
     pub async fn headers(&mut self) -> Result<HashMap<String, String>> {
         if let Some(headers) = self.headers.as_ref() {
             return Ok(headers.clone());
@@ -32,7 +42,12 @@ impl Response {
         Ok(res)
     }
 
-    /// Reads the status codes and stores in self
+    /// Reads the status code from the stream and stores it in `self`.
+    /// Reads from the incoming buffer
+    ///
+    /// # Returns
+    ///
+    /// The status code of this response
     async fn read_status(&mut self) -> Result<u32> {
         let mut buf = String::new();
 
@@ -51,7 +66,12 @@ impl Response {
         Ok(status_code)
     }
 
-    /// Returns the cached status code or reads it from the stream
+    /// Reads the status code and stores it in `self`
+    /// of the response or returns the cached status code.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the status code as a `u32`
     pub async fn status(&mut self) -> Result<u32> {
         if let Some(code) = self.status_code {
             return Ok(code);
@@ -63,7 +83,11 @@ impl Response {
         return Ok(res);
     }
 
-    /// Reads the headers from the stream and stores them in self
+    /// Reads the headers from the incoming stream, parses them and stores them in a hash map.
+    ///
+    /// # Returns
+    ///
+    /// A hashmap of the headers
     async fn read_headers(&mut self) -> Result<HashMap<String, String>> {
         let mut buf = String::new();
 
@@ -120,18 +144,30 @@ impl Response {
         Ok(headers)
     }
 
-    /// Creates a new response from the given stream
-    pub(super) async fn from_stream(stream: TlsStream<TcpStream>) -> Result<Self> {
+    /// Creates a `Response` from the given TLS stream.
+    ///
+    /// # Arguments
+    ///
+    /// * `stream` - The TLS stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// Returns the created `Response` 
+    pub(super) async fn from_stream(stream: TlsStream<TcpStream>) -> Self {
         let reader = BufReader::new(stream);
 
-        Ok(Response {
+        Response {
             reader,
             status_code: None,
             headers: None,
-        })
+        }
     }
 
     /// Reads the body of the response and deserializing it to json
+    /// 
+    /// # Returns
+    /// 
+    /// The deserialized json object
     pub async fn json<'a, T>(self) -> Result<T>
     where
         T: DeserializeOwned,
@@ -143,6 +179,10 @@ impl Response {
     }
 
     /// Reads the body of the response and returns it as a string
+    /// 
+    /// # Returns
+    /// 
+    /// The response body as string
     pub async fn text(mut self) -> Result<String> {
         let mut buf = String::new();
         self.reader.read_to_string(&mut buf).await?;

@@ -7,8 +7,20 @@ use crate::StorageManager;
 
 /// Just an extension trait for the storage manager to add messages to chats
 #[async_trait]
+/// A trait for chat storage helpers.
 pub trait ChatStorageHelper {
-    /// The function that adds messages to the storage. It returns the date of the message
+    /// Adds a message to the secure chat storage.
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver` - The receiver of the message (onion hostname)
+    /// * `sent_self` - Whether the message was sent by the user or not
+    /// * `msg` - The text of the message to add
+    /// * `date` - The date/id of the message
+    ///
+    /// # Returns
+    ///
+    /// Returns the unique identifier of the added message (this is again, the date of that message).
     async fn add_msg(&self, receiver: &str, sent_self: bool, msg: &str, date: u128) -> Result<u128>;
 }
 

@@ -7,7 +7,8 @@ use regex::Regex;
 use storage_internal::STORAGE;
 use tor_proxy::manager::{stop_tor, wait_for_exit};
 
-/// A function to convert an error to a string
+/// A function to convert an error to a string.
+/// Acts as a helper function for commands
 pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where
     E: ToString + Display,
@@ -20,10 +21,9 @@ where
 
 lazy_static! {
     /// A regex used to verify the onion address
-    pub static ref ONION_REGEX: Regex = Regex::new("^([A-z]|[0-9])+$").unwrap();
+    pub static ref ONION_REGEX: Regex = Regex::new("^[a-z2-7]{56}$").unwrap();
 }
 
-//TODO implement in finished product
 /// Used for validation of the given onion address
 pub fn is_onion_hostname(addr: &str) -> bool {
     return ONION_REGEX.is_match(addr);

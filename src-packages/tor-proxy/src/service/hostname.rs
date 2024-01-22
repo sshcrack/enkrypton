@@ -5,7 +5,16 @@ use shared::config::CONFIG;
 use tokio::{fs::File, io::{BufReader, AsyncReadExt}};
 
 
-/// Gets the hostname of the service that is being run by tor
+/// Gets the current hostname of our tor service
+///
+/// # Arguments
+///
+/// **DEV ONLY**
+/// * `_client` - Used for dev purposes only, so you can send messages to yourself
+///
+/// # Returns
+///
+/// The current service hostname, `None` if the hostname could not be found
 pub async fn get_service_hostname(_client: bool) -> Result<Option<String>> {
     let dir = &CONFIG.service_dir();
     let mut hostname_path = PathBuf::from(dir);

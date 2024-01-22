@@ -1,11 +1,13 @@
 use std::{path::PathBuf, sync::Arc, thread::JoinHandle};
 
 use async_channel::{Receiver, Sender};
-use shared::get_tor_path;
 use lazy_static::lazy_static;
+use shared::get_tor_path;
 use tokio::sync::RwLock;
 
 use super::misc::messages::{Client2TorMsg, Tor2ClientMsg};
+#[cfg(feature = "snowflake")]
+use std::path::Path;
 
 lazy_static! {
     /// Hash of the Tor binary, used to verify the integrity of the binary
@@ -33,7 +35,7 @@ lazy_static! {
 
 }
 
-/// Sets all channels up. Documentation is at the channels themselves
+/// Initializes every channel used to communicate with the tor thread
 pub async fn setup_tor_channels() {
     let (to_tx, to_rx) = async_channel::unbounded::<Client2TorMsg>();
     let (from_tx, from_rx) = async_channel::unbounded::<Tor2ClientMsg>();
@@ -45,25 +47,54 @@ pub async fn setup_tor_channels() {
     FROM_TOR_RX.write().await.replace(from_rx);
 }
 
-
 /// Gets the hash of the tor binary, which is platform specific so this is just a helper function
+///
 /// # Returns
+///
 /// The hash of the tor binary encoded in hex
 fn get_tor_binary_hash() -> String {
-    #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
-    let hash = include_str!("../assets/windows/x86_64/tor.exe.hash");
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    let hash = include_str!("../assets/windows/x86_64/tor.hash");
 
-    #[cfg(all(target_os ="windows", target_arch = "x86", not(target_arch="x86_64")))]
-    let hash = include_str!("../assets/windows/i686/tor.exe.hash");
+    #[cfg(all(
+        target_os = "windows",
+        target_arch = "x86",
+        not(target_arch = "x86_64")
+    ))]
+    let hash = include_str!("../assets/windows/i686/tor.hash");
 
-    #[cfg(all(target_os ="linux", target_arch = "x86_64"))]
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     let hash = include_str!("../assets/linux/x86_64/tor.hash");
 
-    #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
+    #[cfg(all(target_os = "linux", target_arch = "x86", not(target_arch = "x86_64")))]
     let hash = include_str!("../assets/windows/i686/tor.hash");
 
     // Checks if the hash is valid
     hex::decode(hash).unwrap();
 
     return String::from(hash);
+}
+
+#[cfg(feature = "snowflake")]
+/// Returns the absolute path of the pluggable transport path used in tor (contains pt_config.json for example)
+pub fn get_pluggable_transport() -> Box<Path> {
+    TOR_BINARY_PATH
+        .parent()
+        .unwrap()
+        .join("pluggable_transports")
+        .into_boxed_path()
+}
+
+#[cfg(feature = "snowflake")]
+/// Gets the relative path of the snowflake binary
+pub fn get_rel_snowflake() -> String {
+    #[cfg(target_os = "windows")]
+    let snowflake_bin = "snowflake-client.exe";
+    #[cfg(not(target_os = "windows"))]
+    let snowflake_bin = "snowflake-client";
+
+    let parent_dir = get_pluggable_transport();
+    let parent_dir = parent_dir.file_name().unwrap().to_string_lossy();
+
+    format!("{}/{}", parent_dir, snowflake_bin)
 }

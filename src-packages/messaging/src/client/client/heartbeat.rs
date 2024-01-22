@@ -11,7 +11,7 @@ use super::MessagingClient;
 
 /// Used to send a ping to the server every HEARTBEAT ms.
 pub(super) trait HeartbeatClient {
-    /// Spawns the actual heartbeat thread
+    /// Spawns the heartbeat thread to send a ping to the server every HEARTBEAT Duration.
     fn spawn_heartbeat_thread(&mut self);
 }
 

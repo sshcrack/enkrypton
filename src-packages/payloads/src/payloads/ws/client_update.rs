@@ -9,10 +9,15 @@ use ts_rs::TS;
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsClientStatus {
+    /// The websocket is connecting to the tor proxy
     ConnectingProxy,
+    /// The client is connected to the tor proxy and is now connecting to the onion host
     ConnectingHost,
+    /// The client is waiting for the identity to be verified
     WaitingIdentity,
+    /// The connection was successful and we can send messages
     Connected,
+    /// The client has been disconnected
     Disconnected
 }
 
@@ -22,7 +27,9 @@ pub enum WsClientStatus {
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WsClientUpdatePayload {
+    /// The receiver to update with this payload
     pub hostname: String,
+    /// The new status of the websocket connection
     pub status: WsClientStatus
 }
 

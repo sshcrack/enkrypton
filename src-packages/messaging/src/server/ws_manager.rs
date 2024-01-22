@@ -108,6 +108,10 @@ impl Actor for WsActor {
 
 impl WsActor {
     // Creates a new `WsActor`
+    ///
+    /// # Returns
+    ///
+    /// The constructed `WsActor` 
     pub fn new() -> Self {
         let (s_tx, s_rx) = async_channel::unbounded();
         let (c_tx, c_rx) = async_channel::unbounded();
@@ -123,7 +127,12 @@ impl WsActor {
         }
     }
 
-    // Handles a packet that was received
+    /// Handles a packet from the client
+    ///
+    /// # Arguments
+    ///
+    /// * `packet` - The packet that was received from the client
+    /// * `ctx` - The context of the actor for storing stuff
     pub async fn inner_handle(
         &mut self,
         packet: C2SPacket,
@@ -214,7 +223,8 @@ impl WsActor {
     }
 }
 
-/// Handler for ws::Message message
+/// Handler for ws::Message message as the name suggests
+/// handles incoming messages and sends them to the client
 impl StreamHandler<Result<Message, ProtocolError>> for WsActor {
     fn handle(&mut self, msg: Result<Message, ProtocolError>, ctx: &mut Self::Context) {
         match msg {

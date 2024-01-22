@@ -18,7 +18,17 @@ pub trait Generate<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
+    /// 
     /// Generates a new SecureStorage with the given password and data
+    ///
+    /// # Arguments
+    ///
+    /// * `pass` - The password that should be used to encrypt the data
+    /// * `data` - Default data to use
+    ///
+    /// # Returns
+    ///
+    /// The generated `SecureStorage` used to store data
     fn generate(pass: &[u8], data: T) -> Result<SecureStorage<T>>;
 }
 

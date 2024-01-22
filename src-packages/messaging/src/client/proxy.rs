@@ -5,7 +5,7 @@ use tokio::net::TcpStream;
 use tokio_socks::tcp::Socks5Stream;
 use url::Url;
 
-use crate::client::util::get_servername;
+use crate::client::util::get_server_name;
 
 /// A socks proxy which is used to connect to the tor network
 #[derive(Debug)]
@@ -18,6 +18,10 @@ pub struct SocksProxy {
 
 impl SocksProxy {
     /// Creates a new socks proxy from the config
+    ///
+    /// # Returns
+    /// 
+    /// A new socks proxy from the config
     pub fn new() -> Result<Self> {
         let addr = format!("socks5://127.0.0.1:{}", CONFIG.socks_port());
 
@@ -48,10 +52,18 @@ impl SocksProxy {
     }
 
     /// Connects to the destination url over the tor network
+    ///
+    /// # Arguments
+    ///
+    /// * `destination_url` - The url to connect to
+    ///
+    /// # Returns
+    ///
+    /// The stream that can be used to send data over the proxy to the destination url
     pub async fn connect(&self, destination_url: &Url) -> Result<Socks5Stream<TcpStream>> {
         // Getting required urls
-        let proxy_url = get_servername(&self.proxy_url)?;
-        let dest_server = get_servername(destination_url)?;
+        let proxy_url = get_server_name(&self.proxy_url)?;
+        let dest_server = get_server_name(destination_url)?;
 
         println!(
             "[PROXY] Connecting to {} with server_name {}",

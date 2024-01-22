@@ -13,31 +13,46 @@ use lazy_static::lazy_static;
 use log::error;
 use smol::block_on;
 use tokio::sync::{Mutex, RwLock};
-
 use super::WriteStream;
+
 lazy_static! {
     // The delay to check if we should flush (so send all the messages in the queue)
     pub static ref FLUSH_DELAY: Duration = Duration::from_millis(100);
 }
 
-/// This struct is used to check if we should flush the websocket (so send all messages in the queue)
+/// This struct is used to check if we should flush the websocket (so send all messages in the queue).
+/// Flushes them if the FLUSH_DELAY has passed since the last flush and since the last message was added.
 #[derive(Debug)]
 pub(super) struct FlushChecker {
     /// The last time we flushed the websocket
     pub(super) last_update: Arc<RwLock<Instant>>,
     /// whether the current thread should exit
     pub(super) should_exit: Arc<AtomicBool>,
+
     #[allow(dead_code)]
-    /// Not used for now
+    /// This stream is just used to flush the websocket.
+    /// This stream is given to other threads (of which the handle is) so actually we *wouldn't* need it,
+    /// but keeping it for now
     write: Arc<Mutex<WriteStream>>,
     #[allow(dead_code)]
-    /// Same here
+    /// The thread handle of the flush checker thread.
     handle: JoinHandle<()>,
 }
 
 impl FlushChecker {
     /// Spawns the new thread which will check if the websocket should be flushed
-    /// and returns its handle
+    /// and returns its handle.
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver` - The onion hostname of the receiver
+    /// * `last_update` - The last time the websocket was flushed or a message was sent
+    /// * `should_exit` - Whether the thread should exit
+    /// * `write` - The write stream of the websocket 
+    ///
+    /// # Returns
+    ///
+    /// The handle that has been spawned
     pub async fn spawn_handle(
         receiver: &str,
         last_update: Arc<RwLock<Instant>>,
@@ -72,7 +87,16 @@ impl FlushChecker {
         }).unwrap()
     }
 
-    /// Constructs this struct and spawns the thread of this struct
+    /// Constructs this struct and spawns the actual thread to check for  new flushes. Represented in the handle field.
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver` - The onion hostname of the receiver
+    /// * `write` - The write stream of the websocket
+    ///
+    /// # Returns
+    /// The constructed flush checker
+    /// 
     pub async fn new(receiver: &str, write: Arc<Mutex<WriteStream>>) -> Result<Self> {
         let last_update = Instant::now() - *FLUSH_DELAY - Duration::from_secs(1);
         let last_update = Arc::new(RwLock::new(last_update));

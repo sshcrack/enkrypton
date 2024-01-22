@@ -19,7 +19,13 @@ use crate::{
 
 use super::messages::{BOOTSTRAP_MSG, ERR_MSG, NOTICE_MSG, WARN_MSG};
 
-/// Will handle the stdout of the tor process
+/// Handles the stdout of the tor process
+///
+/// # Arguments
+///
+/// * `should_exit` - Whether the tor proxy and thread should be exited
+/// * `child` - The spawned tor proxy process to read from
+///
 pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -> Result<()> {
     let stdout = child
         .stdout

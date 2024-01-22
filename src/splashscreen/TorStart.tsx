@@ -7,6 +7,9 @@ import { listenSync } from '../bindings/tauri_prom_wrapper';
 import tor from '../bindings/tor';
 //import { info, error } from "tauri-plugin-log-api";
 
+/**
+ * Handles the whole tor initialization process and shows process or errors.
+ */
 function TorStart() {
     const [percentage, setCurrPercentage] = useState(0);
     const [status, setStatus] = useState("Initializing...");

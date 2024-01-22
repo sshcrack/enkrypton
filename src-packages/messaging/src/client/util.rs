@@ -2,8 +2,16 @@ use anyhow::{anyhow, Result};
 use log::debug;
 use url::Url;
 
-/// Returns the servername for the given url
-pub fn get_servername(url: &Url) -> Result<String> {
+/// Gets the server name from the url
+///
+/// # Arguments
+///
+/// * `url` - The url to get the server name from
+///
+/// # Returns
+///
+/// The server name
+pub fn get_server_name(url: &Url) -> Result<String> {
     let host = url
         .host_str()
         .ok_or(anyhow!("Host is not in the url ({})", url))?;

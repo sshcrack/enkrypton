@@ -13,7 +13,8 @@ pub async fn restart<R: Runtime>(
     _window: tauri::Window<R>,
     kill_old_tor: bool,
 ) -> Result<(), String> {
-    // Kill tor if it's running
+    // Kill tor if it's already running so there is no overlapping
+    //TODO maybe find a better method by checking if process' binary is the same as the one we want to start
     if kill_old_tor {
         let tor_path = TOR_BINARY_PATH.file_name().unwrap();
         let tor_path = tor_path.to_str().unwrap();

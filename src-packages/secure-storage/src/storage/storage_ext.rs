@@ -33,7 +33,11 @@ impl<T> SecureStorage<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize + Debug + Zeroize,
 {
-    // Tries to decrypt the crypto key with the given password
+    /// Tries to decrypt the crypto key with the given password
+    ///
+    /// # Arguments
+    ///
+    /// * `password` - The password in binary (encoded in utf8
     fn try_decrypt_crypto_key(&mut self, password: &[u8]) -> Result<()> {
         let argon2 = Argon2::default();
 
@@ -57,6 +61,10 @@ where
     }
 
     /// Tries to decrypt the data with the given password
+    ///
+    /// # Arguments
+    ///
+    /// * `password` - The password in binary (again, encoded in utf8)
     pub fn try_decrypt(&mut self, password: &[u8]) -> Result<()> {
         // First, we need to decrypt the crypto key
         self.try_decrypt_crypto_key(password)?;
@@ -100,7 +108,9 @@ where
         Ok(())
     }
 
-    // Returns the data that should be written to disk, including hashes, iv and encrypted_data for example
+    /// # Returns
+    /// 
+    /// the data that should be written to disk, including hashes, iv and encrypted_data for example
     pub fn to_raw(&mut self) -> Result<Vec<u8>> {
         self.update_raw()?;
 
@@ -117,7 +127,11 @@ where
         Ok(raw)
     }
 
-    // Check if the password is valid, fails if not
+    /// Check if the password is valid, fails if not
+    ///
+    /// # Arguments
+    ///
+    /// * `pass` - The password in binary (encoded in utf8)
     pub fn verify_password(&self, pass: &[u8]) -> Result<()> {
         let argon = Argon2::default();
         let h = self.pass_hash.password_hash();

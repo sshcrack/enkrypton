@@ -3,16 +3,30 @@ import { ClientMap } from './client/map';
 import { WsClientUpdatePayload } from '../rs/WsClientUpdatePayload';
 import { WsMessageStatusPayload } from '../rs/WsMessageStatusPayload';
 
-if (!window.clients)
+if (!window.clients) {
+    console.log("New client map")
     window.clients = new ClientMap();
+}
 
 
 
 type Func = (payload: WsClientUpdatePayload) => unknown;
 const listeners: Func[] = [];
 
+/**
+ * All functions that are related to real time chat and to communicate with the rust backend.
+ */
 const ws = {
+    /**
+     * Gets the client for the given onion hostname.
+     * @param onionHost The onion hostname of the client.
+     * @returns The client for the given onion hostname.
+     */
     get: (onionHost: string) => window.clients.get(onionHost),
+    /**
+     * Adds the given function as a callback which is called when the client connection status was updated.
+     * @returns the function to remove the listener.
+     */
     addClientUpdateListener: (callback: (payload: WsClientUpdatePayload) => unknown) => {
         listeners.push(callback)
 
@@ -27,6 +41,7 @@ const ws = {
 }
 
 
+// Well, listens for the client update event and notifies listeners.
 listen("ws_client_update", ({ payload }: Event<WsClientUpdatePayload>) => {
     listeners.map(l => l(payload))
     console.log("Received update", payload)

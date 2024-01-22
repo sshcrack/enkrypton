@@ -22,7 +22,7 @@ pub trait ConfigExt {
 
 #[cfg(feature = "snowflake")]
 fn fix_bridges(bridges: Vec<String>) -> Vec<String> {
-    if cfg!(windows) {
+    if cfg!(windows) && false {
         bridges
     } else {
         bridges

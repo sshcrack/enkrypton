@@ -10,7 +10,5 @@ use crate::server::ws_manager::WsActor;
 /// * `req` - The http request that was sent from the client
 /// * `stream` - The websocket stream
 pub async fn ws_index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    let resp = ws::start(WsActor::new(), &req, stream);
-    println!("{:?}", resp);
-    resp
+    ws::start(WsActor::new(), &req, stream)
 }

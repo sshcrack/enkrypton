@@ -75,7 +75,8 @@ impl ConnectionReadThread {
         let msg = priv_key.decrypt(&msg)?;
         let msg = String::from_utf8(msg)?;
 
-        println!(
+        #[cfg(feature="dev")]
+        debug!(
             "Received message: {}, Sending payload with receiver {}",
             msg, receiver_host
         );

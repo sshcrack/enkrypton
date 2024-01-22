@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 function Build-Features {
     param (
         [string]$features
@@ -19,12 +21,19 @@ function Build-Features {
     }
 
     yarn tauri build -b --features $features -c "./src-tauri/tauri-nobuild.json"
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
     Copy-Item -Path "./src-tauri/target/release/$file$ext" -Destination "./build/$file$features_str$ext" -Force
 }
 
 $config = ConvertFrom-Json $(Get-Content "./src-tauri/tauri.conf.json" -Raw)
 
 Invoke-Expression $($config.build.beforeBuildCommand)
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
 
 Remove-Item -r ./build
 New-Item -ItemType Directory -Path ./build

@@ -1,0 +1,1 @@
+Nur ein Utility für mich, um Tor zu updaten, gehört nicht wirklich zum Messenger an sich, deswegen keine Kommentare.

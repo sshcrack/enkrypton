@@ -1,5 +1,9 @@
 use std::time::SystemTime;
 
+/// Gets the current time in milliseconds since the unix epoch
+///
+/// # Returns
+///
 /// Returns the current time in milliseconds since the unix epoch, equal to `Date.now()` in JS
 pub fn now_millis() -> u128 {
     SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis()

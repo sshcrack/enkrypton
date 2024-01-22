@@ -5,7 +5,6 @@ use std::{
 
 use actix_web::Either;
 use anyhow::{anyhow, Result};
-use encryption::rsa_decrypt;
 use log::{debug, error, warn};
 use payloads::{
     event::AppHandleExt,
@@ -27,6 +26,17 @@ pub struct ConnectionReadThread {
 }
 
 impl ConnectionReadThread {
+    /// Creates a new read thread for the given connection.
+    /// This will spawn a new thread and read from the given connection.
+    /// Incoming messages are received and handled by the `handle` function.
+    ///
+    /// # Arguments
+    ///
+    /// * `conn` - The connection to read packets from
+    ///
+    /// # Returns
+    ///
+    /// The constructed read thread
     pub async fn new(conn: &Connection) -> Self {
         let handle = Self::spawn(conn).await;
         Self {
@@ -34,6 +44,17 @@ impl ConnectionReadThread {
         }
     }
 
+    /// Handle an incoming message, decrypt and store it
+    ///
+    /// # Arguments
+    ///
+    /// * `date` - The message date is used as id
+    /// * `msg` - The encrypted message in bytes
+    /// * `receiver_Host` - The sender onion host name
+    ///
+    /// # Returns
+    ///
+    /// The decrypted message, fails if we cannot decrypt it
     pub async fn handle_inner(date: u128, msg: Vec<u8>, receiver_host: &str) -> Result<String> {
         debug!("Reading conn for {}...", receiver_host);
         let storage = block_on(STORAGE.read());
@@ -51,7 +72,7 @@ impl ConnectionReadThread {
         debug!("Done");
         drop(storage);
 
-        let msg = rsa_decrypt(msg, priv_key)?;
+        let msg = priv_key.decrypt(&msg)?;
         let msg = String::from_utf8(msg)?;
 
         println!(
@@ -68,7 +89,14 @@ impl ConnectionReadThread {
         Ok(msg)
     }
 
-    /// Handle an incoming message, decrypt and store it
+    /// Parses an incoming byte packet and handles it.
+    /// The connection must be verified before handle is coming to action.
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message to handle (date, encrypted msg) if None is given, we'll skip that message
+    /// * `info` - A RwLock` which contains connection information (like send/receive channels)
+    /// * `receiver_host` - The onion host that sent this message
     async fn handle(
         msg: Option<(u128, Vec<u8>)>,
         info: Arc<RwLock<ConnInfo>>,
@@ -97,6 +125,8 @@ impl ConnectionReadThread {
                 .set_msg_status(&receiver_host, date, WsMessageStatus::Success)
                 .await?;
 
+            // Handles the packet differently depending if we are a client or server
+            // This is used to send a message received packet to the other side
             match &*info.read().await {
                 ConnInfo::Client(c) => {
                     debug!("Client msg");
@@ -111,6 +141,7 @@ impl ConnectionReadThread {
                 }
             };
 
+            // Emitting payload to update frontend
             let handle = get_app().await;
             handle.emit_payload(WsMessagePayload {
                 receiver: receiver_host.to_string(),
@@ -128,6 +159,7 @@ impl ConnectionReadThread {
                 .set_msg_status(&receiver_host, date, WsMessageStatus::Failed)
                 .await?;
 
+            // Notifies the other side that receiving the message failed
             match &*info.read().await {
                 ConnInfo::Client(c) => {
                     debug!("Client msg");
@@ -146,7 +178,15 @@ impl ConnectionReadThread {
         Ok(())
     }
 
-    /// Spawn the read thread with JoinHandle
+    /// Spawns a new thread which reads from the given connection
+    ///
+    /// # Arguments
+    ///
+    /// * `conn` - The connection to read from
+    ///
+    /// # Returns
+    ///
+    /// The thread handle
     pub async fn spawn(conn: &Connection) -> JoinHandle<()> {
         let info_read = conn.info.clone();
         let receiver = info_read.read().await.get_receiver();

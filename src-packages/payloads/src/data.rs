@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use encryption::{PublicKey, PrivateKey, generate_pair};
+use encryption::{PublicKey, PrivateKey};
 use serde::{Deserialize, Serialize};
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -47,6 +47,15 @@ pub struct StorageChat {
 }
 
 impl StorageChat {
+    /// Creates a new chat with the given receiver onion address
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_onion` - The onion address of the receiver
+    ///
+    /// # Returns
+    ///
+    /// The constructed storage chat
     pub fn new(receiver_onion: &str) -> Self {
         Self {
             receiver_onion: receiver_onion.to_string(),
@@ -54,7 +63,7 @@ impl StorageChat {
             nickname: None,
 
             rec_pub_key: None,
-            priv_key: generate_pair()
+            priv_key: PrivateKey::generate_pair().unwrap()
         }
     }
 }
@@ -64,12 +73,15 @@ impl StorageChat {
 #[cfg_attr(feature="export_ts", ts(export))]
 #[derive(Clone, Serialize, Deserialize, Debug, Zeroize, ZeroizeOnDrop)]
 pub struct ChatMessage {
+    /// Whether this message was sent from this application
     pub self_sent: bool,
     #[zeroize(skip)]
+    /// The current status of this message
     pub status: WsMessageStatus,
     //NOTE This message should not be lying around in memory unencrypted I guess
     pub msg: String,
     #[cfg_attr(feature="export_ts", ts(type="number"))]
+    /// The date when this message was sent. Also acts as id.
     pub date: u128,
 }
 

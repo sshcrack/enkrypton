@@ -4,20 +4,18 @@ import { Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Input
 import { ChangeEvent, useEffect, useState } from 'react';
 import tor from '../../bindings/tor';
 import ws from '../../bindings/ws';
+import { isAddressValid } from '../../tools/misc';
 
 export type ConnectFormProps = {
     onConnected: () => unknown
 }
 
-function isAddressValid(_value: string) {
-    //TODO - actually check here lol
-    return true;
-}
-
 
 const debugMode = true;
 
-//TODO use later
+/**
+ * Unused for now. Maybe will be adding in back later.
+ */
 export default function ConnectForm({ onConnected }: ConnectFormProps) {
     const [connecting, setConnecting] = useState(false);
     const [input, setInput] = useState('')

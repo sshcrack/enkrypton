@@ -4,8 +4,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread,
-    time::Duration,
+    time::Duration, thread,
 };
 
 use anyhow::{anyhow, Result};
@@ -56,6 +55,10 @@ pub struct StorageManager {
 
 impl StorageManager {
     /// Creates a new storage manager and reads the current storage file.
+    /// 
+    /// # Returns
+    /// 
+    /// The constructed storage manager
     pub fn new() -> Self {
         let f_path = get_storage_path();
 
@@ -82,7 +85,7 @@ impl StorageManager {
         e
     }
 
-    /// Exits the save thread and waits for it to finish
+    /// Tells the save thread to exit and waits for it to
     pub async fn exit(&mut self) -> Result<()> {
         self.should_exit.store(true, Ordering::Relaxed);
         let val = self.save_thread.take();
@@ -95,7 +98,7 @@ impl StorageManager {
     }
 
     //noinspection RsSleepInsideAsyncFunction
-    /// Checks every 20 seconds if the storage is marked as dirty and if so, saves ti.
+    /// Checks every 20 seconds if the storage is marked as dirty and if so, encrypts the data again and saves it to disk.
     fn run_save_thread(&mut self) {
         let temp = self.storage.clone();
         let dirty = self.dirty.clone();
@@ -159,7 +162,11 @@ impl StorageManager {
         self.save_thread = Some(handle)
     }
 
-    /// Read the storage from files or generate it with the given password
+    /// Reads the storage file and decrypts it with the password, if the storage file does not exist, it will be generated
+    ///
+    /// # Arguments
+    ///
+    /// * `pass` - The password to use for decryption
     pub async fn read_or_generate(&mut self, pass: &str) -> Result<()> {
         let pass = pass.as_bytes();
 
@@ -191,7 +198,11 @@ impl StorageManager {
         Ok(())
     }
 
-    /// Tries to  unlock the storage with the given password, fails if the password is wrong
+    /// Tries to unlock the storage with the given password, fails if the password is wrong
+    ///
+    /// # Arguments
+    ///
+    /// * `pass` - The password in binary to try to decrypt the storage with
     pub async fn try_unlock(&mut self, pass: &[u8]) -> Result<()> {
         self.modify_storage(move |e| e.try_decrypt(pass)).await?;
 
@@ -229,7 +240,7 @@ impl StorageManager {
         Ok(())
     }
 
-    /// Marks the storage as dirty (so it is saved later)
+    /// Marks the storage as dirty (so it will be saved later)
     pub async fn mark_dirty(&self) {
         self.dirty.store(true, Ordering::Relaxed);
         let res = APP_HANDLE
@@ -255,7 +266,11 @@ impl StorageManager {
         return inner.data.clone();
     }
 
-    /// Gets the data of the storage and passes it to the given function, fails if the storage is not initialized
+    /// Gets the data of the current storage if there is some and passes it to the given function
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - The function to process the data
     pub async fn get_data<T, Func>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&StorageData) -> Result<T>,
@@ -274,7 +289,15 @@ impl StorageManager {
         return Err(anyhow!("Storage not initialized yet."));
     }
 
-    /// Modifies the storage by running the given function
+    /// Modifies the storage with the given function
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - The function to modify the storage with.
+    /// 
+    /// # Returns
+    /// 
+    /// Returns the result of the function `f`
     pub async fn modify_storage<Func, T>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut Storage) -> Result<T>,
@@ -292,7 +315,15 @@ impl StorageManager {
         Ok(res?)
     }
 
-    /// Helper function to `modify_storage` that gets the data and passes it to the given function
+    /// This is just a wrapper function around `modify_storage` that passes just the data to the function
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - The function to run
+    ///
+    /// # Returns
+    ///
+    /// The result of the function that ran
     pub async fn modify_storage_data<Func, T>(&self, f: Func) -> Result<T>
     where
         Func: FnOnce(&mut StorageData) -> Result<T>,
@@ -307,17 +338,29 @@ impl StorageManager {
         .await
     }
 
+    /// Checks if the storage is already unlocked
+    ///
+    /// # Returns
+    ///
     /// Returns whether the storage is unlocked
     pub fn is_unlocked(&self) -> Result<bool> {
         return Ok(self.exists()? && self.is_unlocked);
     }
 
+    /// Checks if the storage file exists
+    ///
+    /// # Returns
+    ///
     /// Returns whether the storage file exists
     pub fn exists(&self) -> Result<bool> {
         return Ok(self.path.is_file() && self.path.metadata()?.len() != 0);
     }
 
-    /// Returns whether the storage has been parsed
+    /// Checks if the storage has already been parsed
+    ///
+    /// # Returns
+    ///
+    /// Returns whether the storage has already been parsed
     pub fn has_parsed(&self) -> bool {
         return self.has_parsed;
     }

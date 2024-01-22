@@ -5,7 +5,6 @@ use crate::{client::MessagingClient, server::ws_manager::ServerChannels};
 use actix_web::Either;
 use anyhow::{anyhow, Result};
 use async_channel::{Receiver, Sender};
-use encryption::rsa_encrypt;
 use log::{debug, error, info};
 use payloads::{
     event::AppHandleExt,
@@ -13,6 +12,7 @@ use payloads::{
     payloads::{WsClientStatus, WsClientUpdatePayload, WsMessageStatus},
 };
 use shared::{APP_HANDLE, util::now_millis};
+#[cfg(feature="dev")]
 use smol::block_on;
 use storage_internal::{helpers::ChatStorageHelper, STORAGE};
 use tokio::sync::RwLock;
@@ -27,6 +27,8 @@ pub(super) enum ConnInfo {
 }
 
 impl ConnInfo {
+    /// # Returns
+    ///
     /// Gets the general receiver for the connection (mostly used for messages)
     pub fn get_receiver(&self) -> Either<Receiver<S2CPacket>, Receiver<C2SPacket>> {
         match self {
@@ -66,6 +68,7 @@ impl Connection {
                 "Could not send client update, app handle not there"
             ))
             .and_then(|handle| {
+                #[cfg(feature="dev")]
                 block_on(block_on(STORAGE.read()).get_data(|e| {
                     println!("Current chats are: {:?}", e.chats);
                     Ok(())
@@ -99,6 +102,16 @@ impl Connection {
         Ok(())
     }
 
+    /// Creates a new generic connection
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_host` - The receiver host of this connection
+    /// * `info` - Additional information and communication channels between structs
+    ///
+    /// # Returns
+    ///
+    /// The newly constructed connection
     async fn new_general(receiver_host: &str, info: ConnInfo) -> Self {
         println!("New client connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
@@ -119,20 +132,46 @@ impl Connection {
         s
     }
 
-    /// Creates a new generic connection from a client
+    /// Creates a new client connection
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_host` - The receiver host of this connection
+    /// * `c` - The messaging client to use for this connection
+    ///
+    /// # Returns
+    ///
+    /// The newly constructed connection
     pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
         println!("New client connection: {:?}", receiver_host);
         Self::new_general(receiver_host, ConnInfo::Client(c)).await
     }
 
-    /// Creates a new generic connection from a server channels
-    /// This function assumes the identity has already been verified
+    /// Creates a new server connection.
+    /// This function assumes that the connection is already verified
+    ///
+    /// # Arguments
+    ///
+    /// * `receiver_host` - The receiver host of this connection
+    /// * `c` - The channels used to send commands to the server ws handler and to receive messages from the server
+    ///
+    /// # Returns
+    ///
+    /// The newly constructed connection
     pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
         println!("New server connection: {:?}", receiver_host);
         Self::new_general(receiver_host, ConnInfo::Server(c)).await
     }
 
     /// Sends a message to the receiver
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The message that should be sent
+    ///
+    /// # Returns
+    ///
+    /// Whether the message was sent successfully
     pub async fn send_msg(&self, msg: &str) -> Result<()> {
         // Adding message to storage
         let date = STORAGE
@@ -146,6 +185,7 @@ impl Connection {
         let res = self.inner_send(msg, date).await;
         if res.is_err() {
             debug!("Inner Send failed, setting status to failed");
+            debug!("{:?}", res.as_ref().unwrap_err());
             MESSAGING
                 .read()
                 .await
@@ -164,7 +204,7 @@ impl Connection {
         Ok(())
     }
 
-    /// Sends a message to the receiver with the given date and msg
+    /// Sends a message to the receiver with the given date and msg, internal function
     async fn inner_send(&self, msg: &str, date: u128) -> Result<()> {
         let raw = msg.as_bytes().to_vec();
 
@@ -185,7 +225,7 @@ impl Connection {
 
         println!("Sending");
         // And encrypt the message
-        let bin = rsa_encrypt(raw, &pub_key)?;
+        let bin = pub_key.encrypt(&raw)?;
 
         // And send it to the receiver
         match &*self.info.read().await {

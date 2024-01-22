@@ -32,6 +32,11 @@ pub struct TorConfig {
 }
 
 impl TorConfig {
+    /// Creates a new TorConfig
+    /// 
+    /// # Returns
+    /// 
+    /// The constructed TorConfig
     fn new() -> Result<Self> {
         // Checks for a free local port and stores it
         let socks_port = free_local_port().ok_or(anyhow!("Could not find a free port."))?;
@@ -58,12 +63,14 @@ impl TorConfig {
         });
     }
 
-    /// Returns the socks proxy port that tor should/is listening on
+    /// # Returns
+    /// 
+    /// the socks proxy port that tor should/is listening on
     pub fn socks_port(&self) -> u16 {
         self.socks_port
     }
 
-    /// The webserver port that we are listening on
+    /// The web server port that we are listening on
     pub fn service_port(&self) -> u16 {
         self.service_port
     }
@@ -73,7 +80,12 @@ impl TorConfig {
         return &self.service_dir;
     }
 
-    /// Returns the proxy host
+    /// The service directory that tor should use
+    pub fn data_dir(&self) -> &OsString {
+        return &self.data_dir;
+    }
+
+    /// The host the tor proxy should be listening on
     pub fn get_socks_host(&self) -> String {
         return format!("127.0.0.1:{}", self.socks_port);
     }
@@ -81,21 +93,6 @@ impl TorConfig {
     /// Returns the hidden service host, as the name suggests
     pub fn get_hidden_service_host(&self) -> String {
         return format!("127.0.0.1:{}", self.service_port);
-    }
-
-    //noinspection SpellCheckingInspection
-    /// Converts the configuration to a `torrc` file format
-    pub fn to_text(&self) -> String {
-        return format!(
-            "SocksPort {}
-HiddenServiceDir \"{}\"
-HiddenServicePort 80 {}
-DataDirectory \"{}\"",
-            self.get_socks_host(),
-            self.service_dir.to_string_lossy().replace("\\", "/"),
-            self.get_hidden_service_host(),
-            self.data_dir.to_string_lossy().replace("\\", "/")
-        );
     }
 }
 

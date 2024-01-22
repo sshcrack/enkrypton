@@ -10,10 +10,14 @@ import { StorageContext, StorageProvider } from './components/storage/StoragePro
 import { listenSync } from '../bindings/tauri_prom_wrapper';
 import ws from '../bindings/ws';
 
+/**
+ * Main App component. Just a wrapper around some providers and the main part of the app, InnerApp.
+ */
 function App() {
   const [splashscreenClosed, setClosed] = useState(false);
 
   useEffect(() => {
+    // Waiting for the splashscreen to close and to actually load stuff
     tor.is_splashscreen_closed().then(e => setClosed(e))
 
     const unlisten = listenSync("splashscreen_closed", () => setClosed(true));
@@ -28,24 +32,32 @@ function App() {
       </StorageProvider>
     </MainProvider>
 
+  // Waiting for splashscren
   return <Text>Splashscreen is still shown...</Text>
 }
 
 
+/**
+ * The actual app component. This is the root component of the application.
+ */
 function InnerApp() {
+  // Current data of storage
   const { data } = useContext(StorageContext)
+
   const [receivers, setReceivers] = useState<GeneralUser[]>([])
   const [hostname, setHostname] = useState<string | null>(null)
   const [retryHostname, setRetryHostname] = useState(0)
   const [update, setUpdate] = useState(0)
 
   //TODO do more efficiently and not that scuffed
-  useEffect(() => ws.addClientUpdateListener((_) => {
+  useEffect(() => ws.addClientUpdateListener(() => {
+    // Updating the whole app when a client update is received
     setUpdate(Math.random())
     console.log("Received payload, updating")
   }), [])
 
   useEffect(() => {
+    // Trying to fetch current hostname and set it
     tor.get_hostname().then(e => setHostname(e)).catch(e => {
       setTimeout(() => setRetryHostname(retryHostname + 1), 100)
       return console.error("Failed to get hostname, retrying", e)
@@ -56,6 +68,7 @@ function InnerApp() {
     if (!data || !hostname)
       return;
 
+    // Getting all users from storage and setting them
     const saved_users: GeneralUser[] = Object.entries(data.chats)
       .map(([k, v]) => {
         return {
@@ -64,13 +77,13 @@ function InnerApp() {
         } as GeneralUser
       })
 
+    // And adding ourselves for debugging purposes
     if (!saved_users.some(savedUsr => savedUsr.nickname === "Self")) {
       saved_users.push({
         nickname: "Self",
         onionHostname: hostname
       })
     }
-
 
     setReceivers(saved_users)
   }, [hostname, data, update])

@@ -14,6 +14,10 @@ lazy_static! {
 
 
 /// Gets the app handle of the application, panics if it's not there
+///
+/// # Returns
+///
+/// The current app handle tauri has launched
 pub async fn get_app() -> AppHandle {
     let state = APP_HANDLE.read().await;
     let handle = state.as_ref().unwrap();

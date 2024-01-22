@@ -225,7 +225,7 @@ impl Connection {
 
         println!("Sending");
         // And encrypt the message
-        let bin = pub_key.encrypt(raw)?;
+        let bin = pub_key.encrypt(&raw)?;
 
         // And send it to the receiver
         match &*self.info.read().await {

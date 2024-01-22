@@ -12,6 +12,7 @@ use std::path::Path;
 lazy_static! {
     /// Hash of the Tor binary, used to verify the integrity of the binary
     pub static ref TOR_BINARY_HASH: String = get_tor_binary_hash();
+
     /// The actual path to the binary
     pub static ref TOR_BINARY_PATH: PathBuf = get_tor_path();
 
@@ -35,6 +36,12 @@ lazy_static! {
 
 }
 
+#[cfg(feature="snowflake")]
+lazy_static! {
+    /// Hash of the Snowflake binary, used to verify the integrity of the binary
+    pub static ref SNOWFLAKE_BINARY_HASH: String = get_snowflake_binary_hash();
+}
+
 /// Initializes every channel used to communicate with the tor thread
 pub async fn setup_tor_channels() {
     let (to_tx, to_rx) = async_channel::unbounded::<Client2TorMsg>();
@@ -47,11 +54,11 @@ pub async fn setup_tor_channels() {
     FROM_TOR_RX.write().await.replace(from_rx);
 }
 
-/// Gets the hash of the tor binary, which is platform specific so this is just a helper function
+/// Gets the hash of the snowflake binary, which is platform specific so this is just a helper function
 ///
 /// # Returns
 ///
-/// The hash of the tor binary encoded in hex
+/// The hash of the snowflake binary encoded in hex
 fn get_tor_binary_hash() -> String {
     #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
     let hash = include_str!("../assets/windows/x86_64/tor.hash");
@@ -75,6 +82,37 @@ fn get_tor_binary_hash() -> String {
     return String::from(hash);
 }
 
+
+/// Gets the hash of the tor binary, which is platform specific so this is just a helper function
+///
+/// # Returns
+///
+/// The hash of the tor binary encoded in hex
+#[cfg(feature="snowflake")]
+fn get_snowflake_binary_hash() -> String {
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    let hash = include_str!("../assets/windows/x86_64/snowflake-client.hash");
+
+    #[cfg(all(
+        target_os = "windows",
+        target_arch = "x86",
+        not(target_arch = "x86_64")
+    ))]
+    let hash = include_str!("../assets/windows/i686/snowflake-client.hash");
+
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    let hash = include_str!("../assets/linux/x86_64/snowflake-client.hash");
+
+    #[cfg(all(target_os = "linux", target_arch = "x86", not(target_arch = "x86_64")))]
+    let hash = include_str!("../assets/windows/i686/snowflake-client.hash");
+
+    // Checks if the hash is valid
+    hex::decode(hash).unwrap();
+
+    return String::from(hash);
+}
+
+
 #[cfg(feature = "snowflake")]
 /// Returns the absolute path of the pluggable transport path used in tor (contains pt_config.json for example)
 pub fn get_pluggable_transport() -> Box<Path> {
@@ -83,6 +121,18 @@ pub fn get_pluggable_transport() -> Box<Path> {
         .unwrap()
         .join("pluggable_transports")
         .into_boxed_path()
+}
+
+#[cfg(feature="snowflake")]
+/// Gets the absolute path of the snowflake binary
+pub fn get_snowflake_path() -> Box<Path> {
+    let path = get_pluggable_transport();
+    let rel = get_rel_snowflake();
+
+    let mut path = path.join("..");
+    path.push(rel);
+
+    path.into_boxed_path()
 }
 
 #[cfg(feature = "snowflake")]

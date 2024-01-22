@@ -17,6 +17,12 @@ pub fn check_integrity() -> Result<()> {
         extract_tor()?;
     }
 
+    #[cfg(feature="snowflake")]
+    if !is_snowflake_binary_valid().unwrap_or(false) {
+        error!("Snowflake is not valid. Extracting...");
+        extract_tor()?;
+    }
+
     Ok(())
 }
 
@@ -60,4 +66,29 @@ fn is_tor_binary_valid() -> Result<bool> {
     let result_hex = hex::encode(result);
 
     Ok(result_hex == TOR_BINARY_HASH.clone())
+}
+
+
+
+/// Checks if the tor binary is valid by comparing the hash of the binary to the hash in `TOR_BINARY_HASH`
+/// 
+/// # Returns
+/// 
+/// a boolean indicating whether the tor binary is valid or not (has a valid hash)
+#[cfg(feature="snowflake")]
+fn is_snowflake_binary_valid() -> Result<bool> {
+    use crate::consts::{SNOWFLAKE_BINARY_HASH, get_snowflake_path};
+
+    let mut file = File::open(get_snowflake_path())?;
+
+    // create a Sha256 object
+    let mut hasher = Sha256::new();
+
+    io::copy(&mut file, &mut hasher)?;
+
+    // read hash digest and consume hasher
+    let result = hasher.finalize();
+    let result_hex = hex::encode(result);
+
+    Ok(result_hex == SNOWFLAKE_BINARY_HASH.clone())
 }

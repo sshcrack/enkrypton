@@ -39,9 +39,15 @@ impl Display for Os {
 }
 
 fn main() -> anyhow::Result<()> {
-    let pairs = get_download_links()?;
-    let out_dir = PathBuf::from("out").into_boxed_path();
+    let args: Vec<String> = std::env::args().collect();
+    let path = args.get(1);
+    if path.is_none() {
+        return Err(anyhow::anyhow!("No path given. (first command line argument)"))
+    }
 
+    let out_dir = PathBuf::from(path.unwrap()).into_boxed_path();
+
+    let pairs = get_download_links()?;
     // Downloading archives
     fs::create_dir_all(&out_dir)?;
 
@@ -145,7 +151,8 @@ fn process(
     fs::remove_dir_all(&out_archive)?;
     fs::remove_file(&out_file)?;
 
-    fs::write(version_file, version)?;
+    fs::write(version_file, version.clone())?;
+    println!("Done downloading {} {} with version {}...", os, arch, version);
     Ok(())
 }
 

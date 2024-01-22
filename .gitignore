@@ -25,3 +25,5 @@ build
 *.sln
 *.sw?
 temp
+
+vite.config.ts.timestamp*

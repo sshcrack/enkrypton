@@ -1,5 +1,6 @@
 // reserved for commands
 
+use log::debug;
 use sysinfo::{ProcessExt, System, SystemExt};
 use tauri::Runtime;
 use tor_proxy::consts::TOR_BINARY_PATH;
@@ -23,7 +24,7 @@ pub async fn restart<R: Runtime>(
         let p = s.processes_by_exact_name(tor_path);
 
         for process in p {
-            println!(
+            debug!(
                 "{:?} {:?}",
                 process.exe(),
                 TOR_BINARY_PATH.to_str().unwrap()

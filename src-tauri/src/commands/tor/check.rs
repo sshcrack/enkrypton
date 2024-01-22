@@ -1,3 +1,4 @@
+use log::debug;
 use messaging::client::TOR_CLIENT;
 use serde::Deserialize;
 
@@ -28,14 +29,14 @@ pub async fn tor_check() -> Result<bool, String> {
     let status = res.status().await.or_else(|e| to_str_err(e)())?;
     let headers = res.headers().await.or_else(|e| to_str_err(e)())?;
 
-    println!("Status: {}", status);
-    println!("Headers:\n{:#?}", headers);
+    debug!("Status: {}", status);
+    debug!("Headers:\n{:#?}", headers);
 
     let body = res
         .json::<TorCheckResponse>()
         .await
         .or_else(|e| to_str_err(e)())?;
 
-    println!("Body:\n{:#?}", body);
+    debug!("Body:\n{:#?}", body);
     Ok(body.is_tor)
 }

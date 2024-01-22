@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 
+use log::info;
 use shared::config::CONFIG;
 use tokio::net::TcpStream;
 use tokio_socks::tcp::Socks5Stream;
@@ -65,7 +66,7 @@ impl SocksProxy {
         let proxy_url = get_server_name(&self.proxy_url)?;
         let dest_server = get_server_name(destination_url)?;
 
-        println!(
+        info!(
             "[PROXY] Connecting to {} with server_name {}",
             proxy_url, dest_server
         );

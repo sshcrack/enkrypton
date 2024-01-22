@@ -70,7 +70,7 @@ impl Connection {
             .and_then(|handle| {
                 #[cfg(feature="dev")]
                 block_on(block_on(STORAGE.read()).get_data(|e| {
-                    println!("Current chats are: {:?}", e.chats);
+                    debug!("Current chats are: {:?}", e.chats);
                     Ok(())
                 }))
                 .unwrap();
@@ -113,7 +113,6 @@ impl Connection {
     ///
     /// The newly constructed connection
     async fn new_general(receiver_host: &str, info: ConnInfo) -> Self {
-        println!("New client connection: {:?}", receiver_host);
         let (tx, rx) = async_channel::unbounded();
 
         let mut s = Self {
@@ -143,7 +142,7 @@ impl Connection {
     ///
     /// The newly constructed connection
     pub async fn new_client(receiver_host: &str, c: MessagingClient) -> Self {
-        println!("New client connection: {:?}", receiver_host);
+        info!("New client connection: {:?}", receiver_host);
         Self::new_general(receiver_host, ConnInfo::Client(c)).await
     }
 
@@ -159,7 +158,7 @@ impl Connection {
     ///
     /// The newly constructed connection
     pub async fn new_server(receiver_host: &str, c: ServerChannels) -> Self {
-        println!("New server connection: {:?}", receiver_host);
+        info!("New server connection: {:?}", receiver_host);
         Self::new_general(receiver_host, ConnInfo::Server(c)).await
     }
 
@@ -209,7 +208,7 @@ impl Connection {
         let raw = msg.as_bytes().to_vec();
 
         let tmp = self.receiver_host.clone();
-        println!("Reading public key for {}...", tmp);
+        debug!("Reading public key for {}...", tmp);
 
         // Firstly we need to get the public key of the receiver
         let pub_key = STORAGE
@@ -223,7 +222,7 @@ impl Connection {
             })
             .await?;
 
-        println!("Sending");
+        debug!("Sending");
         // And encrypt the message
         let bin = pub_key.encrypt(&raw)?;
 

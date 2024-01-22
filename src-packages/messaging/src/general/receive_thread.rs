@@ -72,7 +72,7 @@ impl ConnectionReadThread {
         debug!("Done");
         drop(storage);
 
-        let msg = priv_key.decrypt(msg)?;
+        let msg = priv_key.decrypt(&msg)?;
         let msg = String::from_utf8(msg)?;
 
         println!(

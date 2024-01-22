@@ -1,4 +1,6 @@
 pub mod consts;
+#[cfg(test)]
+mod tests;
 
 use anyhow::Result;
 use consts::{RSA_KEY_SIZE, RSA_PADDING};
@@ -113,18 +115,18 @@ impl PrivateKey {
     /// # Returns
     ///
     ///
-    pub fn decrypt(&self, encrypted: Vec<u8>) -> Result<Vec<u8>> {
+    pub fn decrypt(&self, encrypted: &[u8]) -> Result<Vec<u8>> {
         let key = PKey::from_rsa(self.0.clone())?;
 
         let mut decrypter = Decrypter::new(&key)?;
         decrypter.set_rsa_padding(*RSA_PADDING)?;
 
         // Create an output buffer
-        let buffer_len = decrypter.decrypt_len(&encrypted)?;
+        let buffer_len = decrypter.decrypt_len(encrypted)?;
         let mut decrypted = vec![0; buffer_len];
 
         // Encrypt and truncate the buffer
-        let decrypted_len = decrypter.decrypt(&encrypted, &mut decrypted)?;
+        let decrypted_len = decrypter.decrypt(encrypted, &mut decrypted)?;
         decrypted.truncate(decrypted_len);
 
         Ok(decrypted)
@@ -142,7 +144,7 @@ impl PublicKey {
     /// # Returns
     /// The encrypted data.
     ///
-    pub fn encrypt(&self, data: Vec<u8>) -> Result<Vec<u8>> {
+    pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
         let key = self.0.clone();
 
         // Generate a keypair
@@ -153,11 +155,11 @@ impl PublicKey {
         encrypter.set_rsa_padding(*RSA_PADDING)?;
 
         // Create an output buffer
-        let buffer_len = encrypter.encrypt_len(&data)?;
+        let buffer_len = encrypter.encrypt_len(data)?;
         let mut encrypted = vec![0; buffer_len];
 
         // Encrypt and truncate the buffer
-        let encrypted_len = encrypter.encrypt(&data, &mut encrypted)?;
+        let encrypted_len = encrypter.encrypt(data, &mut encrypted)?;
         encrypted.truncate(encrypted_len);
 
         Ok(encrypted)

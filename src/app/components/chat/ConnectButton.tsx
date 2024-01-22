@@ -27,6 +27,10 @@ export default function ConnectButton({ pressedConnect, setPressedConnect }: Sen
         // Just has to be twice to fire a re-render for sure
         setPressedConnect(true)
         client.connect()
+            .catch(e => {
+                console.error(e)
+                toast({ title: "Could not connect to host", description: e, status: "error" })
+            })
             .finally(() => setPressedConnect(false))
     }
 

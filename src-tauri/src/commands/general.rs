@@ -1,7 +1,7 @@
 // reserved for commands
 
 use log::debug;
-use sysinfo::{ProcessExt, System, SystemExt};
+use sysinfo::System;
 use tauri::Runtime;
 use tor_proxy::consts::TOR_BINARY_PATH;
 
@@ -29,7 +29,7 @@ pub async fn restart<R: Runtime>(
                 process.exe(),
                 TOR_BINARY_PATH.to_str().unwrap()
             );
-            if process.exe() == *TOR_BINARY_PATH {
+            if process.exe().is_some_and(|e| e == *TOR_BINARY_PATH) {
                 process.kill();
             }
         }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
-use smol::io::AsyncWriteExt;
+use tokio::io::AsyncWriteExt;
 use url::Url;
 
 use super::{response::Response, WebClient};

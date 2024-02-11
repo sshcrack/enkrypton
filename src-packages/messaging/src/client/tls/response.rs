@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
-use async_rustls::client::TlsStream;
 use log::{debug, warn};
 use serde::de::DeserializeOwned;
-
-use smol::{
+use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, BufReader},
     net::TcpStream,
 };
+use tokio_rustls::client::TlsStream;
+use tokio_socks::tcp::Socks5Stream;
 
 pub struct Response {
-    reader: BufReader<TlsStream<TcpStream>>,
+    reader: BufReader<TlsStream<Socks5Stream<TcpStream>>>,
     status_code: Option<u32>,
     headers: Option<HashMap<String, String>>,
 }
@@ -152,8 +152,8 @@ impl Response {
     ///
     /// # Returns
     ///
-    /// Returns the created `Response` 
-    pub(super) async fn from_stream(stream: TlsStream<TcpStream>) -> Self {
+    /// Returns the created `Response`
+    pub(super) async fn from_stream(stream: TlsStream<Socks5Stream<TcpStream>>) -> Self {
         let reader = BufReader::new(stream);
 
         Response {
@@ -164,9 +164,9 @@ impl Response {
     }
 
     /// Reads the body of the response and deserializing it to json
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The deserialized json object
     pub async fn json<'a, T>(self) -> Result<T>
     where
@@ -179,9 +179,9 @@ impl Response {
     }
 
     /// Reads the body of the response and returns it as a string
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The response body as string
     pub async fn text(mut self) -> Result<String> {
         let mut buf = String::new();

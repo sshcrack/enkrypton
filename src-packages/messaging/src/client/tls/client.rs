@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use async_rustls::{client::TlsStream, TlsConnector};
-use rustls::{ClientConfig, OwnedTrustAnchor, RootCertStore, ServerName};
-use smol::net::TcpStream;
-use tokio::net::TcpStream as TokioTcpStream;
+use tokio::net::TcpStream;
+use tokio_rustls::{
+    client::TlsStream,
+    rustls::{pki_types::ServerName, ClientConfig, RootCertStore},
+    TlsConnector,
+};
 use tokio_socks::tcp::Socks5Stream;
 
 use url::Url;
-use webpki_roots::TLS_SERVER_ROOTS;
 
 use crate::client::SocksProxy;
 
@@ -27,7 +28,7 @@ pub struct WebClient {
 impl WebClient {
     /// Gets the underlying SocksProxy of this client
     /// # Returns
-    /// 
+    ///
     /// The proxy used to connect to the tor network
     pub(super) fn proxy(&self) -> &SocksProxy {
         &self.proxy
@@ -35,7 +36,7 @@ impl WebClient {
 
     /// Creates a new web client from the config with the default tor proxy port
     /// # Returns
-    /// 
+    ///
     /// Creates a new web client from the config with the default tor proxy port
     pub fn from_config() -> Result<Self> {
         let tor_proxy = SocksProxy::new()?;
@@ -60,34 +61,17 @@ impl WebClient {
             .header("Accept", "*/*")
     }
 
-    /// Gets a root store certificate store used to make https requests
-    /// # Returns
-    /// 
-    /// The root store to use for the tls connection
-    fn get_root_store(&self) -> RootCertStore {
-        let mut root_store = RootCertStore::empty();
-        root_store.add_trust_anchors(TLS_SERVER_ROOTS.iter().map(|ta| {
-            OwnedTrustAnchor::from_subject_spki_name_constraints(
-                ta.subject,
-                ta.spki,
-                ta.name_constraints,
-            )
-        }));
-
-        return root_store;
-    }
-
-    /// The tls config to use for the client 
+    /// The tls config to use for the client
     ///
     /// # Returns
     ///
     /// The TLS Configuration
     fn get_tls_config(&self) -> ClientConfig {
-        let root_store = self.get_root_store();
+        let mut root_cert_store = RootCertStore::empty();
+        root_cert_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
 
         ClientConfig::builder()
-            .with_safe_defaults()
-            .with_root_certificates(root_store)
+            .with_root_certificates(root_cert_store)
             .with_no_client_auth()
     }
 
@@ -101,24 +85,23 @@ impl WebClient {
     ///
     /// # Returns
     /// Returns the connection to the given url
-    /// 
+    ///
     pub(super) async fn create_connection(
         &self,
-        proxy: Socks5Stream<TokioTcpStream>,
+        proxy: Socks5Stream<TcpStream>,
         url: &Url,
-    ) -> Result<TlsStream<TcpStream>> {
+    ) -> Result<TlsStream<Socks5Stream<TcpStream>>> {
         let config = self.get_tls_config();
 
-        let server_name_raw = url.host_str().ok_or(anyhow!("Url has to have a host."))?;
+        let server_name_raw = url
+            .host_str()
+            .ok_or(anyhow!("Url has to have a host."))?
+            .to_string();
         let server_name: ServerName = server_name_raw.try_into()?;
         let connector = TlsConnector::try_from(Arc::new(config))?;
 
-        // Converting the streams
-        let std = proxy.into_inner().into_std()?;
-        let smol_proxy = TcpStream::try_from(std)?;
-
         // and connecting it to the proxy
-        let stream = connector.connect(server_name, smol_proxy).await?;
+        let stream = connector.connect(server_name, proxy).await?;
 
         return Ok(stream);
     }

@@ -14,7 +14,7 @@ use shared::get_torrc;
 use smol::fs::unix::PermissionsExt;
 #[cfg(target_family = "unix")]
 use std::{env, fs};
-use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
+use sysinfo::{Pid, System};
 
 use anyhow::{anyhow, Result};
 use log::{debug, error, info};

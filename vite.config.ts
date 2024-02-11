@@ -4,12 +4,13 @@
 import { resolve } from 'path'
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { visualizer } from "rollup-plugin-visualizer";
 
 declare const __dirname: string
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react()],
+  plugins: [react(), visualizer()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

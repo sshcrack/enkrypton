@@ -27,3 +27,5 @@ build
 temp
 
 vite.config.ts.timestamp*
+
+stats.html

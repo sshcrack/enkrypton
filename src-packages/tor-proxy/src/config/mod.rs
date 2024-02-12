@@ -62,6 +62,7 @@ GeoIPv6File \"{}\"",
             geo_ip6.to_string_lossy().replace("\\", "/"),
         );
 
+        // Falls als pluggable Transport Snowflake verwendet werden soll
         #[cfg(feature = "snowflake")]
         {
             let pt_config = get_pluggable_transport().join("pt_config.json");

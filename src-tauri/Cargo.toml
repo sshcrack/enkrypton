@@ -10,10 +10,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.4", features = [] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5.4", features = [
+tauri = { version = "1.5.3", features = [
     "window-set-maximizable",
     "window-set-decorations",
     "window-maximize",
@@ -29,7 +29,7 @@ tauri-plugin-log = { git = "https://github.com/tauri-apps/plugins-workspace", br
 log = "^0.4"
 signal-hook = "0.3.17"
 sysinfo = "0.30.5"
-regex = "1.9.5"
+regex = "1.10.2"
 storage-internal = { path = "../src-packages/storage-internal" }
 tor-proxy = { path = "../src-packages/tor-proxy", default-features=false }
 payloads = { path = "../src-packages/payloads" }

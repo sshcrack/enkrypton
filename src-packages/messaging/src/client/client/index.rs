@@ -51,113 +51,113 @@ pub struct MessagingClient {
 
 impl MessagingClient {
     //noinspection SpellCheckingInspection
-    /// Connects to the given server and returns the newly constructed client
-    ///
-    /// # Arguments
-    ///
-    /// * `onion_hostname` - The hostname to connect to
-    ///
-    /// # Returns
-    /// The constructed websocket client
-    /// 
-    pub async fn new(onion_hostname: &str) -> Result<Self> {
-        // Sending the status update to the frontend (So the user knows what's going on)
-        let _ = get_app()
-            .await
-            .emit_payload(WsClientUpdatePayload {
-                hostname: onion_hostname.to_string(),
-                status: WsClientStatus::ConnectingProxy,
-            })
-            .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
+/// Connects to the given server and returns the newly constructed client
+///
+/// # Arguments
+///
+/// * `onion_hostname` - The hostname to connect to
+///
+/// # Returns
+/// The constructed websocket client
+/// 
+pub async fn new(onion_hostname: &str) -> Result<Self> {
+    // Sending the status update to the frontend (So the user knows what's going on)
+    let _ = get_app()
+        .await
+        .emit_payload(WsClientUpdatePayload {
+            hostname: onion_hostname.to_string(),
+            status: WsClientStatus::ConnectingProxy,
+        })
+        .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
 
-        debug!("[CLIENT] Creating verify packet...");
-        // Creating a verify packet to send to the client
-        let verify_packet = C2SPacket::identity(onion_hostname).await?;
+    debug!("[CLIENT] Creating verify packet...");
+    // Creating a verify packet to send to the client
+    let verify_packet = C2SPacket::identity(onion_hostname).await?;
 
-        // For developing purposes, one could send himself messages, obviously disabling that for production
-        #[cfg(not(feature = "dev"))]
-        let connect_host = onion_hostname.to_string();
-        #[cfg(feature = "dev")]
-        let connect_host = onion_hostname
-            .replace("-dev-server", "")
-            .replace("-dev-client", "");
+    // For developing purposes, one could send himself messages, obviously disabling that for production
+    #[cfg(not(feature = "dev"))]
+    let connect_host = onion_hostname.to_string();
+    #[cfg(feature = "dev")]
+    let connect_host = onion_hostname
+        .replace("-dev-server", "")
+        .replace("-dev-client", "");
 
-        // The address which is used to connect to the websocket
-        let onion_addr = format!("ws://{}.onion/ws/", connect_host);
+    // The address which is used to connect to the websocket
+    let onion_addr = format!("ws://{}.onion/ws/", connect_host);
 
-        debug!("[CLIENT] Creating proxy...");
+    debug!("[CLIENT] Creating proxy...");
 
-        // Creating the Socks5Proxy client which is used to connect to the tor network
-        let proxy = SocksProxy::new()?;
-        debug!("[CLIENT] Connecting Proxy...");
-        let mut onion_addr = Url::parse(&onion_addr)?;
-        onion_addr
-            .set_scheme("ws")
-            .or(Err(anyhow!("[CLIENT] Could not set scheme")))?;
+    // Creating the Socks5Proxy client which is used to connect to the tor network
+    let proxy = SocksProxy::new()?;
+    debug!("[CLIENT] Connecting Proxy...");
+    let mut onion_addr = Url::parse(&onion_addr)?;
+    onion_addr
+        .set_scheme("ws")
+        .or(Err(anyhow!("[CLIENT] Could not set scheme")))?;
 
-        // Connecting to the destination host using the proxyy
-        let sock = proxy.connect(&onion_addr).await?;
+    // Connecting to the destination host using the proxyy
+    let sock = proxy.connect(&onion_addr).await?;
 
-        debug!("[CLIENT] Connecting Tungstenite...");
+    debug!("[CLIENT] Connecting Tungstenite...");
 
-        // And notifying the front end again about our progress
-        let _ = get_app()
-            .await
-            .emit_payload(WsClientUpdatePayload {
-                hostname: onion_hostname.to_string(),
-                status: WsClientStatus::ConnectingHost,
-            })
-            .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
+    // And notifying the front end again about our progress
+    let _ = get_app()
+        .await
+        .emit_payload(WsClientUpdatePayload {
+            hostname: onion_hostname.to_string(),
+            status: WsClientStatus::ConnectingHost,
+        })
+        .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
 
 
-        // Connecting to the websocket with the client
-        let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
+    // Connecting to the websocket with the client
+    let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
-        // Splitting the duplex stream into a read and write stream
-        let (mut write, read) = ws_stream.split();
+    // Splitting the duplex stream into a read and write stream
+    let (mut write, read) = ws_stream.split();
 
-        // Sending the status update to the frontend, again
-        let _ = get_app()
-            .await
-            .emit_payload(WsClientUpdatePayload {
-                hostname: onion_hostname.to_string(),
-                status: WsClientStatus::WaitingIdentity,
-            })
-            .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
+    // Sending the status update to the frontend, again
+    let _ = get_app()
+        .await
+        .emit_payload(WsClientUpdatePayload {
+            hostname: onion_hostname.to_string(),
+            status: WsClientStatus::WaitingIdentity,
+        })
+        .map_err(|e| warn!("[CLIENT] Could not emit ws client update: {:?}", e));
 
-        debug!("[CLIENT] Sending verify packet");
-        // And actually sending the verify packet
-        write.send(verify_packet.try_into()?).await?;
+    debug!("[CLIENT] Sending verify packet");
+    // And actually sending the verify packet
+    write.send(verify_packet.try_into()?).await?;
 
-        // Establishing the channel used to communicate with the common messaging manager
-        let (tx, rx) = async_channel::unbounded();
+    // Establishing the channel used to communicate with the common messaging manager
+    let (tx, rx) = async_channel::unbounded();
 
-        let arc_write = Arc::new(Mutex::new(write));
+    let arc_write = Arc::new(Mutex::new(write));
 
-        // Spawning the new flush thread
-        let checker = FlushChecker::new(onion_hostname, arc_write.clone()).await?;
-        let flusher_exit = checker.should_exit.clone();
+    // Spawning the new flush thread
+    let checker = FlushChecker::new(onion_hostname, arc_write.clone()).await?;
+    let flusher_exit = checker.should_exit.clone();
 
-        // Constructing the client as the connection was successful
-        let mut c = Self {
-            write: arc_write.clone(),
-            heartbeat_thread: Arc::new(None),
-            receiver: onion_hostname.to_string(),
+    // Constructing the client as the connection was successful
+    let mut c = Self {
+        write: arc_write.clone(),
+        heartbeat_thread: Arc::new(None),
+        receiver: onion_hostname.to_string(),
 
-            rx,
-            read_thread: Arc::new(None),
-            flush_checker: checker
-        };
+        rx,
+        read_thread: Arc::new(None),
+        flush_checker: checker
+    };
 
-        debug!("[CLIENT] Spawning heartbeat thread");
-        // Spawning the heartbeat thread
-        c.spawn_heartbeat_thread();
+    debug!("[CLIENT] Spawning heartbeat thread");
+    // Spawning the heartbeat thread
+    c.spawn_heartbeat_thread();
 
-        // Spawning the read thread
-        c.spawn_read_thread(tx, (read, arc_write), flusher_exit);
+    // Spawning the read thread
+    c.spawn_read_thread(tx, (read, arc_write), flusher_exit);
 
-        return Ok(c);
-    }
+    return Ok(c);
+}
 
     /// Adds the given packet to the send queue of the client
     ///

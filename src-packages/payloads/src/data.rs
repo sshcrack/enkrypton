@@ -29,7 +29,6 @@ pub struct StorageData {
 #[derive(Clone, Debug, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 pub struct StorageChat {
     /// All messages sent to this receiver or received from this receiver
-    #[zeroize(skip)]
     pub messages: Vec<ChatMessage>,
     /// The nickname of the receiver
     pub nickname: Option<String>,
@@ -38,10 +37,7 @@ pub struct StorageChat {
     #[cfg_attr(feature="export_ts", ts(skip))]
     #[zeroize(skip)]
     pub rec_pub_key: Option<PublicKey>,
-    #[zeroize(skip)]
-    pub receiver_onion: String,
-    /// Private key of ourselves used to decrypt the messages that are being received
-    #[zeroize(skip)]
+    /// Private key of this messenger used to decrypt the messages that are being received
     #[cfg_attr(feature="export_ts", ts(skip))]
     pub priv_key: PrivateKey,
 }
@@ -56,9 +52,8 @@ impl StorageChat {
     /// # Returns
     ///
     /// The constructed storage chat
-    pub fn new(receiver_onion: &str) -> Self {
+    pub fn new(_receiver_onion: &str) -> Self {
         Self {
-            receiver_onion: receiver_onion.to_string(),
             messages: Vec::new(),
             nickname: None,
 

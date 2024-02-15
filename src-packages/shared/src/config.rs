@@ -55,12 +55,12 @@ impl TorConfig {
             free_local_port().ok_or(anyhow!("Could not find a free service port."))?;
 
         // Actually constructing this config struct
-        return Ok(Self {
+        Ok(Self {
             socks_port,
             data_dir,
             service_dir,
             service_port,
-        });
+        })
     }
 
     /// # Returns
@@ -77,22 +77,22 @@ impl TorConfig {
 
     /// The service directory that tor should use
     pub fn service_dir(&self) -> &OsString {
-        return &self.service_dir;
+        &self.service_dir
     }
 
     /// The service directory that tor should use
     pub fn data_dir(&self) -> &OsString {
-        return &self.data_dir;
+        &self.data_dir
     }
 
     /// The host the tor proxy should be listening on
     pub fn get_socks_host(&self) -> String {
-        return format!("127.0.0.1:{}", self.socks_port);
+        format!("127.0.0.1:{}", self.socks_port)
     }
 
     /// Returns the hidden service host, as the name suggests
     pub fn get_hidden_service_host(&self) -> String {
-        return format!("127.0.0.1:{}", self.service_port);
+        format!("127.0.0.1:{}", self.service_port)
     }
 }
 

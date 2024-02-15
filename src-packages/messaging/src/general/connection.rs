@@ -226,7 +226,7 @@ impl Connection {
         // And encrypt the message
         let bin = pub_key.encrypt(&raw)?;
 
-        // And send it to the receiver
+        // And send it to the receiver, if we are the client, send a client packet if not, server packet
         match &*self.info.read().await {
             ConnInfo::Client(c) => {
                 debug!("Client msg");

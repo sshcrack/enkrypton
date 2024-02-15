@@ -10,11 +10,24 @@ use openssl::{
     pkey::{PKey, Private, Public},
     rsa::Rsa,
 };
+use zeroize::{Zeroize, ZeroizeOnDrop};
+use lazy_static::lazy_static;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
+
+lazy_static! {
+    pub static ref ZEROIZE_RSA_KEY: Rsa<Private> = Rsa::private_key_from_pem(include_bytes!("../zeroize_key")).unwrap();
+}
 
 /// Just a wrapper to the openssl RSA Key. Used for serialization and deserialization.
 #[derive(Clone, Debug)]
 pub struct PrivateKey(pub Rsa<Private>);
+
+impl Zeroize for PrivateKey {
+    fn zeroize(&mut self) {
+        ZEROIZE_RSA_KEY.clone_into(&mut self.0);
+    }
+}
+impl ZeroizeOnDrop for PrivateKey {}
 
 /// Serialize the private key to a PEM string
 impl Serialize for PrivateKey {

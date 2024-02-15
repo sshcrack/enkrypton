@@ -7,6 +7,7 @@ use openssl::{sign::Verifier, pkey::PKey};
 use payloads::{packets::Identity, data::StorageChat};
 use storage_internal::STORAGE;
 use encryption::consts::DIGEST;
+use tor_proxy::service::get_service_hostname;
 
 #[async_trait::async_trait]
 pub trait IdentityProvider<T> {
@@ -38,6 +39,11 @@ pub trait IdentityVerify {
 impl IdentityVerify for Identity {
     async fn verify(&self) -> Result<()> {
         let Identity {  hostname: remote_host, pub_key, signature} = self;
+        // Get the own hostname
+        let own_hostname = get_service_hostname(!remote_host.ends_with("-dev-client"))
+            .await?
+            .ok_or(anyhow!("Could not get own hostname"))?;
+
 
         debug!("Reading to verify...");
         // Check if there is a public key for the given receiver
@@ -57,7 +63,7 @@ impl IdentityVerify for Identity {
             let mut verifier = Verifier::new(*DIGEST, &keypair)?;
 
             // Verify the signature with the public key
-            verifier.update(remote_host.as_bytes())?;
+            verifier.update((remote_host.to_string() + &own_hostname).as_bytes())?;
             let is_valid = verifier.verify(&signature)?;
 
             if !is_valid {

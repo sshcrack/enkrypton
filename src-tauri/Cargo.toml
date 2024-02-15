@@ -44,6 +44,7 @@ custom-protocol = ["tauri/custom-protocol"]
 snowflake = ["tor-proxy/snowflake"]
 dev = ["messaging/dev", "tor-proxy/dev", "tauri/devtools", "enable-console"]
 enable-console = []
+vendored = [ "storage-internal/vendored", "tor-proxy/vendored", "payloads/vendored", "messaging/vendored"]
 
 [profile.release]
 strip=true

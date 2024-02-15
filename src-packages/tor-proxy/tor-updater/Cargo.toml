@@ -17,3 +17,6 @@ lazy_static = "1.4.0"
 hex = "0.4.3"
 zip = { version = "0.6.6", features = ["deflate"] }
 zip-extensions = "0.6.2"
+
+[features]
+vendored = [ "openssl/vendored" ]

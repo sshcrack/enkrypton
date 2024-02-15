@@ -24,7 +24,7 @@ impl IdentityProvider<Self> for C2SPacket {
         let keypair = PKey::from_rsa(priv_key.0)?;
         let mut signer = Signer::new(*DIGEST, &keypair)?;
 
-        signer.update(own_hostname.as_bytes())?;
+        signer.update((own_hostname.clone() + receiver).as_bytes())?;
         let signature = signer.sign_to_vec()?;
 
         // Return the identity packet

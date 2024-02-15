@@ -1,31 +1,53 @@
 #!/usr/bin/env pwsh
+param (
+    [switch]$compileWindows
+ )
+
+function Get-CommandExist {
+    param (
+        [string]$command
+    )
+
+    $commandPath = Get-Command $command -ErrorAction SilentlyContinue
+    return $commandPath -ne $null
+}
 
 function Build-Features {
     param (
-        [string]$features
+        [string]$features,
+        [string]$target
     )
 
-    Write-Host Building with features: $features
+    Write-Host "Building with features '$features' and target '$target'"
 
     $file = "enkrypton"
     $ext = ""
-    if($IsWindows) {
+    $cargoOut = "release"
+    if($target.Contains("windows")) {
         $ext = ".exe"
+        $cargoOut = $target + "/$cargoOut"
     }
 
-    $features_Str = $features.Replace("-", "_")
-    $features_str = $features.Replace(",", "-")
+    $features_str = $features.Replace("-", "_")
+    $features_str = $features_str.Replace(",", "-")
+    $features_str = $features_str.Replace("-vendored", "")
+    $features_str = $features_str.Replace("vendored", "")
 
     if($features_str -ne "") {
         $features_str = "-$features_str"
     }
 
-    yarn tauri build -b --features $features -c "./src-tauri/tauri-nobuild.json"
+    yarn tauri build -b --features $features -c "./src-tauri/tauri-nobuild.json" $(if($target -ne "") { "--target" }) $(if($target -ne "") { $target })
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }
 
-    Copy-Item -Path "./src-tauri/target/release/$file$ext" -Destination "./build/$file$features_str$ext" -Force
+    Copy-Item -Path "./src-tauri/target/$cargoOut/$file$ext" -Destination "./build/$file$features_str$ext" -Force
+}
+
+if($(-Not $(Get-CommandExist("lld"))) -and $compileWindows) {
+    Write-Host "Windows cross-compilation tools not found. Skipping Windows build. https://tauri.app/v1/guides/building/cross-platform/#experimental-build-windows-apps-on-linux-and-macos"
+    $compileWindows = $false
 }
 
 $config = ConvertFrom-Json $(Get-Content "./src-tauri/tauri.conf.json" -Raw)
@@ -38,10 +60,22 @@ if ($LASTEXITCODE -ne 0) {
 Remove-Item -r ./build
 New-Item -ItemType Directory -Path ./build
 
-Build-Features -features ""
-if($IsWindows) {
-    Build-Features -features "enable-console"
+$windowsTarget = "x86_64-pc-windows-msvc"
+
+$features = "", "snowflake", "dev", "dev,snowflake"
+foreach ($f in $features) {
+    Build-Features -features $f
+    if($compileWindows) {
+        if ($f -eq "") {
+            $f = "vendored"
+        } else {
+            $f = "$f,vendored"
+        }
+
+        Build-Features -features $f -target $windowsTarget
+    }
 }
-Build-Features -features "snowflake"
-Build-Features -features "dev"
-Build-Features -features "dev,snowflake"
+
+if($compileWindows) {
+    Build-Features -features "enable-console,vendored" -target $windowsTarget
+}

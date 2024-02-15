@@ -37,3 +37,4 @@ tokio-rustls = "0.25.0"
 
 [features]
 dev = ["hex"]
+vendored = [ "openssl/vendored", "payloads/vendored", "tor-proxy/vendored", "encryption/vendored", "storage-internal/vendored" ]

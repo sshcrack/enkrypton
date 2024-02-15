@@ -51,7 +51,7 @@ impl IdentityVerify for Identity {
             let key = e.chats.get(remote_host)
                 .and_then(|e| e.rec_pub_key.clone());
 
-            return Ok(key)
+            Ok(key)
         }).await?;
 
         debug!("Done");

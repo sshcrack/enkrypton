@@ -23,9 +23,13 @@ function Build-Features {
     $file = "enkrypton"
     $ext = ""
     $cargoOut = "release"
-    if($target.Contains("windows")) {
+    $targetWindows = $target.Contains("windows")
+    if($targetWindows -or $IsWindows) {
         $ext = ".exe"
-        $cargoOut = $target + "/$cargoOut"
+
+        if($targetWindows) {
+            $cargoOut = $target + "/$cargoOut"
+        }
     }
 
     $features_str = $features.Replace("-", "_")

@@ -1,4 +1,4 @@
-import { Flex, Text } from '@chakra-ui/react';
+import { Button, Flex, Text } from '@chakra-ui/react';
 import { useContext, useEffect, useState } from "react";
 import tor from '../bindings/tor';
 import { GeneralUser } from '../bindings/ws/client/types';
@@ -32,8 +32,10 @@ function App() {
       </StorageProvider>
     </MainProvider>
 
-  // Waiting for splashscren
-  return <Text>Splashscreen is still shown...</Text>
+  // Waiting for splashscreen
+  return <>
+  <Text>Splashscreen is still shown...</Text>
+  <Button colorScheme='green' onClick={() => setClosed(true)}>No it's not!</Button></>
 }
 
 

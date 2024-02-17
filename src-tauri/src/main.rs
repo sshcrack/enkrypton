@@ -9,6 +9,7 @@ use log::{error, info, LevelFilter};
 
 use commands::ws::*;
 use messaging::server::server::start_webserver;
+use shared::get_root_dir;
 use startup::startup;
 use tauri::{async_runtime::block_on, Manager, WindowEvent};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
@@ -31,7 +32,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::default()
-                .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
+                .targets([LogTarget::Folder(get_root_dir()), LogTarget::Stdout, LogTarget::Webview])
                 .with_colors(ColoredLevelConfig::default())
                 .level_for("tauri", LevelFilter::Info)
                 .level_for("hyper", LevelFilter::Info)

@@ -80,6 +80,6 @@ foreach ($f in $features) {
     }
 }
 
-if($compileWindows) {
+if($(-Not $IsWindows -and $compileWindows) -or $IsWindows) {
     Build-Features -features "enable-console,vendored" -target $windowsTarget
 }

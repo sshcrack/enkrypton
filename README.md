@@ -1,5 +1,13 @@
 # Facharbeit
 
+## DevContainer
+Make sure you have [Docker](https://www.docker.com/products/docker-desktop/) and [VS Code](https://code.visualstudio.com/) with the [Remote Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) installed.
+
+Then simply click on this button:
+
+[![VS Code Container](https://img.shields.io/static/v1?label=VS+Code&message=Container&logo=visualstudiocode&color=007ACC&logoColor=007ACC&labelColor=2C2C32)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/sshcrack/enkrypton)
+
+
 ## Virtualisierung
 
 

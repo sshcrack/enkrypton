@@ -40,10 +40,7 @@
 			"upgradePackages": "true"
 		},
 		"ghcr.io/devcontainers/features/rust:1": "latest",
-		"ghcr.io/devcontainers/features/git:1": {
-			"version": "latest",
-			"ppa": "false"
-		},
+		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/powershell:1": {},
 		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
 			"packages": "libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev jq ca-certificates"

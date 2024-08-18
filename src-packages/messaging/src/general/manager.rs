@@ -86,7 +86,7 @@ impl MessagingManager {
             return Ok(c.clone());
         }
 
-        return Err(anyhow!("Could not establish connection"));
+        Err(anyhow!("Could not establish connection"))
     }
 
     /// Waits until this connection is verified

@@ -80,7 +80,7 @@ impl Response {
         let res = self.read_status().await?;
         self.status_code = Some(res);
 
-        return Ok(res);
+        Ok(res)
     }
 
     /// Reads the headers from the incoming stream, parses them and stores them in a hash map.
@@ -187,6 +187,6 @@ impl Response {
         let mut buf = String::new();
         self.reader.read_to_string(&mut buf).await?;
 
-        return Ok(buf);
+        Ok(buf)
     }
 }

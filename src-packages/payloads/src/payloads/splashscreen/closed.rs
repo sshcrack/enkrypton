@@ -11,6 +11,6 @@ pub struct SplashscreenClosedPayload {
 
 impl Sendable for SplashscreenClosedPayload {
     fn get_name(&self) -> String {
-        return "splashscreen_closed".to_string()
+        "splashscreen_closed".to_string()
     }
 }

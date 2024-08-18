@@ -39,6 +39,7 @@ pub async fn handle_tor_stdout(should_exit: Arc<AtomicBool>, mut child: Child) -
     let mut stdout = BufReader::new(stdout);
     // Keeping the 10 last logs in memory
     let mut logs = Vec::<String>::with_capacity(10);
+
     // And exiting only if a exit signal was sent
     while !should_exit.load(Ordering::Relaxed) {
         // checking if the tor process has exited

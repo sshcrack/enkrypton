@@ -37,5 +37,5 @@ async fn server_mainloop() -> Result<()> {
     .run()
     .await?;
 
-    return Ok(());
+    Ok(())
 }

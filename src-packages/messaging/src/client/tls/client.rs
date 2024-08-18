@@ -103,6 +103,6 @@ impl WebClient {
         // and connecting it to the proxy
         let stream = connector.connect(server_name, proxy).await?;
 
-        return Ok(stream);
+        Ok(stream)
     }
 }

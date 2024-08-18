@@ -13,10 +13,10 @@ pub fn to_str_err<E, K>(err: E) -> impl Fn() -> Result<K, String>
 where
     E: ToString + Display,
 {
-    return move || {
+    move || {
         error!("Error: {}", err);
         Err(err.to_string())
-    };
+    }
 }
 
 lazy_static! {
@@ -26,7 +26,7 @@ lazy_static! {
 
 /// Used for validation of the given onion address
 pub fn is_onion_hostname(addr: &str) -> bool {
-    return ONION_REGEX.is_match(addr);
+    ONION_REGEX.is_match(addr)
 }
 
 

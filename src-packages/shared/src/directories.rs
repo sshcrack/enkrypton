@@ -53,7 +53,7 @@ pub fn get_service_dir() -> Result<OsString> {
         fs::create_dir(&dir)?;
     }
 
-    return Ok(dir.into_os_string());
+    Ok(dir.into_os_string())
 }
 
 /// The data directory tor should use. This is `enkrypton_root/data` for now.
@@ -70,7 +70,7 @@ pub fn get_data_dir() -> Result<OsString> {
         fs::create_dir(&dir)?;
     }
 
-    return Ok(dir.into_os_string());
+    Ok(dir.into_os_string())
 }
 
 
@@ -84,7 +84,7 @@ pub fn get_torrc() -> PathBuf {
     let mut dir = get_root_dir();
     dir.push("torrc");
 
-    return dir;
+    dir
 }
 
 /// The path to the tor executable. This is `enkrypton_root/tor.exe` for windows and `enkrypton_root/tor` for linux.
@@ -97,8 +97,7 @@ pub fn get_tor_path() -> PathBuf {
     #[cfg(target_os="windows")]
     return tor_write_path.join("tor.exe");
 
-    #[cfg(target_os="linux")]
-    return tor_write_path.join("tor");
+    tor_write_path.join("tor")
 }
 
 /// The path to the storage file (where user data is encrypted and stored).
@@ -110,5 +109,5 @@ pub fn get_storage_path() -> Box<Path> {
     let mut root = get_root_dir();
     root.push("storage.bin");
 
-    return root.into_boxed_path();
+    root.into_boxed_path()
 }

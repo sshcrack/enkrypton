@@ -111,6 +111,7 @@ pub async fn new(onion_hostname: &str) -> Result<Self> {
 
 
     // Connecting to the websocket with the client
+    let onion_addr = onion_addr.to_string();
     let (ws_stream, _) = tokio_tungstenite::client_async(&onion_addr, sock).await?;
 
     // Splitting the duplex stream into a read and write stream
@@ -156,7 +157,7 @@ pub async fn new(onion_hostname: &str) -> Result<Self> {
     // Spawning the read thread
     c.spawn_read_thread(tx, (read, arc_write), flusher_exit);
 
-    return Ok(c);
+    Ok(c)
 }
 
     /// Adds the given packet to the send queue of the client

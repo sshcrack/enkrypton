@@ -263,7 +263,7 @@ impl StorageManager {
         }
 
         let inner = state.as_ref().unwrap();
-        return inner.data.clone();
+        inner.data.clone()
     }
 
     /// Gets the data of the current storage if there is some and passes it to the given function
@@ -286,7 +286,7 @@ impl StorageManager {
             return f(&d);
         }
 
-        return Err(anyhow!("Storage not initialized yet."));
+        Err(anyhow!("Storage not initialized yet."))
     }
 
     /// Modifies the storage with the given function
@@ -344,7 +344,7 @@ impl StorageManager {
     ///
     /// Returns whether the storage is unlocked
     pub fn is_unlocked(&self) -> Result<bool> {
-        return Ok(self.exists()? && self.is_unlocked);
+        Ok(self.exists()? && self.is_unlocked)
     }
 
     /// Checks if the storage file exists
@@ -353,7 +353,7 @@ impl StorageManager {
     ///
     /// Returns whether the storage file exists
     pub fn exists(&self) -> Result<bool> {
-        return Ok(self.path.is_file() && self.path.metadata()?.len() != 0);
+        Ok(self.path.is_file() && self.path.metadata()?.len() != 0)
     }
 
     /// Checks if the storage has already been parsed
@@ -362,6 +362,6 @@ impl StorageManager {
     ///
     /// Returns whether the storage has already been parsed
     pub fn has_parsed(&self) -> bool {
-        return self.has_parsed;
+        self.has_parsed
     }
 }

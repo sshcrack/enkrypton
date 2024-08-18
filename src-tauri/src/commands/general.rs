@@ -18,7 +18,6 @@ pub async fn restart<R: Runtime>(
     //TODO maybe find a better method by checking if process' binary is the same as the one we want to start
     if kill_old_tor {
         let tor_path = TOR_BINARY_PATH.file_name().unwrap();
-        let tor_path = tor_path.to_str().unwrap();
 
         let s = System::new_all();
         let p = s.processes_by_exact_name(tor_path);

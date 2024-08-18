@@ -72,7 +72,7 @@ impl<'a> Request<'a> {
             lines.push(format!("{}: {}", key, value))
         }
 
-        return lines.join("\r\n");
+        lines.join("\r\n")
     }
 
     /// Gets the beginning of the HTTP Payload
@@ -92,7 +92,7 @@ impl<'a> Request<'a> {
         let server_name_raw = url.host_str().ok_or(anyhow!("Url has to have a host."))?;
         let headers = self.get_headers(server_name_raw);
 
-        return Ok(format!("{}{}\r\n\r\n", start, headers));
+        Ok(format!("{}{}\r\n\r\n", start, headers))
     }
 
 
@@ -119,6 +119,6 @@ impl<'a> Request<'a> {
         stream.write_all(prepend.as_bytes()).await?;
 
         let resp = Response::from_stream(stream).await;
-        return Ok(resp);
+        Ok(resp)
     }
 }

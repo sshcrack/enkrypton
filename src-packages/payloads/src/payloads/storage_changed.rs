@@ -8,6 +8,6 @@ pub struct StorageChangedPayload {}
 
 impl Sendable for StorageChangedPayload {
     fn get_name(&self) -> String {
-        return "storage_changed".to_string()
+        "storage_changed".to_string()
     }
 }

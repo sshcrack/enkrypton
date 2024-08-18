@@ -79,7 +79,7 @@ fn get_tor_binary_hash() -> String {
     // Checks if the hash is valid
     hex::decode(hash).unwrap();
 
-    return String::from(hash);
+    String::from(hash)
 }
 
 
@@ -109,7 +109,7 @@ fn get_snowflake_binary_hash() -> String {
     // Checks if the hash is valid
     hex::decode(hash).unwrap();
 
-    return String::from(hash);
+    String::from(hash)
 }
 
 

@@ -45,5 +45,5 @@ pub async fn get_service_hostname(_client: bool) -> Result<Option<String>> {
         buffer = format!("{}-dev-{}", buffer, if _client { "client"} else { "server" });
     }
 
-    return Ok(Some(buffer));
+    Ok(Some(buffer))
 }

@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 lazy_static = "1.4.0"
-port_check = "0.1.5"
+port_check = "0.2.1"
 tauri = "1.5.3"
 tokio = "1.34.0"
 

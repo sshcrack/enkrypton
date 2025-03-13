@@ -12,7 +12,10 @@ use lazy_static::lazy_static;
 use openssl::hash::{Hasher, MessageDigest};
 use scraper::{Html, Selector};
 use tar::Archive;
-use zip::{write::FileOptions, ZipWriter};
+use zip::{
+    write::SimpleFileOptions,
+    ZipWriter,
+};
 use zip_extensions::ZipWriterExtensions;
 
 lazy_static! {
@@ -42,7 +45,9 @@ fn main() -> anyhow::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let path = args.get(1);
     if path.is_none() {
-        return Err(anyhow::anyhow!("No path given. (first command line argument)"))
+        return Err(anyhow::anyhow!(
+            "No path given. (first command line argument)"
+        ));
     }
 
     let out_dir = PathBuf::from(path.unwrap()).into_boxed_path();
@@ -87,10 +92,13 @@ fn process(
             );
             return Ok(());
         }
-        
-        println!("Replacing version {} with {} on os {} {}", version_local, version, os, arch);
+
+        println!(
+            "Replacing version {} with {} on os {} {}",
+            version_local, version, os, arch
+        );
     }
-    
+
     if download_dir.is_dir() {
         fs::remove_dir_all(&download_dir)?;
     }
@@ -142,17 +150,19 @@ fn process(
 
     let path = download_dir.join("tor.zip");
     let file = File::create(&path)?;
-    let mut zip = ZipWriter::new(file);
-    zip.create_from_directory_with_options(
-        &out_archive.to_path_buf(),
-        FileOptions::default().compression_level(Some(9)),
-    )?;
+    let zip = ZipWriter::new(file);
+    zip.create_from_directory_with_options(&out_archive.to_path_buf(), |_p| {
+        SimpleFileOptions::default().compression_level(Some(9))
+    })?;
 
     fs::remove_dir_all(&out_archive)?;
     fs::remove_file(&out_file)?;
 
     fs::write(version_file, version.clone())?;
-    println!("Done downloading {} {} with version {}...", os, arch, version);
+    println!(
+        "Done downloading {} {} with version {}...",
+        os, arch, version
+    );
     Ok(())
 }
 

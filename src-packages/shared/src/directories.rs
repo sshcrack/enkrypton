@@ -94,10 +94,12 @@ pub fn get_torrc() -> PathBuf {
 /// The platform specific path to the tor executable
 pub fn get_tor_path() -> PathBuf {
     let tor_write_path = get_tor_dir();
-    #[cfg(target_os="windows")]
-    return tor_write_path.join("tor.exe");
 
-    tor_write_path.join("tor")
+    return tor_write_path.join(if cfg!(target_os="windows") {
+        "tor.exe"
+    } else {
+        "tor"
+    });
 }
 
 /// The path to the storage file (where user data is encrypted and stored).

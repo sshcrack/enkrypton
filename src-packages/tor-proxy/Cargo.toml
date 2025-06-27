@@ -1,4 +1,6 @@
-workspace = { members = ["tor-updater"] }
+[workspace]
+members = ["tor-updater"]
+
 [package]
 name = "tor-proxy"
 version = "0.1.0"
@@ -22,7 +24,6 @@ serde = { version = "1.0.193", optional = true }
 zip-extract = "0.1.2"
 async-trait = { version = "0.1.74" }
 serde_json = { version = "1.0.108", optional = true }
-
 
 [target.'cfg(target_family="unix")'.dependencies]
 smol = { version = "2.0.0", default-features = false }

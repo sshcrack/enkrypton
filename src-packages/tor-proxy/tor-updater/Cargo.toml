@@ -16,7 +16,6 @@ openssl = "0.10.60"
 lazy_static = "1.4.0"
 hex = "0.4.3"
 zip = { version = "2.1.6", features = ["deflate"] }
-zip-extensions = "0.8.1"
 
 [features]
 vendored = [ "openssl/vendored" ]

@@ -33,3 +33,6 @@ dev = [ ]
 snowflake = ["dep:serde", "dep:serde_json"]
 fix-snowflake = []
 vendored = [ "payloads/vendored" ]
+
+[build-dependencies]
+tor-updater = { version = "0.1.0", path = "tor-updater" }

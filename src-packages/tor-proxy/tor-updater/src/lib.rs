@@ -16,7 +16,6 @@ use zip::{
     write::SimpleFileOptions,
     ZipWriter,
 };
-use zip_extensions::ZipWriterExtensions;
 
 lazy_static! {
     pub static ref DIGEST: MessageDigest = MessageDigest::sha256();
@@ -41,17 +40,8 @@ impl Display for Os {
     }
 }
 
-fn main() -> anyhow::Result<()> {
-    let args: Vec<String> = std::env::args().collect();
-    let path = args.get(1);
-    if path.is_none() {
-        return Err(anyhow::anyhow!(
-            "No path given. (first command line argument)"
-        ));
-    }
-
-    let out_dir = PathBuf::from(path.unwrap()).into_boxed_path();
-
+pub fn download_version(out_dir: &Path) -> anyhow::Result<()> {
+    let out_dir = out_dir.to_path_buf();
     let pairs = get_download_links()?;
     // Downloading archives
     fs::create_dir_all(&out_dir)?;
@@ -63,14 +53,15 @@ fn main() -> anyhow::Result<()> {
     }
 
     for h in handles {
-        h.join().unwrap().unwrap();
+        h.join().unwrap()?;
     }
+
     Ok(())
 }
 
 fn process(
     (info, (version, link)): ((Os, String), (String, String)),
-    out_dir: Box<Path>,
+    out_dir: PathBuf,
 ) -> anyhow::Result<()> {
     let (os, arch) = info;
 
@@ -150,10 +141,10 @@ fn process(
 
     let path = download_dir.join("tor.zip");
     let file = File::create(&path)?;
-    let zip = ZipWriter::new(file);
-    zip.create_from_directory_with_options(&out_archive.to_path_buf(), |_p| {
-        SimpleFileOptions::default().compression_level(Some(9))
-    })?;
+    let mut zip = ZipWriter::new(file);
+    zip.add_directory_from_path(&out_archive.to_path_buf(), SimpleFileOptions::default().compression_level(Some(9)))?;
+
+    zip.finish()?;
 
     fs::remove_dir_all(&out_archive)?;
     fs::remove_file(&out_file)?;

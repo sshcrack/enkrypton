@@ -1,5 +1,4 @@
-use std::env;
-use std::path::Path;
+use std::{env, path::Path};
 
 fn main() {
     // Re-run build script if the version file changes
@@ -12,9 +11,9 @@ fn main() {
         let out_path = Path::new(&out_dir);
 
         // Download the Tor expert bundles
-        match tor_updater::download_version(out_path) {
-            Ok(_) => println!("Successfully downloaded Tor expert bundles"),
-            Err(e) => eprintln!("Failed to download Tor expert bundles: {}", e),
+        match tor_updater::download_version(out_path, include_str!("./assets/tor_expert_bundle_version.txt").trim()) {
+            Ok(_) => println!("cargo:warning=Successfully downloaded Tor expert bundles to {}", out_path.display()),
+            Err(e) => panic!("Failed to download Tor expert bundles: {}", e),
         }
     }
 }

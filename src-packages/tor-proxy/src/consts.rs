@@ -61,20 +61,20 @@ pub async fn setup_tor_channels() {
 /// The hash of the snowflake binary encoded in hex
 fn get_tor_binary_hash() -> String {
     #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-    let hash = include_str!("../assets/windows/x86_64/tor.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/windows/x86_64/tor.hash"));
 
     #[cfg(all(
         target_os = "windows",
         target_arch = "x86",
         not(target_arch = "x86_64")
     ))]
-    let hash = include_str!("../assets/windows/i686/tor.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/windows/i686/tor.hash"));
 
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-    let hash = include_str!("../assets/linux/x86_64/tor.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/linux/x86_64/tor.hash"));
 
     #[cfg(all(target_os = "linux", target_arch = "x86", not(target_arch = "x86_64")))]
-    let hash = include_str!("../assets/windows/i686/tor.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/windows/i686/tor.hash"));
 
     // Checks if the hash is valid
     hex::decode(hash).unwrap();
@@ -91,20 +91,20 @@ fn get_tor_binary_hash() -> String {
 #[cfg(feature="snowflake")]
 fn get_snowflake_binary_hash() -> String {
     #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-    let hash = include_str!("../assets/windows/x86_64/snowflake-client.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/windows/x86_64/snowflake-client.hash"));
 
     #[cfg(all(
         target_os = "windows",
         target_arch = "x86",
         not(target_arch = "x86_64")
     ))]
-    let hash = include_str!("../assets/windows/i686/snowflake-client.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/windows/i686/snowflake-client.hash"));
 
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-    let hash = include_str!("../assets/linux/x86_64/snowflake-client.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/linux/x86_64/snowflake-client.hash"));
 
     #[cfg(all(target_os = "linux", target_arch = "x86", not(target_arch = "x86_64")))]
-    let hash = include_str!("../assets/windows/i686/snowflake-client.hash");
+    let hash = include_str!(concat!(env!("OUT_DIR"), "/windows/i686/snowflake-client.hash"));
 
     // Checks if the hash is valid
     hex::decode(hash).unwrap();

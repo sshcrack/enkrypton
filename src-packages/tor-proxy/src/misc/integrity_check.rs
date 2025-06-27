@@ -31,16 +31,16 @@ pub fn check_integrity() -> Result<()> {
 fn extract_tor() -> Result<()> {
 
     #[cfg(all(target_os ="windows", target_arch = "x86_64"))]
-    let tor_zip = include_bytes!("../../assets/windows/x86_64/tor.zip");
+    let tor_zip = include_bytes!(concat!(env!("OUT_DIR"), "/windows/x86_64/tor.zip"));
 
     #[cfg(all(target_os ="windows", target_arch = "x86", not(target_arch="x86_64")))]
-    let tor_zip = include_bytes!("../../assets/windows/i686/tor.zip");
+    let tor_zip = include_bytes!(concat!(env!("OUT_DIR"), "/windows/i686/tor.zip"));
 
     #[cfg(all(target_os ="linux", target_arch = "x86_64"))]
-    let tor_zip = include_bytes!("../../assets/linux/x86_64/tor.zip");
+    let tor_zip = include_bytes!(concat!(env!("OUT_DIR"), "/linux/x86_64/tor.zip"));
 
     #[cfg(all(target_os ="linux", target_arch = "x86", not(target_arch="x86_64")))]
-    let tor_zip = include_bytes!("../../assets/windows/i686/tor.zip");
+    let tor_zip = include_bytes!(concat!(env!("OUT_DIR"), "/windows/i686/tor.zip"));
 
     let target_dir = get_root_dir();
     zip_extract::extract(Cursor::new(tor_zip),&target_dir, true)?;

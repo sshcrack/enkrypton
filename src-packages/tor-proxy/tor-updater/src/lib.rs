@@ -1,10 +1,8 @@
 use std::{
-    env,
     fmt::Display,
     fs::{self, File},
     io::{BufReader, Cursor, Read, Write},
     path::{Path, PathBuf},
-    thread,
 };
 
 use flate2::bufread::GzDecoder;
@@ -15,6 +13,11 @@ use zip::{write::SimpleFileOptions, ZipWriter};
 
 lazy_static! {
     pub static ref DIGEST: MessageDigest = MessageDigest::sha256();
+}
+
+/// Logs a message in the cargo build script format
+fn cargo_log(message: &str) {
+    println!("cargo:warning={}", message);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -34,21 +37,6 @@ impl Display for Os {
             }
         )
     }
-}
-
-/// Read the version from the tor_expert_bundle_version.txt file
-fn read_version() -> anyhow::Result<String> {
-    // Get the path to the parent directory of the tor-updater crate
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let parent_dir = Path::new(&manifest_dir).parent().unwrap();
-
-    let version_path = parent_dir
-        .join("assets")
-        .join("tor_expert_bundle_version.txt");
-
-    let mut version = String::new();
-    File::open(version_path)?.read_to_string(&mut version)?;
-    Ok(version.trim().to_string())
 }
 
 /// Generates download information for the supported platforms
@@ -98,23 +86,30 @@ fn get_download_info(version: &str) -> Vec<((Os, String), String)> {
     downloads
 }
 
-pub fn download_version(out_dir: &Path) -> anyhow::Result<()> {
+pub fn download_version(out_dir: &Path, version: &str) -> anyhow::Result<()> {
     let out_dir = out_dir.to_path_buf();
-    let version = read_version()?;
+    let version = version.to_string();
+
+    // Detect current platform
+    let current_platform = detect_current_platform()?;
+    cargo_log(&format!("Detected platform: {} {}", current_platform.0, current_platform.1));
+    
+    // Get all download info but filter for current platform
     let downloads = get_download_info(&version);
-
-    // Downloading archives
-    fs::create_dir_all(&out_dir)?;
-
-    let mut handles = Vec::new();
-    for download_info in downloads {
-        let temp = out_dir.clone();
-        let version = version.clone();
-        handles.push(thread::spawn(move || process(download_info, version, temp)));
-    }
-
-    for h in handles {
-        h.join().unwrap()?;
+    let matching_download = downloads
+        .into_iter()
+        .find(|((os, arch), _)| *os == current_platform.0 && *arch == current_platform.1);
+    
+    if let Some(download_info) = matching_download {
+        // Downloading archive
+        fs::create_dir_all(&out_dir)?;
+        process(download_info, version, out_dir)?;
+    } else {
+        return Err(anyhow::anyhow!(
+            "No matching download found for current platform: {} {}",
+            current_platform.0,
+            current_platform.1
+        ));
     }
 
     Ok(())
@@ -137,17 +132,17 @@ fn process(
         version_f.read_to_string(&mut version_local)?;
 
         if version == version_local {
-            println!(
+            cargo_log(&format!(
                 "Skipping {} {} with version {} as it is already downloaded",
                 os, arch, version
-            );
+            ));
             return Ok(());
         }
 
-        println!(
+        cargo_log(&format!(
             "Replacing version {} with {} on os {} {}",
             version_local, version, os, arch
-        );
+        ));
     }
 
     if download_dir.is_dir() {
@@ -158,7 +153,7 @@ fn process(
 
     let out_file = download_dir.join("tor.tar.gz");
 
-    println!("Downloading {} {} from {}", os, arch, download_url);
+    cargo_log(&format!("Downloading {} {} from {}", os, arch, download_url));
     let resp = reqwest::blocking::get(&download_url)?;
     if !resp.status().is_success() {
         return Err(anyhow::anyhow!(
@@ -171,7 +166,7 @@ fn process(
     let mut content = Cursor::new(resp.bytes()?);
     std::io::copy(&mut content, &mut file)?;
 
-    println!("Unpacking...");
+    cargo_log("Unpacking...");
 
     let out_archive = download_dir.join("unpacked").into_boxed_path();
     fs::create_dir(&out_archive)?;
@@ -183,7 +178,7 @@ fn process(
     archive.unpack(&out_archive)?;
 
     // Find the Tor and Snowflake binaries within the unpacked directory
-    println!("Calculating hashes...");
+    cargo_log("Calculating hashes...");
 
     // For Windows, look in Tor/tor.exe and Tor/PluggableTransports/snowflake-client.exe
     // For Linux, look in tor and tor/pluggable_transports/snowflake-client
@@ -212,7 +207,7 @@ fn process(
         File::create(snow_hash_f)?.write_all(snow_hash.as_bytes())?;
     }
 
-    println!("Creating zip...");
+    cargo_log("Creating zip...");
 
     let path = download_dir.join("tor.zip");
     let file = File::create(&path)?;
@@ -233,10 +228,10 @@ fn process(
     // Write version file
     fs::write(version_file, version.clone())?;
 
-    println!(
+    cargo_log(&format!(
         "Done downloading {} {} with version {}...",
         os, arch, version
-    );
+    ));
     Ok(())
 }
 
@@ -265,4 +260,27 @@ fn get_hash(path: &Path, file_name: &str, os: Os) -> anyhow::Result<String> {
     let hash = hasher.finish()?;
 
     Ok(hex::encode(hash))
+}
+
+/// Detects the current operating system and architecture
+fn detect_current_platform() -> anyhow::Result<(Os, String)> {
+    // Detect operating system
+    let os = if cfg!(target_os = "windows") {
+        Os::Windows
+    } else if cfg!(target_os = "linux") {
+        Os::Linux
+    } else {
+        return Err(anyhow::anyhow!("Unsupported operating system"));
+    };
+
+    // Detect architecture
+    let arch = if cfg!(target_arch = "x86_64") {
+        "x86_64".to_string()
+    } else if cfg!(target_arch = "x86") {
+        "i686".to_string()
+    } else {
+        return Err(anyhow::anyhow!("Unsupported architecture"));
+    };
+
+    Ok((os, arch))
 }

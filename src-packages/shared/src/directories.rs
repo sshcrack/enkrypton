@@ -97,6 +97,7 @@ pub fn get_tor_path() -> PathBuf {
     #[cfg(target_os="windows")]
     return tor_write_path.join("tor.exe");
 
+    #[allow(unreachable_code)]
     tor_write_path.join("tor")
 }
 

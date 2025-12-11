@@ -1,4 +1,3 @@
-workspace = { members = ["tor-updater"] }
 [package]
 name = "tor-proxy"
 version = "0.1.0"

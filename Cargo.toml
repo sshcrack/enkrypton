@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "src-tauri",
+    "src-packages/encryption",
+    "src-packages/messaging",
+    "src-packages/payloads",
+    "src-packages/secure-storage",
+    "src-packages/shared",
+    "src-packages/tor-proxy",
+    "src-packages/tor-proxy/tor-updater",
+]
+
+
+[profile.release]
+strip = true

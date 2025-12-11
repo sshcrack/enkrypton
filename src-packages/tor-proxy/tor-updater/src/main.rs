@@ -132,19 +132,14 @@ fn process(
 
     println!("Calculating hashes...");
 
+    println!("Out archive: {:?}", out_archive);
     let tor_binary = out_archive.join("tor").into_boxed_path();
+    println!("Tor binary path: {:?}", tor_binary);
     let tor_hash = get_hash(&tor_binary, "tor", os)?;
     let tor_hash_f = download_dir.join("tor.hash");
 
-    let snow_binary = out_archive
-        .join("tor/pluggable_transports")
-        .into_boxed_path();
-
-    let snow_hash = get_hash(&snow_binary, "snowflake-client", os)?;
-    let snow_hash_f = download_dir.join("snowflake-client.hash");
-
+    println!("Writing hashes...");
     File::create(tor_hash_f)?.write_all(tor_hash.as_bytes())?;
-    File::create(snow_hash_f)?.write_all(snow_hash.as_bytes())?;
 
     println!("Creating zip...");
 
@@ -176,8 +171,10 @@ fn get_hash(path: &Path, file_name: &str, os: Os) -> anyhow::Result<String> {
     let path: Box<Path> = path.into_boxed_path();
     let mut hasher = Hasher::new(*DIGEST)?;
 
+    println!("Calculating hash for {:?}", path);
     let binary_f = File::open(path)?;
     let mut reader = BufReader::new(binary_f);
+    println!("Reading binary...");
 
     let mut binary = Vec::new();
     reader.read_to_end(&mut binary)?;

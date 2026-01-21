@@ -37,5 +37,4 @@ pub async fn restart<R: Runtime>(
     on_exit().await.or_else(|e| Err(e.to_string()))?;
 
     app.restart();
-    Ok(())
 }

@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::event::Sendable;
+use crate::event::SendablePayload;
 #[cfg(feature="export_ts")]
 use ts_rs::TS;
 
@@ -16,7 +16,7 @@ pub struct WsMessagePayload {
     pub message: String
 }
 
-impl Sendable for WsMessagePayload {
+impl SendablePayload for WsMessagePayload {
     fn get_name(&self) -> String {
         format!("msg-{}", self.receiver)
     }

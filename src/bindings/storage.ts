@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api"
+import { invoke } from "@tauri-apps/api/core"
 import { StorageData } from './rs/StorageData';
 import { listen, Event } from "@tauri-apps/api/event"
 

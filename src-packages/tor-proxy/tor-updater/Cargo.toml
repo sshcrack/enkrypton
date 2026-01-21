@@ -1,20 +1,20 @@
 [package]
 name = "tor-updater"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.12.5", features = ["blocking"] }
-itertools = "0.13.0"
-anyhow = "1.0.75"
-flate2 = "1.0.28"
-tar = "0.4.40"
-openssl = "0.10.60"
-lazy_static = "1.4.0"
-hex = "0.4.3"
-zip = { version = "2.1.6", features = ["deflate"] }
+reqwest = { workspace = true }
+itertools = { workspace = true }
+anyhow = { workspace = true }
+flate2 = { workspace = true }
+tar = { workspace = true }
+openssl = { workspace = true }
+lazy_static = { workspace = true }
+hex = { workspace = true }
+zip = { workspace = true }
 
 [features]
 vendored = [ "openssl/vendored" ]

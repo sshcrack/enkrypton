@@ -1,32 +1,29 @@
-[workspace]
-members = ["tor-updater"]
-
 [package]
 name = "tor-proxy"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.75"
-async-channel = "2.1.1"
-lazy_static = "1.4.0"
-log = "0.4.20"
-sha2 = "0.10.8"
-sysinfo = "0.31.2"
-tokio = { version = "1.34.0", features = ["full"] }
-payloads = { path = "../payloads" }
-shared = { path = "../shared" }
-tauri = "1.5.3"
-hex = "0.4.3"
-serde = { version = "1.0.193", optional = true }
-zip-extract = "0.1.2"
-async-trait = { version = "0.1.74" }
-serde_json = { version = "1.0.108", optional = true }
+anyhow = { workspace = true }
+async-channel = { workspace = true }
+lazy_static = { workspace = true }
+log = { workspace = true }
+sha2 = { workspace = true }
+sysinfo = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+payloads = { workspace = true }
+shared = { workspace = true }
+tauri = { workspace = true }
+hex = { workspace = true }
+serde = { workspace = true, optional = true }
+zip-extract = { workspace = true }
+async-trait = { workspace = true }
+serde_json = { workspace = true, optional = true }
 
 [target.'cfg(target_family="unix")'.dependencies]
-smol = { version = "2.0.0", default-features = false }
+smol = { workspace = true, default-features = false }
 
 [features]
 default = [ "fix-snowflake" ]
@@ -36,4 +33,4 @@ fix-snowflake = []
 vendored = [ "payloads/vendored" ]
 
 [build-dependencies]
-tor-updater = { version = "0.1.0", path = "tor-updater" }
+tor-updater = { workspace = true }

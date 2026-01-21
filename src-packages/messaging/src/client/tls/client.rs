@@ -55,7 +55,7 @@ impl WebClient {
     /// # Returns
     ///
     /// The struct that can be used to send the request
-    pub fn get(&self, addr: &str) -> Request {
+    pub fn get(&self, addr: &str) -> Request<'_> {
         Request::from_client(self, "GET", addr)
             .header("User-Agent", USER_AGENT)
             .header("Accept", "*/*")

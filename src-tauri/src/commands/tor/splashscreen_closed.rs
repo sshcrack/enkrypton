@@ -3,7 +3,7 @@ use tauri::{Runtime, Manager};
 /// Returns whether the splashscreen is closed
 #[tauri::command]
 pub async fn splashscreen_closed<R: Runtime>(handle: tauri::AppHandle<R>) -> Result<bool, String> {
-    let e = handle.get_window("splashscreen");
+    let e = handle.get_webview_window("splashscreen");
     if e.is_none() {
         return Ok(true)
     }

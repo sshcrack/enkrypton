@@ -1,5 +1,5 @@
 import { emit } from '@tauri-apps/api/event'
-import { invoke } from "@tauri-apps/api"
+import { invoke } from "@tauri-apps/api/core"
 
 /**
  * Contains all bindings for the backend tor module

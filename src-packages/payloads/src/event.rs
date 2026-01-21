@@ -1,9 +1,9 @@
 use serde::{Serialize, Deserialize};
-use tauri::{AppHandle, Manager, Error};
+use tauri::{AppHandle, Emitter, Error};
 
 //noinspection SpellCheckingInspection
 /// Describes any sendable payload and contains a function to get the name of the payload
-pub trait Sendable {
+pub trait SendablePayload: Serialize + for<'de> Deserialize<'de> + Clone {
     /// The name of the payload that should be used for tauri
     fn get_name(&self) -> String;
 }
@@ -17,11 +17,11 @@ pub trait AppHandleExt {
     ///
     /// * `payload` - The payload to be emitted.
     ///
-    fn emit_payload<'a, T: Sendable + Serialize + Deserialize<'a> + Clone>(&self, payload: T) -> Result<(), Error>;
+    fn emit_payload<T: SendablePayload>(&self, payload: T) -> Result<(), Error>;
 }
 
 impl AppHandleExt for AppHandle {
-    fn emit_payload<'a, T: Sendable + Serialize + Deserialize<'a> + Clone>(&self, payload: T) -> Result<(), Error> {
-        self.emit_all(&payload.get_name(), payload)
+    fn emit_payload<T: SendablePayload>(&self, payload: T) -> Result<(), Error> {
+        self.emit(&payload.get_name(), payload)
     }
 }

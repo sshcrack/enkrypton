@@ -2,76 +2,30 @@
   "build": {
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "enkrypton",
-    "version": "1.0.2"
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "sshcrack",
+    "longDescription": "This app uses RSA to encrypt messages being sent over the tor network. There is no central server as this app is centralized.",
+    "category": "SocialNetworking",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "window": {
-        "all": false,
-        "center": false,
-        "close": false,
-        "create": false,
-        "hide": false,
-        "maximize": true,
-        "minimize": false,
-        "print": false,
-        "requestUserAttention": false,
-        "setAlwaysOnTop": false,
-        "setClosable": false,
-        "setContentProtected": false,
-        "setCursorGrab": false,
-        "setCursorIcon": false,
-        "setCursorPosition": false,
-        "setCursorVisible": false,
-        "setDecorations": true,
-        "setFocus": false,
-        "setFullscreen": false,
-        "setIcon": false,
-        "setIgnoreCursorEvents": false,
-        "setMaxSize": false,
-        "setMaximizable": true,
-        "setMinSize": false,
-        "setMinimizable": false,
-        "setPosition": false,
-        "setResizable": false,
-        "setSize": false,
-        "setSkipTaskbar": false,
-        "setTitle": false,
-        "show": false,
-        "startDragging": false,
-        "unmaximize": false,
-        "unminimize": false
-      }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "publisher": "sshcrack",
-      "longDescription": "This app uses RSA to encrypt messages being sent over the tor network. There is no central server as this app is centralized.",
-      "category": "SocialNetworking",
-      "identifier": "me.sshcrack.enkrypton",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
-    },
-    "security": {
-      "csp": null
-    },
+  "productName": "enkrypton",
+  "mainBinaryName": "enkrypton",
+  "version": "1.0.2",
+  "identifier": "me.sshcrack.enkrypton",
+  "plugins": {},
+  "app": {
+    "withGlobalTauri": false,
     "windows": [
       {
         "fullscreen": false,
@@ -81,7 +35,8 @@
         "height": 600,
         "url": "src/app/index.html",
         "visible": false,
-        "label": "main"
+        "label": "main",
+        "useHttpsScheme": true
       },
       {
         "width": 400,
@@ -89,8 +44,12 @@
         "decorations": false,
         "url": "index.html",
         "label": "splashscreen",
-        "center": true
+        "center": true,
+        "useHttpsScheme": true
       }
-    ]
+    ],
+    "security": {
+      "csp": null
+    }
   }
 }

@@ -1,20 +1,20 @@
 [package]
 name = "secure-storage"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.75"
-argon2 = { version = "0.5.2", features = ["std", "password-hash"] }
-byteorder = "1.5.0"
-lazy_static = "1.4.0"
-openssl = "0.10.60"
-serde = { version = "1.0.193", features = ["derive"] }
-serde_json = "1.0.108"
-thiserror = "1.0.50"
-zeroize = { version = "1.7.0", features = ["zeroize_derive", "derive"] }
+anyhow = { workspace = true }
+argon2 = { workspace = true }
+byteorder = { workspace = true }
+lazy_static = { workspace = true }
+openssl = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+zeroize = { workspace = true }
 
 [features]
 vendored = [ "openssl/vendored" ]

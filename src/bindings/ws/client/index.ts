@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/core';
 import { listen, Event, UnlistenFn } from "@tauri-apps/api/event"
 import EventEmitter from "events"
 import TypedEmitter from "typed-emitter"

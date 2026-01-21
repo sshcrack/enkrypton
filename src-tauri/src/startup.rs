@@ -1,34 +1,35 @@
-use std::thread;
+use crate::util::on_exit;
 use log::{error, warn};
 use payloads::{
     event::AppHandleExt,
-    payloads::{splashscreen::SplashscreenClosedPayload, TorStartupErrorPayload},
+    payloads::{TorStartupErrorPayload, splashscreen::SplashscreenClosedPayload},
 };
 use shared::APP_HANDLE;
 use signal_hook::consts::TERM_SIGNALS;
+use std::thread;
 use tauri::{
+    App, Listener, Manager,
     async_runtime::{self, block_on},
-    App, Manager,
 };
 use tor_proxy::{manager, misc::messages::TorStartError};
-use crate::util::on_exit;
-
 
 #[cfg(target_family = "windows")]
-use std::sync::{Arc, atomic::{Ordering, AtomicBool}};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 #[cfg(target_family = "windows")]
 use std::time::Duration;
-
 
 /// The whole startup process of this app
 pub fn startup(app: &mut App) {
     let mut state = APP_HANDLE.blocking_write();
-    *state = Some(app.handle());
+    *state = Some(app.handle().clone());
 
     drop(state);
 
     // Window is the main window
-    let window = app.get_window("main").unwrap();
+    let window = app.get_webview_window("main").unwrap();
 
     #[cfg(debug_assertions)] // only include this code on debug builds
     {
@@ -36,11 +37,11 @@ pub fn startup(app: &mut App) {
     }
 
     // The splashscreen to close later
-    let splashscreen_window = app.get_window("splashscreen").unwrap();
+    let splashscreen_window = app.get_webview_window("splashscreen").unwrap();
     let temp = splashscreen_window.clone();
 
     let _env = app.env();
-    temp.once_global("splashscreen_ready", move |_event| {
+    temp.once_any("splashscreen_ready", move |_event| {
         // Starting tor if the splashscreen is ready
         async_runtime::spawn(async move {
             let temp = splashscreen_window.clone();
@@ -56,7 +57,7 @@ pub fn startup(app: &mut App) {
 
             if res.is_ok() {
                 // After starting tor, close the splashscreen and show the main window
-                #[cfg(any(debug_assertions, all(feature="dev", feature="enable-console")))]
+                #[cfg(any(debug_assertions, all(feature = "dev", feature = "enable-console")))]
                 window.open_devtools();
                 window.show().unwrap();
                 splashscreen_window.close().unwrap();
@@ -96,7 +97,7 @@ pub fn startup(app: &mut App) {
     });
 
     // Handle the SIGINT signal and stop tor first
-    let handle = app.handle();
+    let handle = app.handle().clone();
     #[cfg(target_family = "unix")]
     if let Ok(mut s) = signal_hook::iterator::Signals::new(TERM_SIGNALS) {
         thread::Builder::new()
@@ -138,6 +139,7 @@ pub fn startup(app: &mut App) {
                 if let Err(e) = r {
                     error!("Could not exit: {}", e);
                 }
-            }).unwrap();
+            })
+            .unwrap();
     }
 }

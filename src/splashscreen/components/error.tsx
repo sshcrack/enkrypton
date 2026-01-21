@@ -1,5 +1,5 @@
 import { Button, Flex, Heading, Text } from '@chakra-ui/react'
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from "react"
 import { invokeWindowTauri } from '../../tools/tauri';
 import { TorStartupErrorPayload } from '../../bindings/rs/TorStartupErrorPayload';

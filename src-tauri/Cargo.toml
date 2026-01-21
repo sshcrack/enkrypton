@@ -5,47 +5,40 @@ description = "End-To-End Encrypted Decentralized Messaging App with Tor"
 authors = ["sshcrack"]
 license = ""
 repository = ""
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = [] }
+tauri-build = { workspace = true, features = [] }
 
 [dependencies]
-tauri = { version = "1.5.3", features = [
-    "window-set-maximizable",
-    "window-set-decorations",
-    "window-maximize",
-    "shell-open",
-] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-anyhow = "1.0.75"
-lazy_static = "1.4.0"
-tauri-plugin-log = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1", features = [
-    "colored",
-] }
-log = "^0.4"
-signal-hook = "0.3.17"
-sysinfo = "0.31.2"
-regex = "1.10.2"
-storage-internal = { path = "../src-packages/storage-internal" }
-tor-proxy = { path = "../src-packages/tor-proxy", default-features=false }
-payloads = { path = "../src-packages/payloads" }
-messaging = { path = "../src-packages/messaging" }
-shared = { path = "../src-packages/shared" }
+tauri = { workspace = true, features = [] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+lazy_static = { workspace = true }
+tauri-plugin-log = { workspace = true, features = ["colored"] }
+log = { workspace = true }
+signal-hook = { workspace = true }
+sysinfo = { workspace = true }
+regex = { workspace = true }
+storage-internal = { workspace = true }
+tor-proxy = { workspace = true }
+payloads = { workspace = true }
+messaging = { workspace = true }
+shared = { workspace = true }
+tauri-plugin-shell = { workspace = true }
 
 [features]
-default = [ "tor-proxy/fix-snowflake"]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
-snowflake = ["tor-proxy/snowflake"]
 dev = ["messaging/dev", "tor-proxy/dev", "tauri/devtools", "enable-console"]
 enable-console = []
-vendored = [ "storage-internal/vendored", "tor-proxy/vendored", "payloads/vendored", "messaging/vendored"]
-
-[profile.release]
-strip=true
-
+vendored = [
+    "storage-internal/vendored",
+    "tor-proxy/vendored",
+    "payloads/vendored",
+    "messaging/vendored",
+]

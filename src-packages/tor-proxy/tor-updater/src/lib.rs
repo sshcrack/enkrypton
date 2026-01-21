@@ -194,19 +194,6 @@ fn process(
     let tor_hash_f = download_dir.join("tor.hash");
     File::create(tor_hash_f)?.write_all(tor_hash.as_bytes())?;
 
-    // Calculate the hash for the Snowflake binary
-    let snowflake_dir = if os == Os::Windows {
-        tor_binary_dir.join("PluggableTransports")
-    } else {
-        tor_binary_dir.join("pluggable_transports")
-    };
-
-    if snowflake_dir.exists() {
-        let snow_hash = get_hash(&snowflake_dir, "snowflake-client", os)?;
-        let snow_hash_f = download_dir.join("snowflake-client.hash");
-        File::create(snow_hash_f)?.write_all(snow_hash.as_bytes())?;
-    }
-
     cargo_log("Creating zip...");
 
     let path = download_dir.join("tor.zip");

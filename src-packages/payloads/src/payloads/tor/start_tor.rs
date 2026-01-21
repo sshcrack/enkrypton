@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::event::Sendable;
+use crate::event::SendablePayload;
 
 /// Used to tell the client what the progress of the tor startup is
 #[cfg_attr(feature="export_ts", derive(ts_rs::TS))]
@@ -13,7 +13,7 @@ pub struct StartTorPayload {
     pub message: String,
 }
 
-impl Sendable for StartTorPayload {
+impl SendablePayload for StartTorPayload {
     fn get_name(&self) -> String {
         "tor_start".to_string()
     }
@@ -33,7 +33,7 @@ pub struct TorStartupErrorPayload {
     pub logs: Option<Vec<String>>
 }
 
-impl Sendable for TorStartupErrorPayload {
+impl SendablePayload for TorStartupErrorPayload {
     fn get_name(&self) -> String {
         "tor_start_error".to_string()
     }

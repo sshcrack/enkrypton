@@ -25,13 +25,11 @@ fn encrypt_decrypt_test() -> Result<()> {
 
 #[test]
 fn serialize() -> Result<()> {
-    let gen = PrivateKey::generate_pair()?;
-    let original_pub: PublicKey = gen.clone().try_into()?;
+    let pair = PrivateKey::generate_pair()?;
+    let original_pub: PublicKey = pair.clone().try_into()?;
 
-
-    let serialized = serde_json::to_string(&gen)?;
+    let serialized = serde_json::to_string(&pair)?;
     let _deserialized: PrivateKey = serde_json::from_str(&serialized)?;
-
 
     let serialized = serde_json::to_string(&original_pub)?;
     let _deserialized: PublicKey = serde_json::from_str(&serialized)?;
